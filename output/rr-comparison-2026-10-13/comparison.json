@@ -1,0 +1,350 @@
+{
+  "date": "2026-10-13",
+  "universe_source": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy",
+  "universe_as_of": "2026-10-13",
+  "universe_basis": "index top 10 securities by weight, as-of end of test day; descriptive comparison, not point-in-time trading selection",
+  "assumptions": {
+    "sampling": "1m close",
+    "brick": "fixed USD = 0.5% of 09:30 minute open",
+    "anchor": "first minute open in each slot",
+    "slots": "AM [09:30,12:30), PM [12:30,16:00), America/New_York",
+    "counting": "each full threshold crossing counts B; multiple crossings per minute allowed; direction change counts R; first event has no reversal; one-brick reversal",
+    "ranking": "competition ranks; ties receive same rank",
+    "scope": "RR and ranking only; no 20-day Stage 1 screening, gate, fills, costs or P&L"
+  },
+  "retrieved_utc": "2026-10-14T12:25:44.008767+00:00",
+  "metadata": [
+    {
+      "symbol": "NVDA",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NVDA?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 224.27000427246094,
+      "brick_usd": 1.1213500213623047,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "AAPL",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 344.6650085449219,
+      "brick_usd": 1.7233250427246094,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "MSFT",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 544.625,
+      "brick_usd": 2.723125,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "AMZN",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AMZN?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 259.5450134277344,
+      "brick_usd": 1.297725067138672,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "GOOGL",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/GOOGL?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 356.29998779296875,
+      "brick_usd": 1.7814999389648438,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "AVGO",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AVGO?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 349.20001220703125,
+      "brick_usd": 1.7460000610351563,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "META",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/META?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 736.0900268554688,
+      "brick_usd": 3.680450134277344,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "GOOG",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/GOOG?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 352.1000061035156,
+      "brick_usd": 1.760500030517578,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "MU",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/MU?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 934.0700073242188,
+      "brick_usd": 4.670350036621094,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    },
+    {
+      "symbol": "TSLA",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1m&range=5d",
+      "minutes": 390,
+      "open": 372.1719970703125,
+      "brick_usd": 1.8608599853515626,
+      "first": "2026-10-13T09:30:00-04:00",
+      "last": "2026-10-13T15:59:00-04:00"
+    }
+  ],
+  "rows": [
+    {
+      "symbol": "NVDA",
+      "slot": "AM",
+      "B": 4,
+      "R": 2,
+      "RR1": 1.3333333333333333,
+      "RR10": 0.3333333333333333,
+      "increase_pct": 300.0,
+      "rank1": 10,
+      "rank10": 7,
+      "rank_gain_plus1": -3
+    },
+    {
+      "symbol": "NVDA",
+      "slot": "PM",
+      "B": 1,
+      "R": 0,
+      "RR1": 1.0,
+      "RR10": 0.1,
+      "increase_pct": 900.0,
+      "rank1": 3,
+      "rank10": 5,
+      "rank_gain_plus1": 2
+    },
+    {
+      "symbol": "AAPL",
+      "slot": "AM",
+      "B": 6,
+      "R": 3,
+      "RR1": 1.5,
+      "RR10": 0.46153846153846156,
+      "increase_pct": 225.0,
+      "rank1": 6,
+      "rank10": 5,
+      "rank_gain_plus1": -1
+    },
+    {
+      "symbol": "AAPL",
+      "slot": "PM",
+      "B": 1,
+      "R": 0,
+      "RR1": 1.0,
+      "RR10": 0.1,
+      "increase_pct": 900.0,
+      "rank1": 3,
+      "rank10": 5,
+      "rank_gain_plus1": 2
+    },
+    {
+      "symbol": "MSFT",
+      "slot": "AM",
+      "B": 3,
+      "R": 1,
+      "RR1": 1.5,
+      "RR10": 0.2727272727272727,
+      "increase_pct": 450.0,
+      "rank1": 6,
+      "rank10": 8,
+      "rank_gain_plus1": 2
+    },
+    {
+      "symbol": "MSFT",
+      "slot": "PM",
+      "B": 1,
+      "R": 0,
+      "RR1": 1.0,
+      "RR10": 0.1,
+      "increase_pct": 900.0,
+      "rank1": 3,
+      "rank10": 5,
+      "rank_gain_plus1": 2
+    },
+    {
+      "symbol": "AMZN",
+      "slot": "AM",
+      "B": 3,
+      "R": 1,
+      "RR1": 1.5,
+      "RR10": 0.2727272727272727,
+      "increase_pct": 450.0,
+      "rank1": 6,
+      "rank10": 8,
+      "rank_gain_plus1": 2
+    },
+    {
+      "symbol": "AMZN",
+      "slot": "PM",
+      "B": 1,
+      "R": 0,
+      "RR1": 1.0,
+      "RR10": 0.1,
+      "increase_pct": 900.0,
+      "rank1": 3,
+      "rank10": 5,
+      "rank_gain_plus1": 2
+    },
+    {
+      "symbol": "GOOGL",
+      "slot": "AM",
+      "B": 9,
+      "R": 4,
+      "RR1": 1.8,
+      "RR10": 0.6428571428571429,
+      "increase_pct": 180.0,
+      "rank1": 4,
+      "rank10": 2,
+      "rank_gain_plus1": -2
+    },
+    {
+      "symbol": "GOOGL",
+      "slot": "PM",
+      "B": 0,
+      "R": 0,
+      "RR1": 0.0,
+      "RR10": 0.0,
+      "increase_pct": null,
+      "rank1": 9,
+      "rank10": 9,
+      "rank_gain_plus1": 0
+    },
+    {
+      "symbol": "AVGO",
+      "slot": "AM",
+      "B": 5,
+      "R": 1,
+      "RR1": 2.5,
+      "RR10": 0.45454545454545453,
+      "increase_pct": 450.0,
+      "rank1": 2,
+      "rank10": 6,
+      "rank_gain_plus1": 4
+    },
+    {
+      "symbol": "AVGO",
+      "slot": "PM",
+      "B": 3,
+      "R": 2,
+      "RR1": 1.0,
+      "RR10": 0.25,
+      "increase_pct": 300.0,
+      "rank1": 3,
+      "rank10": 3,
+      "rank_gain_plus1": 0
+    },
+    {
+      "symbol": "META",
+      "slot": "AM",
+      "B": 15,
+      "R": 3,
+      "RR1": 3.75,
+      "RR10": 1.1538461538461537,
+      "increase_pct": 225.0,
+      "rank1": 1,
+      "rank10": 1,
+      "rank_gain_plus1": 0
+    },
+    {
+      "symbol": "META",
+      "slot": "PM",
+      "B": 3,
+      "R": 1,
+      "RR1": 1.5,
+      "RR10": 0.2727272727272727,
+      "increase_pct": 450.0,
+      "rank1": 2,
+      "rank10": 2,
+      "rank_gain_plus1": 0
+    },
+    {
+      "symbol": "GOOG",
+      "slot": "AM",
+      "B": 9,
+      "R": 4,
+      "RR1": 1.8,
+      "RR10": 0.6428571428571429,
+      "increase_pct": 180.0,
+      "rank1": 4,
+      "rank10": 2,
+      "rank_gain_plus1": -2
+    },
+    {
+      "symbol": "GOOG",
+      "slot": "PM",
+      "B": 0,
+      "R": 0,
+      "RR1": 0.0,
+      "RR10": 0.0,
+      "increase_pct": null,
+      "rank1": 9,
+      "rank10": 9,
+      "rank_gain_plus1": 0
+    },
+    {
+      "symbol": "MU",
+      "slot": "AM",
+      "B": 10,
+      "R": 6,
+      "RR1": 1.4285714285714286,
+      "RR10": 0.625,
+      "increase_pct": 128.57142857142858,
+      "rank1": 9,
+      "rank10": 4,
+      "rank_gain_plus1": -5
+    },
+    {
+      "symbol": "MU",
+      "slot": "PM",
+      "B": 5,
+      "R": 1,
+      "RR1": 2.5,
+      "RR10": 0.45454545454545453,
+      "increase_pct": 450.0,
+      "rank1": 1,
+      "rank10": 1,
+      "rank_gain_plus1": 0
+    },
+    {
+      "symbol": "TSLA",
+      "slot": "AM",
+      "B": 2,
+      "R": 0,
+      "RR1": 2.0,
+      "RR10": 0.2,
+      "increase_pct": 900.0,
+      "rank1": 3,
+      "rank10": 10,
+      "rank_gain_plus1": 7
+    },
+    {
+      "symbol": "TSLA",
+      "slot": "PM",
+      "B": 2,
+      "R": 1,
+      "RR1": 1.0,
+      "RR10": 0.18181818181818182,
+      "increase_pct": 450.0,
+      "rank1": 3,
+      "rank10": 4,
+      "rank_gain_plus1": 1
+    }
+  ]
+}

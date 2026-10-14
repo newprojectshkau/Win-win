@@ -1,0 +1,17 @@
+# Local system files and credentials
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+
+# Temporary renders and deployment archives
+/tmp/
+
+# Local hosting association (website files remain included)
+/sites/investment-roadmap-hk/.openai/

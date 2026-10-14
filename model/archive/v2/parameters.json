@@ -1,0 +1,286 @@
+{
+  "version": "2.0",
+  "status": "transcript_aligned_specification_with_unresolved_rules_not_executable",
+  "as_of_hong_kong": "2026-10-14",
+  "source_of_truth": {
+    "documents": [
+      {
+        "label": "transcript_01",
+        "path": "/Users/macmini001/Desktop/Win-win/imports/AL-briefing-01/10-14_會議：量化選股與日內交易執行系統邏輯討論-transcript 01.txt",
+        "sha256": "6dd87d70de47b4844faf8444e71886201862ed442bd52ab272718198c198b1b0",
+        "last_timestamp": "00:24:07",
+        "primary_scope": "stages_1_to_4"
+      },
+      {
+        "label": "transcript_02",
+        "path": "/Users/macmini001/Desktop/Win-win/imports/AL-briefing-01/10-14_量化交易策略第四與第五階段執行邏輯與_Renko_區間突破機制分析會議紀要-transcript 02.txt",
+        "sha256": "d1bd490a3779b75169c5a36fa179f2e3466126d2c83ff1732da4fbb5a22929fa",
+        "last_timestamp": "00:10:03",
+        "primary_scope": "stages_4_and_5_and_AM_start_correction"
+      }
+    ],
+    "precedence": "explicit_later_discussion_revision_then_earlier_definitions_then_supplementary_photos",
+    "all_provided_sources_reviewed": true,
+    "stage_5_discussed_in_transcripts": true,
+    "stage_5_event_generator_fully_defined": false
+  },
+  "confirmed_by_user": {
+    "market": "US_equities",
+    "reverse_action": "close_then_reverse"
+  },
+  "timezone": "America/New_York",
+  "display_timezone": "Asia/Hong_Kong",
+  "currency": "USD",
+  "platform": {
+    "discussion_name": "IB",
+    "interpreted_name": "Interactive Brokers",
+    "account_connection_verified": false
+  },
+  "sampling": {
+    "interval_minutes": 1,
+    "price_field": null,
+    "confirmation_time_rule": null
+  },
+  "screen": {
+    "universe": "IB_platform_stock_pool_exact_security_scope_unresolved",
+    "lookback_days": 20,
+    "day_basis": null,
+    "market_cap_aggregation": "mean_over_lookback",
+    "average_market_cap_strictly_above": 2000000000,
+    "average_daily_share_volume_strictly_above": 10000000,
+    "average_daily_fluctuation_fraction_strictly_above": 0.015,
+    "fluctuation_numerator": "daily_high_minus_low_from_photo",
+    "fluctuation_denominator": null,
+    "average_price_range_usd": [
+      20,
+      1000
+    ],
+    "average_price_sampling_method": null
+  },
+  "renko": {
+    "threshold_fraction": 0.005,
+    "mode_options": [
+      "fixed_dollar_amount",
+      "percentage"
+    ],
+    "discussion_starting_mode": "fixed_dollar_amount_derived_from_opening_reference",
+    "reference_price": null,
+    "opening_reference_session_definition": null,
+    "threshold_equality_policy": null,
+    "B_event_counting_method": null,
+    "R_direction_change_scope": null,
+    "multiple_thresholds_in_one_minute_policy": null,
+    "window_anchor_reset_rule": null,
+    "percentage_compounding_rule": null,
+    "first_entry_anchor": "initial_price_recorded_at_monitor_start_after_gate",
+    "subsequent_event_anchor_rule": null
+  },
+  "selection": {
+    "candidates_per_slot": 10,
+    "lookback": "previous_day",
+    "rr_formula": "B/(R+k)",
+    "discussion_revised_k": 10,
+    "k_comparison_values": [
+      1,
+      10
+    ],
+    "revision_status": "discussion_requested_change_to_10_with_ranking_comparison_pending",
+    "slots_independent_lists": true,
+    "overlap_between_lists_allowed": true,
+    "tie_break_rule": null,
+    "insufficient_candidates_rule": null,
+    "additional_minimum_B_filter": null
+  },
+  "slots": {
+    "configurable_slot_count": true,
+    "default_slot_count": 2,
+    "AM": {
+      "previous_day_scoring": [
+        "09:30",
+        "12:30"
+      ],
+      "previous_day_overall_baseline": [
+        "09:30",
+        "12:30"
+      ],
+      "current_day_observation": [
+        "09:30",
+        "10:00"
+      ],
+      "monitor_initial_price_at": "10:00",
+      "end_of_slot_liquidation": "12:30",
+      "trade_times_source": "transcript_02_03_13_and_05_01_start_photo_end",
+      "observation_time_status": "supported_by_later_correction_02_02_42_to_03_13"
+    },
+    "PM": {
+      "previous_day_scoring": [
+        "12:30",
+        "16:00"
+      ],
+      "previous_day_overall_baseline": [
+        "12:30",
+        "16:00"
+      ],
+      "current_day_observation": [
+        "12:30",
+        "13:00"
+      ],
+      "monitor_initial_price_at": "13:00",
+      "end_of_slot_liquidation": "16:00",
+      "trade_times_source": "transcript_01_and_photo_clock_times_transcript_02_same_tactic"
+    },
+    "baseline_interpretation": "previous_day_corresponding_full_AM_PM_slot_best_supported_reading",
+    "interval_boundary_convention": null,
+    "half_day_policy": null
+  },
+  "preparation": {
+    "timing": "previous_day",
+    "target_notional_per_stock_usd": 1000,
+    "share_quantity_objective": "argmin_positive_integer_q_abs_q_times_P_minus_target",
+    "above_target_allowed": true,
+    "reference_price": null,
+    "equal_distance_tie_rule": null,
+    "intraday_resizing_rule": null,
+    "overall_rr_formula": "sum(B)/sum(R)",
+    "overall_denominator_additive_constant": 0,
+    "overall_zero_denominator_value": null,
+    "overall_zero_denominator_status": "undefined_pending_decision_rule",
+    "overall_values_separate_per_slot": true
+  },
+  "gate": {
+    "discussion_default_enabled": true,
+    "optional_enable_disable_source": "transcript_02_00_33_confirmed",
+    "current_metric": "current_day_30_minute_observation_overall_rr",
+    "baseline_metric": "previous_day_corresponding_slot_overall_rr",
+    "pass_operator": ">",
+    "below_baseline_action": "skip_slot",
+    "equal_baseline_action": null,
+    "zero_denominator_action": null,
+    "missing_data_action": null,
+    "scope": "whole_candidate_basket_per_slot_not_individual_stock_filter",
+    "pass_means": "all_candidates_eligible_for_stage_5_not_immediate_entry"
+  },
+  "execution": {
+    "first_event_action": "follow_direction",
+    "same_direction_action": "hold",
+    "opposite_direction_action": "close_then_reverse_after_confirmation_threshold",
+    "source": "transcript_02_03_13_to_07_43_with_photo_PM_times_and_slot_ends",
+    "broker_reconciliation_required": true,
+    "short_borrow_and_buying_power_checks_required": true,
+    "fill_simulation_rule": null,
+    "live_orders_enabled": false,
+    "immediate_entry_at_monitor_start": false,
+    "no_first_event_action": "stay_flat_for_that_stock",
+    "same_direction_add_to_position": false,
+    "liquidate_at_slot_end_without_new_event": true,
+    "exit_price_intent": "then_current_executable_market_price_not_guaranteed_renko_price",
+    "reverse_confirmation": {
+      "default_adverse_event_count": 1,
+      "discussed_comparison_counts": [
+        2,
+        3
+      ],
+      "candidate_interpretation": "consecutive_renko_events_against_current_position",
+      "consecutive_interpretation_status": "supported_reading_of_02_07_52_and_08_46_exact_reset_unresolved",
+      "hold_original_position_while_waiting": true,
+      "reset_on_same_direction_event": null,
+      "event_anchor_when_waiting": null,
+      "count_scope": "adverse_signal_confirmations_not_max_total_reversals_not_RR_count_not_brick_generation_threshold",
+      "source": "transcript_02_07_52_to_09_26",
+      "h_greater_than_1_rules_complete": false
+    }
+  },
+  "interface_requirements": {
+    "implemented": false,
+    "editable_fields": [
+      "lookback_days",
+      "market_cap_threshold",
+      "daily_share_volume_threshold",
+      "daily_fluctuation_threshold",
+      "average_price_min",
+      "average_price_max",
+      "candidates_per_slot",
+      "renko_threshold",
+      "dollar_or_percentage_mode",
+      "slot_count",
+      "slot_boundaries",
+      "target_notional",
+      "individual_rr_k_comparison",
+      "trade_decider_enable_disable",
+      "reverse_confirmation_event_count_h"
+    ],
+    "future_weighted_groups": {
+      "discussed": true,
+      "weights": null
+    }
+  },
+  "optional_assistant_proposals": {
+    "enabled": false,
+    "source": "assistant_v1.0_not_meeting_agreement",
+    "position_sizing": {
+      "account_start_day_equity_usd": null,
+      "target_position_notional_usd": 1000,
+      "per_trade_risk_fraction_of_start_day_equity": 0.001,
+      "max_single_stock_notional_fraction": 0.1,
+      "max_previous_completed_minute_volume_fraction": 0.01,
+      "integer_shares_only": true,
+      "emergency_stop_bricks_from_actual_fill": 2,
+      "max_round_trip_cost_fraction_of_brick": 0.25
+    },
+    "portfolio_risk": {
+      "max_concurrent_positions": 5,
+      "max_gross_notional_fraction": 0.5,
+      "max_sector_notional_fraction": 0.2,
+      "max_aggregate_budgeted_stop_risk_fraction": 0.005,
+      "daily_loss_trigger_fraction": 0.01,
+      "max_reversals_per_stock_per_slot": 3,
+      "pending_orders_reserve_budget": true,
+      "emergency_stop_locks_symbol_for_slot": true,
+      "daily_loss_locks_entire_day": true,
+      "user_max_acceptable_drawdown_fraction": null,
+      "user_max_acceptable_drawdown_usd": null
+    },
+    "additional_filters": {
+      "minimum_selection_bricks": 3,
+      "minimum_observation_total_bricks_per_candidate": 2,
+      "minimum_current_observation_bricks_each_candidate": 1,
+      "minute_coverage": 0.99,
+      "earnings_day_exclusion": true,
+      "previous_close_in_range_required": true
+    },
+    "alternative_gate": "same_symbols_same_30_minute_window_previous_day",
+    "alternative_AM_observation": null,
+    "early_liquidation_times": [
+      "12:25",
+      "15:55"
+    ],
+    "traditional_two_brick_reversal": true,
+    "AM_09_30_to_10_00_observation_status": "now_supported_core_by_transcript_02_not_just_assistant_proposal"
+  },
+  "validation": {
+    "core_logic_complete": false,
+    "ranking_k_1_vs_10_comparison_required": true,
+    "manual_counterexamples_are_not_market_results": true,
+    "performance_verified": false,
+    "unresolved_rule_ids": [
+      "day_basis",
+      "screen_price_sampling",
+      "fluctuation_denominator",
+      "minute_price_and_confirmation",
+      "B_counting_and_subsequent_anchor",
+      "R_scope",
+      "multi_threshold_counting",
+      "threshold_equality",
+      "observation_dollar_reference_known_before_monitor_start",
+      "percentage_compounding",
+      "zero_denominator_gate",
+      "equal_RR_gate",
+      "quantity_reference_tie_and_update",
+      "slot_boundary_and_half_day",
+      "candidate_ties_and_shortage",
+      "execution_fill_rule",
+      "h_greater_than_1_counter_and_reset"
+    ]
+  },
+  "review_specification_path": "/Users/macmini001/Desktop/Win-win/model/投資模型規格_v2.md"
+}

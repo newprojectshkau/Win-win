@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "rr-comparison",
+      "title": "2026年10月13日：RR＋1與＋10排名比較",
+      "queries": [
+        {
+          "id": "minute-replay",
+          "source": {
+            "label": "Yahoo Finance 一分鐘行情及 State Street 指數成分",
+            "links": [
+              {
+                "label": "Yahoo Finance",
+                "url": "https://finance.yahoo.com"
+              },
+              {
+                "label": "State Street S&P 500 成分權重",
+                "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy"
+              }
+            ],
+            "metricDefinitions": [
+              {
+                "name": "RR",
+                "definition": "RR＋1及RR＋10分別以同一時段嘅Renko事件數B除以R＋1及R＋10；R為事件方向改變次數。"
+              }
+            ],
+            "filters": [
+              "股票池：2026年10月13日收市權重最高10隻S&P 500證券",
+              "時段：AM 09:30–12:30；PM 12:30–16:00，美東時間"
+            ],
+            "caveats": [
+              "計數採用研究假設：一分鐘收市價、固定美元磚幅為09:30分鐘開市價的0.5%，兩時段各自重設錨點，一磚反向，多磚事件逐磚計數。",
+              "本次未套用原模型20日股票池篩選；未計成交、費用或盈利。",
+              "測試池只有10隻，選頭10隻時兩個版本均全數入選。",
+              "股票池按測試日收市權重選定，這是事後描述比較，不是當時可執行的選股回測。"
+            ],
+            "executedAt": "2026-10-14T12:25:44.008767+00:00",
+            "evidenceFlow": [
+              {
+                "kind": "validation",
+                "title": "數據及計算核對",
+                "text": "10隻股票各有390個完整分鐘時間戳；逐磚獨立重算與20組B／R及RR結果一致。"
+              }
+            ]
+          },
+          "reportingPeriod": "2026年10月13日美股正常交易時段",
+          "rows": [
+            {
+              "symbol": "NVDA",
+              "slot": "AM",
+              "B": 4,
+              "R": 2,
+              "RR1": 1.3333333333333333,
+              "RR10": 0.3333333333333333,
+              "increase_pct": 300.0,
+              "rank1": 10,
+              "rank10": 7,
+              "rank_gain_plus1": -3
+            },
+            {
+              "symbol": "NVDA",
+              "slot": "PM",
+              "B": 1,
+              "R": 0,
+              "RR1": 1.0,
+              "RR10": 0.1,
+              "increase_pct": 900.0,
+              "rank1": 3,
+              "rank10": 5,
+              "rank_gain_plus1": 2
+            },
+            {
+              "symbol": "AAPL",
+              "slot": "AM",
+              "B": 6,
+              "R": 3,
+              "RR1": 1.5,
+              "RR10": 0.46153846153846156,
+              "increase_pct": 225.0,
+              "rank1": 6,
+              "rank10": 5,
+              "rank_gain_plus1": -1
+            },
+            {
+              "symbol": "AAPL",
+              "slot": "PM",
+              "B": 1,
+              "R": 0,
+              "RR1": 1.0,
+              "RR10": 0.1,
+              "increase_pct": 900.0,
+              "rank1": 3,
+              "rank10": 5,
+              "rank_gain_plus1": 2
+            },
+            {
+              "symbol": "MSFT",
+              "slot": "AM",
+              "B": 3,
+              "R": 1,
+              "RR1": 1.5,
+              "RR10": 0.2727272727272727,
+              "increase_pct": 450.0,
+              "rank1": 6,
+              "rank10": 8,
+              "rank_gain_plus1": 2
+            },
+            {
+              "symbol": "MSFT",
+              "slot": "PM",
+              "B": 1,
+              "R": 0,
+              "RR1": 1.0,
+              "RR10": 0.1,
+              "increase_pct": 900.0,
+              "rank1": 3,
+              "rank10": 5,
+              "rank_gain_plus1": 2
+            },
+            {
+              "symbol": "AMZN",
+              "slot": "AM",
+              "B": 3,
+              "R": 1,
+              "RR1": 1.5,
+              "RR10": 0.2727272727272727,
+              "increase_pct": 450.0,
+              "rank1": 6,
+              "rank10": 8,
+              "rank_gain_plus1": 2
+            },
+            {
+              "symbol": "AMZN",
+              "slot": "PM",
+              "B": 1,
+              "R": 0,
+              "RR1": 1.0,
+              "RR10": 0.1,
+              "increase_pct": 900.0,
+              "rank1": 3,
+              "rank10": 5,
+              "rank_gain_plus1": 2
+            },
+            {
+              "symbol": "GOOGL",
+              "slot": "AM",
+              "B": 9,
+              "R": 4,
+              "RR1": 1.8,
+              "RR10": 0.6428571428571429,
+              "increase_pct": 180.0,
+              "rank1": 4,
+              "rank10": 2,
+              "rank_gain_plus1": -2
+            },
+            {
+              "symbol": "GOOGL",
+              "slot": "PM",
+              "B": 0,
+              "R": 0,
+              "RR1": 0.0,
+              "RR10": 0.0,
+              "increase_pct": null,
+              "rank1": 9,
+              "rank10": 9,
+              "rank_gain_plus1": 0
+            },
+            {
+              "symbol": "AVGO",
+              "slot": "AM",
+              "B": 5,
+              "R": 1,
+              "RR1": 2.5,
+              "RR10": 0.45454545454545453,
+              "increase_pct": 450.0,
+              "rank1": 2,
+              "rank10": 6,
+              "rank_gain_plus1": 4
+            },
+            {
+              "symbol": "AVGO",
+              "slot": "PM",
+              "B": 3,
+              "R": 2,
+              "RR1": 1.0,
+              "RR10": 0.25,
+              "increase_pct": 300.0,
+              "rank1": 3,
+              "rank10": 3,
+              "rank_gain_plus1": 0
+            },
+            {
+              "symbol": "META",
+              "slot": "AM",
+              "B": 15,
+              "R": 3,
+              "RR1": 3.75,
+              "RR10": 1.1538461538461537,
+              "increase_pct": 225.0,
+              "rank1": 1,
+              "rank10": 1,
+              "rank_gain_plus1": 0
+            },
+            {
+              "symbol": "META",
+              "slot": "PM",
+              "B": 3,
+              "R": 1,
+              "RR1": 1.5,
+              "RR10": 0.2727272727272727,
+              "increase_pct": 450.0,
+              "rank1": 2,
+              "rank10": 2,
+              "rank_gain_plus1": 0
+            },
+            {
+              "symbol": "GOOG",
+              "slot": "AM",
+              "B": 9,
+              "R": 4,
+              "RR1": 1.8,
+              "RR10": 0.6428571428571429,
+              "increase_pct": 180.0,
+              "rank1": 4,
+              "rank10": 2,
+              "rank_gain_plus1": -2
+            },
+            {
+              "symbol": "GOOG",
+              "slot": "PM",
+              "B": 0,
+              "R": 0,
+              "RR1": 0.0,
+              "RR10": 0.0,
+              "increase_pct": null,
+              "rank1": 9,
+              "rank10": 9,
+              "rank_gain_plus1": 0
+            },
+            {
+              "symbol": "MU",
+              "slot": "AM",
+              "B": 10,
+              "R": 6,
+              "RR1": 1.4285714285714286,
+              "RR10": 0.625,
+              "increase_pct": 128.57142857142858,
+              "rank1": 9,
+              "rank10": 4,
+              "rank_gain_plus1": -5
+            },
+            {
+              "symbol": "MU",
+              "slot": "PM",
+              "B": 5,
+              "R": 1,
+              "RR1": 2.5,
+              "RR10": 0.45454545454545453,
+              "increase_pct": 450.0,
+              "rank1": 1,
+              "rank10": 1,
+              "rank_gain_plus1": 0
+            },
+            {
+              "symbol": "TSLA",
+              "slot": "AM",
+              "B": 2,
+              "R": 0,
+              "RR1": 2.0,
+              "RR10": 0.2,
+              "increase_pct": 900.0,
+              "rank1": 3,
+              "rank10": 10,
+              "rank_gain_plus1": 7
+            },
+            {
+              "symbol": "TSLA",
+              "slot": "PM",
+              "B": 2,
+              "R": 1,
+              "RR1": 1.0,
+              "RR10": 0.18181818181818182,
+              "increase_pct": 450.0,
+              "rank1": 3,
+              "rank10": 4,
+              "rank_gain_plus1": 1
+            }
+          ],
+          "columns": [
+            {
+              "field": "symbol",
+              "label": "股票"
+            },
+            {
+              "field": "slot",
+              "label": "時段"
+            },
+            "B",
+            "R",
+            "RR1",
+            "RR10",
+            "rank1",
+            "rank10"
+          ]
+        }
+      ]
+    }
+  ]
+}

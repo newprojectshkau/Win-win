@@ -1,0 +1,165 @@
+
+00:00:00 Speaker 1
+重溫一次啊！
+00:00:01 Speaker 1
+我哋搵咗一紮股票， base上嗰五個criteria啊， base上廿四d二十d data，跟住base上琴日嘅data搵咗個十隻股票，跟住嗰十隻股票咧就係base上嗰十隻股票咧計咗佢個一千蚊嘅LCM最近一千蚊，
+00:00:17 Speaker 1
+同埋計咗佢個overall out分兩組，跟住就頭先stay for啦，
+00:00:24 Speaker 1
+就base上當天啊intraday之前每個吹半個鐘頭。
+00:00:29 Speaker 1
+計翻佢嗰半個鐘頭real time嘅out out，
+00:00:33 Speaker 1
+Interest大過琴日嗰個part day就嗰日開始，細過佢阿boy嗰日唔做，或者嗰個就唔做A嘢或者B嘢就個short，嗰個變數就係話成個四方唔要，到時如果標時咧發覺咦呢個呢個冇Q用喎可能，然後發覺仲好咁咯，即係四方啊，收到。
+00:00:55 Speaker 1
+咁四四五嗰度唔使，因為唔夠紙咧，我寫咗喺前邊嘅。好啦，咁到最後一個sent噶啦。咁即係話，
+00:01:02 Speaker 1
+嗱，你而家幻想咧，喺電腦入邊咧，
+00:01:05 Speaker 1
+我已經有晒啲十隻股票，有晒佢要買幾多錢，
+00:01:12 Speaker 1
+每一隻要買幾多股，又base上咗AM個頭嗰半個鐘嘅data，發覺哦，原來個煲煲out大個pass out，去馬啦。
+00:01:21 Speaker 1
+點去馬咧？呢一板就係要講點去馬，
+00:01:24 Speaker 1
+係最重要嘅一板嚟。
+00:01:28 Speaker 1
+大家嚇，我繼續。我佢梳返我咁計到，我見到佢個樣，我知啊。
+00:01:36 Speaker 1
+係啊，因為我同佢一個嘅，其實佢個樣係咁嘅。我佢有變化㗎，你知唔知啊？你唔好以為佢冇變化。其實佢佢唔明咧，係咁㗎。佢有時望一望個天㗎，佢佢冇望先得㗎。好啦，咁我用A M嚟做例子啊。我唔講兩個奏啦嚇，我講一個視片啫。
+00:01:54 Speaker 1
+好啦，去碼， Basic Stage Four去碼，咁點去碼咧？就係如果AM嚟計咧，我就mark咗個initial price啊，
+00:02:03 Speaker 1
+即係話去碼嘅時候就九點半啊嘛。哦，九點半原來十蚊喎，
+00:02:08 Speaker 2
+十蚊。
+00:02:09 Speaker 1
+咁我就A D十隻股票， A股票第一隻股票，譬如十蚊嚇，咁就mark咗十蚊。咁啊mark住佢啫喎，冇喐過。咁你mark住嚟做咩啊？
+00:02:20 Speaker 1
+就要睇佢幾時有個range啦。
+00:02:23 Speaker 1
+Range code as defined as零點個percent of佢個price stock price嘅movement就係一個range code。
+00:02:31 Speaker 1
+佢發覺哦，
+00:02:32 Speaker 3
+原來佢stock price係mark誒十蚊誒十點，
+00:02:36 Speaker 2
+三點半咯係咯，
+00:02:37 Speaker 1
+九點至九點半啊嘛，
+00:02:42 Speaker 3
+喂九點半到十點啊，
+00:02:45 Speaker 1
+喂嗰啲你佢九點半開始嘛，咁你哦咁啊十點啊sorry sorry呢個誒你講得啱，又俾你捉到呢捉到流啊！咁即九點半開始，即係用咗半個鐘啦，係啦係啦，呢啲時間我佢可以捉到你就即時去已經明。唔係呢啲時間，我有時我都會咩？九點半定十點咧？
+00:03:01 Speaker 3
+十點即係十點一個月，因為呢啲就係咧，
+00:03:06 Speaker 1
+其實我嗰陣時齊咧， AI都會問翻我預投。
+00:03:12 Speaker 3
+唔係，佢九點半開始，
+00:03:13 Speaker 1
+我用咗半個鐘頭嚟計個rankle，跟住即刻電翻佢去碼，咪十點咯。咁我十點嘅時候就mark咗第一個initial price，
+00:03:20 Speaker 1
+呢度叫initial price。係啦， initial price啊，嗱， mark the initial price and monitor for the first rankle movement。
+00:03:25 Speaker 1
+如果佢成日只股票都唔喐嘅，
+00:03:28 Speaker 1
+真係冇喐過，咁咪冇movement咯，
+00:03:31 Speaker 1
+冇喐㗎，即係呢只股票我哋冇喐過嘢。但係佢有一個rankle movement咧，我哋點做啦？嗱，呢個最重要啦，
+00:03:37 Speaker 1
+我mark咗咯，
+00:03:39 Speaker 1
+十蚊啊，舉頭係十蚊。
+00:03:42 Speaker 3
+咪住，誒誒，唔好意思。誒誒， Clarify先，睇下先。誒， plays back when first rank all observe，即係話冇錯啦，即係話嗰十隻裡邊每一隻，譬如舉例下當誒喺Stage Four咧，有已經西走咗，
+00:04:01 Speaker 3
+誒有有四隻係冇西走啊，
+00:04:02 Speaker 1
+Stage Four係去定唔去啊？
+00:04:04 Speaker 3
+系咯，係全部去，我當佢全部去。即係譬如十隻十隻裡邊，誒誒，去到stage four咧，就得四。
+00:04:10 Speaker 1
+冇得四隻啊，佢all floor嘅， all floor啊，唔係四隻啊，唔係individual嘅outout，係all floor。將嗰十隻嚟計晒啊，首先就係話。
+00:04:17 Speaker 3
+哦，即係即係，如果如果係stage four all floor嗰日就就會。
+00:04:26 Speaker 1
+去就去，唔去就嗰個成就都唔去，係啦，因為佢all floor，你記得佢講啊？佢係有define叫fascination day，唔係嗰啲股票㗎。
+00:04:32 Speaker 3
+哦， OK， OK，即係誒誒， Stage Four係design個誒opening。
+00:04:37 Speaker 1
+係啦， opening嘅，嗰日唔去就唔去。
+00:04:40 Speaker 3
+咁跟住之後咧就誒再六隻睇一下。唔係六隻，都係嗰十隻。
+00:04:51 Speaker 1
+係啦係，總之總之誒決定去定唔去咁就誒。
+00:04:56 Speaker 2
+決定去啦。邊隻有First Rank Movement就先。係啦， Stage Five係決定去咗之後嘅嘢嚟嘅。 Stage Five係決定去咗之後嘅嘢。
+00:04:58 Speaker 1
+嗯。好。咁去咧，我哋好似頭先咁啦。
+00:05:01 Speaker 1
+A. M.嘅時候，佢而家十點鐘我mark咗第一次price，譬如佢十蚊我mark住佢，咁啊留意住啫。總之有一個Frankel move嘅時候咧，
+00:05:10 Speaker 1
+如果冇就冇啦。有有嘅時候點啊？嗱咁樣啦，你下邊第四個字句寫住follow個betting tactic啫。 Initial price係個base啦。如果第一個Frankel move係係long，即係升咗零點五個percent，我哋就買佢升。
+00:05:30 Speaker 1
+如果佢個base price佢initial price跟住係第一個rangele，原來跌咗零點五嘅，我哋就買佢再跌。嗯。如果冇接觸到個rangele咧，就冇嘢嘅，唔發生嘢。話俾E I聽冇嘢，佢唔接觸到rangele冇嘢，有佢成只可能成日都冇就冇零，
+00:05:51 Speaker 1
+就唔買又唔賣，就咁樣。如果佢一升，力升咗零點五，我哋就即刻買佢零點五。佢跌零點，我就即刻買佢跌。
+00:06:03 Speaker 1
+好啦，
+00:06:04 Speaker 1
+遇事者買咗咯喎，你當十隻入邊，哦，原來有八隻已經買咗啦。佢有rankle movement啦，就追上佢嘅升同跌，我哋買咗佢升同跌。
+00:06:16 Speaker 1
+咁啊，留意佢第二個rankle啦， monitor for the second rankle movement and follow the betting tactics。
+00:06:23 Speaker 1
+即係話，如果第一個可能性，
+00:06:25 Speaker 1
+我哋喺第一次買浪。第二次個rankle movement observe又係long咁我哋點啊？我哋hold住佢，唔好又唔買又唔買。如果我哋買short第二個rankle，佢又唔係買跌，仲係short緊喎，我哋又係hold住佢。呢度呢個邏輯明唔明先？即係嗱，譬如佢十蚊，
+00:06:46 Speaker 1
+佢升到十點十蚊零五毫，咁我就買啦。佢下次變咗十蚊零八毫喎，即係升咗咪十蚊零一毫咯喎，再升咗零五，哎個電腦一格睇到第二個breakout喎，都係升，咁我hold住佢，唔理佢啦。佢買跌又係咁hold住佢，又hold住佢啦。好啦，有啲咩情況咧？
+00:07:04 Speaker 1
+我哋買佢long，但係第二個breakout係short嘅時候咧，我哋就sell咗佢，
+00:07:11 Speaker 1
+即刻買翻reverse。於是者，我哋如果買short，佢變咗long，我哋就sell咗佢，買翻reverse，就係咁啦。
+00:07:19 Speaker 1
+跟住下邊嗰個戰術就follow the same pattern for the following rangeo movements，
+00:07:26 Speaker 1
+全個AM或者全個PM都係咁啦。跟住去到臨尾close嗰嗰個時間嘅時候，佢就算唔理佢達唔達到另一個rangeo都好啦。我哋就sell all at price，
+00:07:38 Speaker 1
+即係at price意思即係話當當時幾多錢就賣幾多錢。全部建倉。係啦。
+00:07:43 Speaker 1
+咁就兩個session trading佢跌啦，喺呢個時間。
+00:07:52 Speaker 1
+而唯一個變數咧就係我想話咧，如果你睇翻前一版咧，我因為唔夠位咧，我寫咗第五個stage嘅變數咧就係reverse嘅rankle，究竟係stop啊定係繼續賣？我我要再諗啊，即係我要第次第將佢出嚟嘅option option賣咗，即係話我係連續兩次我先sell咗佢啊，我定係話我record一次reverse sell咗佢？但係呢個唔緊要，呢個唔使要注意，即係話。
+00:08:17 Speaker 1
+你呢個可能整咗佢先，跟住可能要標一個，我要reverse幾多次？而家一次啊嘛，一reverse我就買啊嘛。
+00:08:24 Speaker 1
+嗯，
+00:08:29 Speaker 1
+可能我想兩次，因為我我要我要諗一諗，嗱譬如你升跌又升翻，我如果我亦都唔買嘅時候咧，我仍然hold住等reverse price噶嘛。
+00:08:40 Speaker 1
+你你明唔明先啊？即係嗱，譬如我哋買我哋買佢升，但佢跌喎。
+00:08:46 Speaker 1
+跟住第二個range佢又升翻喎，我哋去翻第一個位啫嘛，所以我喺度諗緊，究竟佢一跌嘅時候就已經reverse啊，定係我第二次跌嘅時候先reverse啊？
+00:08:56 Speaker 1
+但係呢個唔緊要，即係到到時有個parameter嚟諗嘅。
+00:09:12 Speaker 1
+你get到意思嘛？嚇，即係話我要build in一個parameter啫，嚇。冇嘅，我覺得。因為咧，其實咧，我考慮咧，譬如如果佢升跌升嘅時候咧，其實我咧係。係平手啫嘛，
+00:09:18 Speaker 1
+我平手嘅咯，我冇嘢喎。我我仍然可以hold住佢噶嘛。
+00:09:21 Speaker 3
+但係如果你係跟佢逐個range move，
+00:09:23 Speaker 1
+咁就可能就又變數啦。
+00:09:24 Speaker 3
+Transaction cost係啦，
+00:09:26 Speaker 1
+所以我就想我落一手就係話嗰個range嗰個reverse card究竟一次定兩次，或者甚至三次？呢度我要我要有個變數喺度，我有個parameter喺度。好。
+00:09:40 Speaker 1
+於是者再重複，再褪二十日嘅第十九日，就從第。
+00:09:46 Speaker 1
+臺天出地嘅第二日，
+00:09:48 Speaker 2
+就同一件事要繼續咁做。
+00:10:03 Speaker 2
+錄音完畢。三五五。

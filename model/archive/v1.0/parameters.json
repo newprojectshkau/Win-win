@@ -1,0 +1,111 @@
+{
+  "version": "1.0",
+  "status": "research_specification_not_executable",
+  "as_of_hong_kong": "2026-10-14",
+  "confirmed_by_user": {"market": "US_equities", "reverse_action": "close_then_reverse"},
+  "timezone": "America/New_York",
+  "display_timezone": "Asia/Hong_Kong",
+  "currency": "USD",
+  "screen": {
+    "security_type": "exchange_listed_common_stock",
+    "lookback_completed_trading_days": 20,
+    "market_cap_strictly_above": 2000000000,
+    "average_daily_share_volume_strictly_above": 10000000,
+    "average_daily_high_low_over_previous_close_strictly_above": 0.015,
+    "average_close_price_inclusive_range": [20, 1000],
+    "previous_close_price_inclusive_range": [20, 1000],
+    "minimum_relevant_minute_coverage": 0.99,
+    "known_earnings_day_excluded": true
+  },
+  "renko": {
+    "mode": "previous_close_percentage_frozen_daily",
+    "brick_fraction": 0.005,
+    "rounding": "ceil_to_instrument_valid_tick",
+    "source": "completed_one_minute_close",
+    "anchor": "first_valid_minute_open_of_each_window",
+    "reversal_bricks": 1,
+    "comparison_reversal_bricks": 2,
+    "reset_at_each_window": true,
+    "include_threshold_equality": true,
+    "multiple_bricks_per_minute": "count_all_but_one_position_decision",
+    "rr_formula": "B/(1+R)",
+    "basket_rr_formula": "sum(B)/(n+sum(R))"
+  },
+  "selection": {
+    "maximum_candidates_per_slot": 10,
+    "minimum_bricks_per_previous_scoring_window": 3,
+    "ranking": ["RR_desc", "dollar_volume_desc", "available_spread_asc", "symbol_asc"],
+    "freeze_both_lists_before_market_open": true
+  },
+  "slots": {
+    "AM": {
+      "previous_day_scoring": ["10:00", "12:30"],
+      "observation": ["09:30", "10:00"],
+      "trade_anchor": "10:00",
+      "new_signal_cutoff_exclusive": "12:20",
+      "scheduled_liquidation": "12:25",
+      "hard_slot_end": "12:30"
+    },
+    "PM": {
+      "previous_day_scoring": ["13:00", "16:00"],
+      "observation": ["12:30", "13:00"],
+      "trade_anchor": "13:00",
+      "new_signal_cutoff_exclusive": "15:50",
+      "scheduled_liquidation": "15:55",
+      "hard_slot_end": "16:00"
+    },
+    "window_convention": "left_closed_right_open_bar_start_times",
+    "half_day_policy": "AM_only_liquidate_at_earlier_of_12_25_or_close_minus_5_minutes"
+  },
+  "gate": {
+    "enabled": true,
+    "compare": "same_symbols_same_30_minute_window_previous_trading_day",
+    "pass_operator": ">=",
+    "minimum_total_bricks_both_days_per_candidate": 2,
+    "minimum_current_day_bricks_each_candidate": 1,
+    "missing_observation_data": "skip_entire_slot",
+    "reevaluate_during_trading_slot": false
+  },
+  "position_sizing": {
+    "account_start_day_equity_usd": null,
+    "target_position_notional_usd": 1000,
+    "per_trade_risk_fraction_of_start_day_equity": 0.001,
+    "max_single_stock_notional_fraction": 0.10,
+    "max_previous_completed_minute_volume_fraction": 0.01,
+    "integer_shares_only": true,
+    "emergency_stop_bricks_from_actual_fill": 2,
+    "max_round_trip_cost_fraction_of_brick": 0.25
+  },
+  "portfolio_risk": {
+    "max_concurrent_positions": 5,
+    "max_gross_notional_fraction": 0.50,
+    "max_sector_notional_fraction": 0.20,
+    "max_aggregate_budgeted_stop_risk_fraction": 0.005,
+    "daily_loss_trigger_fraction": 0.01,
+    "max_reversals_per_stock_per_slot": 3,
+    "pending_orders_reserve_budget": true,
+    "emergency_stop_locks_symbol_for_slot": true,
+    "daily_loss_locks_entire_day": true,
+    "user_max_acceptable_drawdown_fraction": null,
+    "user_max_acceptable_drawdown_usd": null
+  },
+  "execution": {
+    "reverse_action": "close_confirm_flat_recheck_open_opposite",
+    "short_requires_current_borrow_and_permission": true,
+    "backtest_fill": "next_regular_ohlc_open_with_adverse_costs",
+    "backtest_stop_and_signal_same_bar": "stop_first_then_lock_symbol",
+    "fees_source": null,
+    "broker": null,
+    "account_type": null,
+    "live_orders_enabled": false
+  },
+  "validation": {
+    "historical_months_suggested_minimum": 12,
+    "historical_months_target": 24,
+    "chronological_train_validation_test_fractions": [0.6, 0.2, 0.2],
+    "cost_stress_multipliers": [1, 2, 3],
+    "brick_fraction_comparison_grid": [0.0025, 0.005, 0.0075, 0.01],
+    "minimum_paper_trading_days_starting_point": 30,
+    "performance_verified": false
+  }
+}

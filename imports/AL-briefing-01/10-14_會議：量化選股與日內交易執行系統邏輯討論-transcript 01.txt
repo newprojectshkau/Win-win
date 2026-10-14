@@ -1,0 +1,333 @@
+
+00:00:02 Speaker 1
+其實咧成件事咧，我而家將佢精簡咗咧，分咗五個stage嘅， OK，咁我要逐個stage講啦。咁啊啊， Clary，如果你弊有問題咧，你講先。你你聽咗起碼知道大綱先。咁如果有咩問題咧，你可以問Andrew或者我嘅，因為Andrew已經熟嘅， Andrew已經收到係咪？嗱， OK，咁咧呢度咧第一個stage我叫stop screening嘅。咁但係呢啲嘢咧第時可能要咩翻落去試用頭先講嗰啲Andrew或者第時點turn嗰啲度嘅。但係個個嗰個即係真係做嗰時step咧，其實得五個step嘅啫。
+00:00:33 Speaker 1
+OK，咁啊點樣screening咧？咁你你見到入邊有括號咧，寫住past twenty data同埋one minute bar嘅。嗱呢一度咧，阿高如俾少少誒，俾少少background你啦。咁因為咧，而家譬如IPO嗰啲咁嘅trading platform咧，你知道係咁轉嘅嘛？咁咧，而家我哋用day day trade intra day嘅data嘅。咁呢度寫住咧就past twenty day啦。
+00:00:56 Speaker 1
+咁同埋one minute bar， one minute bar係咩意思咧？就即係話咧，因為嗰啲股票其實每一隻咧，其實佢係minute second咁喐緊嘅。你冇得咁樣去誒喐佢嘅。咁我哋呢一度咧就tick咗叫一分鐘一個一個一tick一次嘅啫，一分鐘一次。佢中間可能其實喐喐緊嘅，你唔知道嘅，即係你冇得。但係你電腦A I只可以一譬如我哋定咗一分一第一分鐘係叫十蚊，第二分鐘十一蚊，咁即係喐一次嘅啫。咁呢個就係叫one minute bar嚇。我哋以後所有嘢都叫one minute bar去做嘅。
+00:01:25 Speaker 1
+咁咧點樣screening咧就係第一步嚟嘅，就係話咧我哋將所有誒而家而家係I B嘅platform啦，
+00:01:32 Speaker 1
+我哋做screen成個pool咧， base on下邊嗰四個咁嘅criteria嘅啫。第一個criteria咧就話個market capital咧喺過去二十日嘅past average data，你寫住screen pool of stock base on old average data，即係你你收到嘛？
+00:01:47 Speaker 1
+Past十day嘅average data啦， market cap係要大過兩個billion嘅， average daily volume咧係要大過。
+00:01:56 Speaker 1
+十個million share嘅，好在理解到嚇。嗯。個average daily嘅fluctuation咧係要大過佢本身個股票個價錢咧一點五個percent嘅，即係如果唔喐嗰啲我哋唔揀嘅，即係一定要大過一點五。全部喺電腦嚟講就係，即係嗰個限係估説嚇。第二咧個average個stock price in past twenty day咧係要二十蚊至一千蚊以內嘅美金，
+00:02:19 Speaker 1
+太大嗰啲我哋賣唔到，太細嗰啲fluctuation咧好少，好多內線已經搞掂咗。
+00:02:24 Speaker 1
+咁要base上邊個data，下邊紅色嗰啲係咩嘅咧？頭先我成日都想講噶啦，我想第次出嚟嗰啲嘢咧
+00:02:32 Speaker 1
+第一次哦，我run呢啲data啦，我就搵到一集股票啦。咁但係咧，頭先嗰啲variants咧係可以有啲box俾我哋有個interface咧係好容易改嘅。例如twenty billion嘅cap可以變成n二十個day可以變成十個day嘅。
+00:02:48 Speaker 1
+兩個billion可以變成一個billion或者三個billion嘅一點五個percent可以變成n嘅percent stop咁都係佢即係你明嘛？即係我可以填嘅啫。而家係初第一步係二十至一千，但係如果我哋再後期發覺二十係太都係太低嘅時候咧，可能一百至一千咯。咁但係我哋好容易咁後邊嗰四個之後呢個set one咧有四個box可以任改嘅。咁完咗set one之後咧，好簡單啦，我哋咪有一集股票， based on past twenty data one minute bar已經有一個pool of stock係咪？ Kobe聽到係咪？好啦。好咯，無限嗰個誒，
+00:03:20 Speaker 1
+第一次無限，呢度可能已經係捐咗五十隻出嚟，或者五十七隻出嚟嘅。好啦，咁啊攞咗呢個pool之後咧，我哋點咧？我哋真係開始揀啦。第一次就揀咗個大朗出嚟咧，即係有啲唔要嘅細咗啦。咁第二個咧，我就叫做stock selector啦，真係搵嗰啲stock啦。咁呢度咧就呢度就唔使twenty days咯喎。嗱，因為呢度緊要㗎，
+00:03:41 Speaker 1
+唔係純粹因為因為個越近嗰個reality越好㗎。呢個就係past day㗎啫。嗯。同埋又係搵俾你巴，你見到右邊個括號啊？即係話呢一個search咧，我只係用past day嘅data嘅啫。 OK，
+00:03:55 Speaker 1
+咁嗱，咁啊past嘅data咩啊？咁based on the screen pool啦，第一個step，即係譬如我我我舉例，我哋screen咗一百隻出嚟，由一個IB嘅一千隻screen咗一百隻出嚟咯。好啦，嗱呢度麻煩少少啦， Angela應該明啊。阿阿Koey個問題講俾你，我哋要calculate一個叫ranko ratio嘅。
+00:04:13 Speaker 1
+嗱， rankle係咩意思咧？好簡單嘅啫， rankle咧個definition咧就係等於所有嘅change in佢個price大過零點五個percent，
+00:04:26 Speaker 1
+即係話如果有一隻股票佢係一百蚊，咁佢零點五個percent即係一百零五先啦。
+00:04:37 Speaker 1
+咁佢任何一次喐嗰，無論正好負好，佢一次我哋都係count過叫rankle嘅。
+00:04:44 Speaker 1
+咁呢個咧，就A. I.計咧。譬如話啊，我嗰嗰一嗰，譬如screen咗嗰五十隻股票出嚟，我就要睇呢五十隻股票喺琴日個past data，
+00:04:53 Speaker 1
+佢哋每一隻pass咗幾多次呢啲range啊？
+00:04:57 Speaker 1
+可以係up，可以係down。譬如佢十蚊變咗十個零五，咁咪一次咯；十個零一，咁咪第二次咯。佢跌翻落九個九點八，咁咪第三次咯。係咪？即係邏輯上係咁啊。咁啊計咗哦，原來呢一隻A嘅股票咧有十次range。
+00:05:13 Speaker 1
+好啦，咁第二個咩叫reversal咧？好簡單嘅， reversal就係個change啊，即係long同short嗱。俾少啲background嚟， long同short咧， long即係話升， short即係話跌。 OK， long short我哋叫long short嘅， long就升， short就跌。買股票可以買long可以買short，跌都要賺可以賺錢噶嘛。咁呢度好簡單嘅啫， reversal係long變short， short變long嘅啫。有幾多次？譬如一隻股票佢係咁。
+00:05:41 Speaker 1
+一百蚊啊！開始開始嘅時候一百蚊，一百零五先再升咗一百零一先，誒一百零十先去咗rankle十次，但係佢全部都升喎，咁佢咪rankle咪冇咯，冇reverse咯，佢冇reverse過咯。你明我意思啊？
+00:05:56 Speaker 1
+咁我哋要計咯，舊日琴日就係咁啦，將呢啲鋪個股票計一次。哦，佢而家幾多rankle，有幾多reverse？好啦。
+00:06:04 Speaker 1
+咁我哋咪有咗其中一隻股票，我當股票A，我count咗佢嘅reversal，我count咗佢嘅range，我咪將佢count of range over count of reversal就係等於呢個ratio啦。但係呢度有一個好重要嘅check嚇，你一定要教咗個AI值，一定個count of reversal要加一嘅，因為上次我哋嘅以前教訓咧，好多真係唔升嘅股票咧，零嘅時候咧佢彈咗好多怪嘢出嚟，計唔到啊。嗱，我亦都做咗一啲試驗咧，發覺佢加一咧係唔會影響個selection嘅。
+00:06:33 Speaker 1
+我真係照股表出嚟
+00:06:37 Speaker 1
+即係如果譬如，如果有一隻股票佢除零啊嘛，佢error咗咯。
+00:06:41 Speaker 2
+即係等於計數機，你你一個數除零會變咗error啊嘛。
+00:06:44 Speaker 1
+係啦，佢error咗咯。
+00:06:46 Speaker 1
+咁如果譬如我就計過，如果佢其實佢唔喐嗰啲，我哋先係最賺錢嗰啲啊嘛。咁我咪全部加咯。咁啊變咗加一嘅時候，如果佢喐咗一次加二啦。咁我計過一次嗰個step咧，原來係一息㗎。我真係plot咗個表出嚟，我搬戇居咁用人手plot咗個表，所以係OK嘅。
+00:07:02 Speaker 1
+一定要加一
+00:07:04 Speaker 1
+即係話我哋總之basis嗰日嘅data one minute bar cum純粹用電腦cum啫，即係人手都得嘅。 cum咗幾多次喐過定大過零點五嘅，
+00:07:15 Speaker 1
+Cum咗幾多次轉嘅，就計咗呢個ratio出嚟。
+00:07:20 Speaker 2
+但係我有問題，有問題點解點解唔係加一唔係加十咧？
+00:07:23 Speaker 1
+加一得啦。最大佢加一次啫。即係佢零變都係除一咯。
+00:07:29 Speaker 1
+即係佢計出嚟唔會錯啊！如果佢一次就變二咯，佢將一個step推一次嘅啫。
+00:07:34 Speaker 2
+但係二統一嗰個嗰個base，
+00:07:39 Speaker 2
+即係嗰個分母已經係即係除出嚟嗰個基礎已經唔同咗，已經爭兩倍喎。
+00:07:42 Speaker 1
+我明啊，你嘅意思係除加十，係咯？唔係唔係你我我想聽你講加十嘅點？
+00:07:50 Speaker 2
+十加即係譬如佢佢佢一攤。佢嗰日個reverse哦，
+00:07:52 Speaker 1
+如果係加十嘅時候就變咗除全部小數點入十一、十二、十三，
+00:07:57 Speaker 2
+咁變咗個嗰個基數，佢個nomination啊係喎，
+00:08:00 Speaker 1
+你好聰明喎！喂，我明你講乜喎？佢純粹shift一個一個decimal啫嘛，
+00:08:05 Speaker 2
+係啦，但係。但係你一加一同一加二咧
+00:08:09 Speaker 1
+你唔係你問得好。其實我覺得啱啊！因為我計完之後就發覺係一個好大嘅，但我拖咗出嚟咧係試力計啊！但係你加十都OK喎，我覺得十仲好喎。
+00:08:22 Speaker 1
+加十啦，加十啊！喂，犀利
+00:08:29 Speaker 2
+唔係真係好啊，真真係好啊，唔係真係好。
+00:08:30 Speaker 1
+加十，你依家成日即刻改啊！唔係我明，我完全明你講乜啦。我其實都係唔係因為加十係變咗shift一個decimal啫嘛。唔係。
+00:08:35 Speaker 1
+你加十係變咗shift一個decimal㗎。
+00:08:36 Speaker 2
+係啊係啊，即係因為個數學嗰個基數㗎。係咯
+00:08:43 Speaker 1
+你十。唔係，雖然加一咧係唔會影響個selector㗎，
+00:08:46 Speaker 1
+因為我pop佢出嚟，其實都唔影響嘅。但係你個魚皮啊，加十。
+00:08:51 Speaker 2
+佢嗰個percentage都係除出嚟嗰個。
+00:08:53 Speaker 1
+我明啊，但係計出嚟其實係褪咗一個step㗎，你明唔明意思啊？零同一同二其實都係嗰幾隻嚟㗎。我覺得十係容易。
+00:09:04 Speaker 1
+嗱咁我計阿阿阿Tory，你計咗我哋有個ratio咯喎，咁即係嗱，你當我哋攞咗五十隻股票出嚟啦，咁喺道理上我咪每一隻股票都計到呢個ratio啦，啱嗎？好啦，咁點咧？我哋就揀top嗰十隻，
+00:09:18 Speaker 1
+With the highest rank ratio就係咁簡單啦。 AI就要將嗰嗰個pool用第二個station pass data計咗呢個ratio出嚟，就揀頭嗰十隻，就係咁多啦。
+00:09:31 Speaker 1
+咁咧，咁我減咗啦，呢個stage減咗十隻嘅啫。咁啊，好啦，但係有少少communication咧，就係將呢十隻咧係一一日分兩次嘅，一次叫AM，一次叫PM，就係九點半到十二點半，十二點半到四點，咁啊完㗎啦喺IP入邊。咁即係話每一日咧係會有兩set十隻嘅股票，一隻係AM，一隻係PM，就basin嗰十隻最高high rankle嗰十隻股票，
+00:09:58 Speaker 1
+揀十隻出嚟。
+00:10:01 Speaker 3
+等我陣先，方唔方路到？
+00:10:12 Speaker 2
+得唔得？可能咧，不如咪等佢尋尋點先。
+00:10:19 Speaker 1
+用個AI誒計一計。唔係邏輯上嚟睇先。
+00:10:21 Speaker 2
+唔係頭先講啦，我提出嗰個聽一加二跟落
+00:10:26 Speaker 2
+咪應該係由加一變到加十嗰個。
+00:10:29 Speaker 1
+睇係咪一樣啊！出嚟嘅股比應該係一樣㗎。我感覺上一樣㗎，因為我自己plot個出嚟。但係唔緊要，我覺得三十，我哋可以試一試㗎嘛。
+00:10:37 Speaker 1
+但係個邏輯明唔明先？
+00:10:39 Speaker 1
+係。啊！但係你唔緊要，唔明晒唔緊要。Angela喺度啊，我佢就而家幫我手嘅，因為Angela佢之前已經同我緊搞咗幾個月咧，佢已經知道做乜㗎啦。
+00:10:48 Speaker 1
+So far而家follow唔follow到先？
+00:10:51 Speaker 1
+Follow唔follow？咁咁，我哋揀咗十隻咯。咁每一日十隻就分咗兩個時段啦。即係喺past day嘅時候咧，
+00:10:57 Speaker 1
+我喺A. M.同一件事揀咗十隻，我PM同一件事又揀咗十隻，其實可能有七隻係相同嘅，唔緊要，但係我都分咗兩個時段，清楚？係。
+00:11:07 Speaker 1
+好啦，如果清楚之後咧，下邊紅色就係啦，嗰啲就係我想有box可以改嘅嘢啦。
+00:11:12 Speaker 1
+例如十隻變咗n咁多隻咧？可以分三隻嗎？
+00:11:16 Speaker 1
+我可以再分grey噶嘛，
+00:11:18 Speaker 1
+即係五隻重磅、五隻輕磅都得噶嘛。
+00:11:22 Speaker 1
+第二就係個rankle係零點五啊嘛，可唔可以變成零點六咧？呢個一定要我到時可以及個制就可以有嘅，即係填落去。第三個就係個rankle咧，而家係錢嚟噶嘛，零點五個percent係非常錢噶嘛，慢慢嚟先。譬如個股票一開市嘅時候一百蚊，咁佢零點五個percent咪五毫子咯，
+00:11:41 Speaker 1
+係咪？但係我都可以非常percentage噶嘛。
+00:11:49 Speaker 1
+即係佢變咗，如果一百個percent個index，佢升咗零點五個percent，變咗一百點零五個percent。咁我再升一百點零點五個percent，變咗一百點零五乘零點零五個percent㗎嘛？即係我可以錢同percent嚟算㗎嘛？
+00:12:04 Speaker 2
+第三，即係呢一欄要有個box係。
+00:12:06 Speaker 1
+係啦，我唔知邊度好啊。
+00:12:07 Speaker 2
+錢定係誒誒percent嚟咯，即係佢可以有個減係入數字，跟住個單位係多拿定。
+00:12:17 Speaker 2
+系啦，但系計出嚟嗰個數字唔同。
+00:12:21 Speaker 1
+但係唔呢啲係我有個box嘅啫，但係前面set就係前面定咗㗎啦。到時如果真係唔得，我可以即係opt埋出嚟啫。而第四個slot咧，而家飛又分咗A M同B M㗎嘛。
+00:12:31 Speaker 1
+我可唔可以變成一個咧？我唔分都得㗎嘛。我亦都可以分四個㗎嘛。呢個亦都係俾我時間，我可以分嘅啫。即係而家time share兩個
+00:12:39 Speaker 1
+但係可以係一個，可以係四個，可以係三個。
+00:12:44 Speaker 1
+但係呢個係即係後期嘅，唔緊要嚇。即係我講埋嗰個parameter嘅changes嘅。
+00:13:05 Speaker 1
+OK，收放OK未？
+00:13:08 Speaker 1
+好啦，咁而家喺我哋喺手上咧，由第一個step咧，由一個天文嘅。一好多股票入邊， based on past twenty data搵到一個pool。第二個stage，我喺stock selector度用琴日嘅data搵到嗰十隻A. M十隻P. M嘅股票， based on嘅rank ratio啦。咁我而家有嗰個表㗎啦喎，係咪？好啦，
+00:13:33 Speaker 1
+咁到第三樣係咩咧？就係嗰個叫betting operation啦。嗱呢度咧就咁嘅，有兩個point嘅啫。我有嗰十隻股票啦嘛，係咪？你當A. M先啦， Koey有十隻，
+00:13:39 Speaker 1
+咁要做兩樣嘢嘅啫。第一。
+00:13:41 Speaker 1
+因為每一隻股票佢個錢個股價係唔同噶，頭先講咗係由五十蚊到一千蚊不等，有啲可能係二十蚊，有啲可能係一千蚊。咁我就用一千蚊做個base
+00:13:55 Speaker 1
+就要計呢十隻股票嘅LCM最近一千蚊。
+00:14:03 Speaker 1
+例如有隻股票係九百蚊，有隻股票係一百蚊
+00:14:09 Speaker 1
+咁咪九百蚊咯。即係話有一隻股票我買一股，有隻股票我買十股，我要close到一千蚊嘅，呢個A I都計到出嚟嘅，佢唔使expiry一樣，但系我要近，即系話臨尾出嚟咧
+00:14:23 Speaker 1
+可能那十隻股票有一隻買九百五十七蚊，有隻買九百三十二蚊，一隻買一千零七蚊，但我想最近一千蚊，因為我想盡量每一個錢都系uniting。
+00:14:38 Speaker 1
+但係股票嘅number of stock唔使unit。
+00:14:41 Speaker 2
+佢咧會有個term咧，我唔知咧叫做乜鬼嘢LCM。因為咧我上次係嗰個LTM上咧，就係我開頭俾個方佢，就係話總之計牛翻一千蚊
+00:14:59 Speaker 2
+咁佢只股應該誒賣幾多到啦？唔係唔係，咦我咁就我真係唔出貨，咁就叫佢話誒搵佢嗰只股個股價嘅LCM，咁但係發覺咧。
+00:15:06 Speaker 2
+因為如果你計MCM咧，可以佢好大嘅
+00:15:09 Speaker 2
+咁但係就即係根本係我哋誒壓縮唔到嗰個嗰個數量嚟㗎，咁所以咧就後屘佢係係個AI自己咧，我我要睇翻啲case先面，其實如果你要穩定，咁就佢係佢去candle和post就係話會唔會其實你係想睇係誒即係而家啊坐而家變翻咗你覺得？
+00:15:35 Speaker 2
+係啊，即係有個腔㗎。咁咁佢佢就會識得介紹俾你聽，就係誒就好長篇幅咁解㗎啦。係啊，因為譬如如果嚟長篇篇嗰十隻咧，我係只講計數咁，用數學嘅嘅誒誒程式仔咧係得翻，即係會可以好大嘅個數，係唔知幾多萬平方。
+00:15:58 Speaker 1
+但係而家改咗啦，我用一千蚊嚟做基礎。
+00:16:00 Speaker 2
+係啦，咁樣咯。
+00:16:01 Speaker 1
+總之嗰十隻。
+00:16:03 Speaker 1
+成個倍數係要最近一千蚊就得，唔使unit。好啦，依個第一樣嘢計咗咯喎。咁第二樣要計嘅咩咩咧？嗱，呢個複雜少少啊。嗱，你記得我哋有十隻股票係咪？嗰十隻股票都有每一隻有佢嘅range同埋佢嘅reversal嘅can噶嘛？
+00:16:22 Speaker 1
+我要計一個叫overall嘢，即係話將嗰十隻嘅所有嘅range。加埋佢，
+00:16:29 Speaker 1
+Average唔係average啊！記住，因為個電腦話俾我聽， average係唔啱嘅。我同意係要嗰十隻，譬如第一隻係七次，第二隻係三次，加晒佢，加晒佢嘅rankle account，
+00:16:42 Speaker 1
+加晒呢十隻股票嘅reverse account。
+00:16:46 Speaker 1
+我計咗個數叫overall rankle account，
+00:16:50 Speaker 3
+就係咁簡單。
+00:16:52 Speaker 1
+即係話唔係一組只股票啦，係十隻股票攣埋一齊。
+00:16:57 Speaker 1
+嗰十隻股票每一隻individually都有rankle count同埋有reversal count噶嘛，唔系average佢嚇，系十隻加晒佢。
+00:17:08 Speaker 2
+但係呢個數係我嚟做咩嘅啫嘛？
+00:17:09 Speaker 1
+你等一陣，嗯，加晒佢，加晒佢之後，我亦都有叫all four嘅rank rank to rankle count ratio，
+00:17:18 Speaker 1
+明啊？邏輯上好容易明㗎，係咪？
+00:17:21 Speaker 1
+即係話，譬如第一隻股票係三次。
+00:17:24 Speaker 1
+有三次rankle，兩次reversal，第二隻股票一次rankle，兩次reversal，加，即係stop A stop一同stop二stop三一路去到stop十，加晒佢有幾多個total rankle？
+00:17:37 Speaker 1
+Reversal都係由stop一至stop十，加晒佢total有幾多次reversal？就整一個overlong嘅，
+00:17:46 Speaker 1
+唔係average，係overlong。譬如overlong佢通常喐晒，喐咗五十次， total reversal喐咗五十次，咁佢咪一啊？
+00:17:55 Speaker 1
+同一時間呢度要加翻十，對唔住啊！啊，唔係呢度唔會零嘅，唔使加十啊！
+00:18:00 Speaker 1
+嚇，因為實有喐㗎嘛。好啦，咁我有咗呢兩個數喎，呢個係preparation啫，冇嘢。阿Angela問得好，咁我總之嗱，我已經有晒嗰啲十隻股票啦，我都有呢兩個數喎，即係嗰十隻股票第一大概最近一千蚊嘅股票嘅number，
+00:18:17 Speaker 1
+同埋呢十隻股票佢哋個overall reversal cap喺手啦。
+00:18:22 Speaker 1
+咁跟住點咧？
+00:18:23 Speaker 1
+跟住下邊嗰個就係到時我轉下係咪一千下嗰個價位？好啦，咁真係到第四啦
+00:18:33 Speaker 1
+個trade data啦。咁我今日開始咯喎，嗱我我計晒啦，
+00:18:37 Speaker 1
+咪我琴日已經計晒啲，即係以上one two three嘅data喺past day已經有晒噶啦嘛，啱唔啱？即係我琴日收市嘅時候已經可以計晒嗰啲data噶啦嘛， past day嘅啫嘛，全部係咪？一二三都係past day嘅嘛。
+00:18:53 Speaker 1
+好啦，咁到stage stage four咧，我寫咗叫intraday啦，
+00:18:58 Speaker 1
+就係今天嘅trade嗰日嘅intraday即係trading嗰日，亦都係分俾你辦trading嗰一日啊。
+00:19:06 Speaker 1
+今次先係到真正stage four先係trading嗰日。咁啊點樣design啊？首先我分兩個AM同PM噶嘛，
+00:19:17 Speaker 1
+就係用頭嗰半個鐘， AM就九點做九點半， PM就十二點半一點。
+00:19:23 Speaker 1
+Calculate個intraday overall
+00:19:25 Speaker 1
+同一個邏輯，但系用真正嘅data計個rr，
+00:19:30 Speaker 2
+跟住你驚未到呢度？
+00:19:32 Speaker 1
+當日嘅data，當日intraday嗰日半個鍾日半個鐘頭，嗯，計佢嗰個intraday系啦，
+00:19:41 Speaker 1
+同一日嘅buying decision嘅，同一個即系話我十隻股票喺呢半個鐘頭內total有幾多次reversal count， total有幾多次range count，計一個overall嘅。
+00:19:50 Speaker 1
+如果嗰個intraday嘅out out大過我哋之前嗰個咧，
+00:19:56 Speaker 1
+今日先吹細個唔吹嗰日停咗佢，或者嗰個session嗰個short停咗。
+00:20:04 Speaker 1
+呢個就係minimise個fluctuation嘅。嗯，之前我哋用咗好多其他方法去minimise個fluctuation嘅，
+00:20:09 Speaker 3
+咪得我發覺呢個最好。
+00:20:15 Speaker 1
+嗯，你明唔明啊？即係嗱，即係話，如果我琴日overall個trading出咗嚟係七。
+00:20:22 Speaker 1
+發覺而家得五系啦，好低喎。咁即系話佢轉，即系今日真正嘅實日實放咧，繫好甩出嚟噶。咁對我哋不利啊。咁我就阿波咗佢啦，之後嗰個session唔trade
+00:20:34 Speaker 1
+停咗佢。如果唔系就去去馬。即系話如果九點至九點半A. M.嘅時候，我發覺一計計咗個intraday個overlout系大過琴日計嗰個嘅，誒去馬啦咁樣。唔系停阿波就叫A. I.阿波咗。
+00:20:52 Speaker 1
+咁即系話喺呢個入邊咧有兩一日有兩個designer啦，因為有兩個slot啊嘛，
+00:20:55 Speaker 3
+AM同PM啊嘛。
+00:21:01 Speaker 2
+啊，問題。嗯。但系你個part day嗰個hour咧系嘅全日嘅。
+00:21:10 Speaker 1
+唔系AMPMAM、PM兩個啊嘛，我話計兩個啊嘛。
+00:21:13 Speaker 2
+即系part day都系啊。
+00:21:14 Speaker 1
+系啊系啊，即系全部如果有個兩個session，兩個session咯，同一個邏輯嚟嘅啫嘛，同一個邏輯嚟嘅。
+00:21:22 Speaker 2
+但係你講緊我講緊stage three嗰個計嗰個outout。係啊係啊。嗰個係計之前一日嘅。黑色係啊係啊，
+00:21:32 Speaker 1
+黑色嘅M P啊。一日計嘅啫嘛。
+00:21:34 Speaker 2
+嚇！一日嘅啫嘛。我意思咧係。如果逐日用攞呢個做變數
+00:21:40 Speaker 1
+跟住compare上晝嘅outout。即係上晝計翻上晝，下晝計翻上晝啦。下晝下晝計翻下晝，我都亂咗啲計。你哋錯嘅我都亂咗。嗱，你咪講。
+00:21:52 Speaker 1
+即係有個A A M嘅啊，
+00:21:54 Speaker 2
+即係冇得Apple to Apple啊，
+00:21:55 Speaker 1
+你明唔明啊？
+00:22:01 Speaker 2
+就係啊，根本就係我呢個，就Apple上晝啊out out同Apple，我哋就分。
+00:22:04 Speaker 1
+即係話Stage Three都要分兩個咩個？
+00:22:05 Speaker 2
+Stage Four係啊，唔係話Stage Three啊？
+00:22:06 Speaker 1
+係啊係啊， Yes Yes啊，係啊係啊。
+00:22:10 Speaker 2
+咁第OK，總之誒誒，咁就要define清楚Stage Three。誒嗰個Opera Out Out咧係有兩個咯，
+00:22:18 Speaker 1
+Timeslot喎。係啦，咪個Timeslot咪之前嗰個咯，九點半到九點，九點到十二點半咯，十二點。啊OK OK。
+00:22:29 Speaker 4
+嚇，唔係你寫得一two slot啦，啱啊。我諗住即係啱啊，其實啱啊。
+00:22:38 Speaker 1
+Two slot只能一呢個，都係十萬啦。咁呢啲係舊嘅，有邊邊新嘅咧？破地好似。但係因為遲啲可能係四個slot，可能一個slot㗎嘛。到時你明唔明啊？我之前咪話個parameter個時間可以俾我改，同時optimize可能我係咁desktop嘅。
+00:22:50 Speaker 4
+我邊行啦？邊行就啊，呢個邊行。好多碎骨。我做呢啲佢開成啲蛋仔。都碎骨啊啲雞。多。碎骨。
+00:23:33 Speaker 4
+我實啊！我啲面嗰度
+00:23:37 Speaker 1
+我冇除晒
+00:23:38 Speaker 2
+攞啲索晒啲。我已經叫咗少面啊，都係都好多。係啊，我加半個嘅，因為係所以佢我係自索晒啲湯
+00:23:49 Speaker 4
+我又續汁。
+00:24:07 Speaker 2
+都係標配一啲入口，就係主要係新嘢，即係一啲，O. K.即係唔係會昂啲啲。
