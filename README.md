@@ -15,6 +15,18 @@
 
 v3 is the current strategy definition. Earlier PDFs and the website may reflect earlier versions; use v3 and `model/parameters.json` when resolving differences. This project currently contains research and specifications, not a complete trading execution system.
 
+## G3 simulator plan and review status
+
+The G3 implementation plan has been reviewed through three independent agent perspectives: programmatic trading, software engineering, and investor usability. The revised plan incorporates their findings. These documents are a proposal; the simulator has not been implemented or accepted.
+
+- [Revised implementation plan](docs/G3-simulator-plan.md)
+- [Trading review](docs/reviews/G3-trading-review.md), [engineering review](docs/reviews/G3-engineering-review.md), and [investor review](docs/reviews/G3-investor-review.md)
+- [Browser and printer-friendly HTML](output/html/G3-review.html): download the file and open it in a browser; GitHub's file view displays the HTML source.
+- [PDF containing the plan and all three reviews](output/pdf/G3-simulator-plan-and-reviews.pdf): open the GitHub file view and select **Download raw file** to save it.
+- [Current project status and next steps](docs/STATUS.md)
+
+No public live URL for the G3 review page has been verified. A repository file URL is not a hosted website; publishing the prepared HTML requires a connected hosting service or GitHub Pages configuration.
+
 ## Open in browser Codex
 
 Repository: https://github.com/newprojectshkau/Win-win
