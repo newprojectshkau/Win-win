@@ -16,6 +16,8 @@ The reviews are analytical agent assessments through the requested perspectives,
 
 ## Implementation readiness
 
+簡報已按[原始資料核對](G3-checklist-01-source-audit-zh-HK.md)修訂：第 3 頁分列「已有設定」及「待補細節」，不再把所有項目當成未定；01c 對話尚未取得，已在簡報註明。PowerPoint、PDF 及瀏覽器版已同步更新。
+
 The repository remains a strategy research/specification project. There is no implemented or accepted five-stage simulator, trading engine, live broker integration or verified profitability. The current strategy authority remains v3 and `model/parameters.json`.
 
 Next steps are to approve the unresolved G1 rule decisions and independently calculated fixtures, establish the G2 point-in-time data contract and readiness report, then build the bounded G3 replay core. The plan's four-development-week estimate remains conditional on approved rules and usable data; it excludes historical-data procurement, realistic broker execution constraints and the separately estimated browser interface.
