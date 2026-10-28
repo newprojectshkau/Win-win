@@ -10,6 +10,7 @@ Updated: 29 October 2026 (Australia/Melbourne).
 - [Investor usability review](reviews/G3-investor-review.md).
 - [Self-contained, printer-friendly HTML review](../output/html/G3-review.html), including all four documents.
 - [PDF review bundle](../output/pdf/G3-simulator-plan-and-reviews.pdf), including all four documents.
+- 香港繁體中文六頁審閱簡報：[可編輯 PowerPoint](../output/slides/G3-engine-briefing-zh-HK.pptx)、[PDF](../output/slides/G3-engine-briefing-zh-HK.pdf)及[可列印瀏覽器版](../output/slides/G3-engine-briefing-zh-HK.html)。涵蓋引擎架構、建置路線、16 項決策及系統限制；屬建議設計，並非完成建置或批准紀錄。
 
 The reviews are analytical agent assessments through the requested perspectives, not professional endorsements. The original document and export dates are retained. Conditional roadmap dates have not been rebaselined and are not evidence that scheduled milestones were completed.
 

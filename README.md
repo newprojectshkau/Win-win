@@ -24,6 +24,7 @@ The G3 implementation plan has been reviewed through three independent agent per
 - [Browser and printer-friendly HTML](output/html/G3-review.html): download the file and open it in a browser; GitHub's file view displays the HTML source.
 - [PDF containing the plan and all three reviews](output/pdf/G3-simulator-plan-and-reviews.pdf): open the GitHub file view and select **Download raw file** to save it.
 - [Current project status and next steps](docs/STATUS.md)
+- 香港繁體中文六頁簡報：[PowerPoint](output/slides/G3-engine-briefing-zh-HK.pptx)｜[PDF](output/slides/G3-engine-briefing-zh-HK.pdf)｜[離線瀏覽器版](output/slides/G3-engine-briefing-zh-HK.html)。內容包括引擎架構、建置路線、16 項開工前決策及系統限制；下載後開啟。
 
 No public live URL for the G3 review page has been verified. A repository file URL is not a hosted website; publishing the prepared HTML requires a connected hosting service or GitHub Pages configuration.
 
