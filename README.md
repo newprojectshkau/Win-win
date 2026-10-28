@@ -17,7 +17,22 @@ v3 is the current strategy definition. Earlier PDFs and the website may reflect 
 
 ## G3 simulator plan and review status
 
-The G3 implementation plan has been reviewed through three independent agent perspectives: programmatic trading, software engineering, and investor usability. The revised plan incorporates their findings. These documents are a proposal; the simulator has not been implemented or accepted.
+### 可操作平台審閱版
+
+已建立[六頁操作平台](sites/g3-platform/README.md)：工作台、參數設定、五階段結果、逐股重播、假設與留言及版本比較。參數會實際傳入重播核心；示例採合成資料，不是市場回測。此版不接券商或實盤。
+
+未定義的內容依用戶指示採用[22 項可追溯暫定假設](docs/G3-platform-assumptions-zh-HK.md)，沒有覆寫原始 v3。留言只存在當前瀏覽器，可連同設定及運行結果匯出 JSON 審閱包。01c 對話仍未納入。
+
+在 repo 根目錄可執行：
+
+```sh
+python3 -m http.server 8010 --bind 0.0.0.0 --directory sites/g3-platform
+npm test --prefix sites/g3-platform
+```
+
+發布來源分支為 `g3-platform-review`，部署工作流程為 [G3 review platform](.github/workflows/g3-review-pages.yml)。GitHub Pages 須由 repo Settings 啟用 GitHub Actions 來源並允許此分支；推送程式不代表網址已上線。實際部署狀態見 [docs/STATUS.md](docs/STATUS.md)。
+
+The G3 implementation plan has been reviewed through three independent agent perspectives: programmatic trading, software engineering, and investor usability. A review implementation now runs on explicit provisional assumptions; the complete v3 simulator and historical-data workflow have not been accepted as G3-complete. Earlier plans and briefings retain their original preparation context.
 
 - [Revised implementation plan](docs/G3-simulator-plan.md)
 - [Trading review](docs/reviews/G3-trading-review.md), [engineering review](docs/reviews/G3-engineering-review.md), and [investor review](docs/reviews/G3-investor-review.md)

@@ -1,0 +1,55 @@
+name: G3 review platform
+on:
+  push:
+    branches: [g3-platform-review]
+    paths:
+      - 'sites/g3-platform/**'
+      - '.github/workflows/g3-review-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: g3-review-pages
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify strategy fixtures and replay invariants
+        run: npm test --prefix sites/g3-platform
+      - name: Prepare review-only static site
+        shell: bash
+        run: |
+          mkdir -p _site
+          cp sites/g3-platform/index.html sites/g3-platform/styles.css sites/g3-platform/app.js sites/g3-platform/engine.js sites/g3-platform/assumptions.js _site/
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('_site/build.json').write_text(json.dumps({
+              'revision': os.environ['GITHUB_SHA'],
+              'ref': os.environ['GITHUB_REF_NAME'],
+              'engineVersion': '0.1.0-review'
+          }))
+          Path('_site/.nojekyll').touch()
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Read Pages configuration
+        uses: actions/configure-pages@v5
+      - name: Publish review platform
+        id: deployment
+        uses: actions/deploy-pages@v4

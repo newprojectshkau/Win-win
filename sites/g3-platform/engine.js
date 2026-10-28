@@ -1,0 +1,143 @@
+export const ENGINE_VERSION='0.1.0-review';
+export const DEFAULT_CONFIG=Object.freeze({lookback:20,capMin:2000000000,volumeMin:10000000,rangeMin:.015,priceMin:20,priceMax:1000,candidates:10,threshold:.005,mode:'fixed',k:1,target:1000,gateEnabled:true,equalPolicy:'skip',quantityTie:'lower',commission:1,slippageBps:5,h:1});
+export const SLOT={AM:{label:'早市',start:0,observeEnd:30,end:180},PM:{label:'午市',start:180,observeEnd:210,end:390}};
+const UNIT=10000;
+const units=p=>{const v=Math.round(p*UNIT);if(!Number.isSafeInteger(v)||v<=0)throw Error('價格／金額超出可安全計算範圍');return v;};
+export function validateConfig(c){
+ for(const k of ['lookback','capMin','volumeMin','rangeMin','priceMin','priceMax','candidates','threshold','k','target','commission','slippageBps','h'])if(!Number.isFinite(c[k]))throw Error(`設定 ${k} 必須是有效數字`);
+ if(!Number.isInteger(c.lookback)||c.lookback<1||c.lookback>250)throw Error('回看日數須為 1–250 的整數');
+ if(!Number.isInteger(c.candidates)||c.candidates<1||c.candidates>100)throw Error('候選數須為 1–100 的整數');
+ if(c.priceMin<=0||c.priceMax<c.priceMin||c.target<=0||c.capMin<0||c.volumeMin<0||c.rangeMin<0||c.rangeMin>1)throw Error('篩選或配注數值範圍無效');
+ if(c.threshold<.0001||c.threshold>.2)throw Error('Renko 門檻須介乎 0.01% 至 20%');
+ if(!Number.isInteger(c.k)||c.k<1||c.k>100||c.h!==1)throw Error('k 須為 1–100 整數；此版只支援 h＝1');
+ if(c.commission<0||c.commission>100||c.slippageBps<0||c.slippageBps>1000)throw Error('成本設定超出支援範圍');
+ if(!['fixed','percentage'].includes(c.mode)||!['skip','pass'].includes(c.equalPolicy)||!['lower','higher'].includes(c.quantityTie)||typeof c.gateEnabled!=='boolean')throw Error('模式或規則選項無效');
+ return c;
+}
+export function countEvents(bars,{threshold=.005,mode='fixed',initial,reference}={}){
+ if(!bars.length)return {B:0,R:0,events:[],anchor:initial??null};
+ let anchor=units(initial??bars[0].open),referenceUnits=units(reference??initial??bars[0].open),previous=0,B=0,R=0;
+ const events=[];
+ for(const bar of bars){
+  let p=units(bar.close),delta=p-anchor,d=delta>0?1:-1,steps=0;
+  if(mode==='fixed'){
+   const brick=Math.max(1,Math.round(referenceUnits*threshold));steps=Math.floor(Math.abs(delta)/brick);if(steps>20000)throw Error('單分鐘事件過多，請核對資料及門檻');anchor+=d*steps*brick;
+  }else{
+   while(Math.abs(p-anchor)>=Math.max(1,Math.round(anchor*threshold))){
+    const direction=p>anchor?1:-1;if(direction!==d)break;
+    anchor+=direction*Math.max(1,Math.round(anchor*threshold));steps++;if(steps>20000)throw Error('單分鐘事件過多，請核對資料及門檻');
+   }
+  }
+  if(steps){if(previous&&previous!==d)R++;B+=steps;previous=d;events.push({time:bar.availableAt,direction:d,bricks:steps,anchor:anchor/UNIT,price:bar.close});}
+ }
+ return {B,R,events,anchor:anchor/UNIT};
+}
+export function nearestQuantity(price,target,tie='lower'){
+ if(!Number.isFinite(price)||price<=0||!Number.isFinite(target)||target<=0)throw Error('股價及目標金額必須大於零');
+ const p=units(price),t=units(target),lo=Math.max(1,Math.floor(t/p)),hi=Math.max(1,Math.ceil(t/p));
+ const a=Math.abs(lo*p-t),b=Math.abs(hi*p-t);return a===b?(tie==='higher'?hi:lo):(a<b?lo:hi);
+}
+export const ratio=(B,R)=>R===0?null:B/R;
+export function decideGate(previous,current,enabled=true,equalPolicy='skip'){
+ if(!enabled)return {pass:true,status:'disabled',reason:'交易開關已停用；仍須等各股首事件'};
+ if(!previous.R||!current.R)return {pass:false,status:'undefined',reason:'組合 RR 分母為零，依 A14 跳過整段'};
+ const diff=current.B*previous.R-previous.B*current.R;
+ if(diff>0)return {pass:true,status:'passed',reason:'當日觀察 RR 大於前日完整對應時段'};
+ if(diff===0&&equalPolicy==='pass')return {pass:true,status:'equal_pass',reason:'RR 相等，依暫定等號通過選項啟用'};
+ return {pass:false,status:diff===0?'equal_skip':'below',reason:diff===0?'RR 相等，依 A13 跳過整段':'當日觀察 RR 較低，整段不交易'};
+}
+export function simulateSymbol({symbol,bars,slot,quantity,config}){
+ const spec=SLOT[slot],initial=bars[spec.observeEnd-1].close;
+ const counted=countEvents(bars.slice(spec.observeEnd,spec.end-1),{threshold:config.threshold,mode:config.mode,initial,reference:initial});
+ let position=0,cash=0,fees=0,maxExposure=0;const fills=[],transitions=[],holdEvents=[];
+ function fill(side,qty,bar,action){
+  const px=Math.round(bar.close*(1+side*config.slippageBps/10000)*UNIT)/UNIT;
+  const fee=config.commission;cash-=side*qty*px+fee;fees+=fee;position+=side*qty;
+  const f={id:`${symbol}-${slot}-${fills.length+1}`,symbol,slot,time:bar.availableAt,action,side:side===1?'buy':'sell',quantity:qty,reference:bar.close,price:px,fee,position,cash};fills.push(f);maxExposure=Math.max(maxExposure,Math.abs(position*px));return f;
+ }
+ for(const e of counted.events){
+  const bar={close:e.price,availableAt:e.time};
+  if(position===0){fill(e.direction,quantity,bar,e.direction===1?'open_long':'open_short');transitions.push({...e,action:'entry',position});}
+  else if(Math.sign(position)===e.direction){holdEvents.push({...e,position});transitions.push({...e,action:'hold',position});}
+  else{const previous=position;fill(-Math.sign(previous),Math.abs(previous),bar,'close_reverse');fill(e.direction,quantity,bar,e.direction===1?'reverse_long':'reverse_short');transitions.push({...e,action:'reverse',position});}
+ }
+ const exit=bars[spec.end-1];if(position!==0){fill(-Math.sign(position),Math.abs(position),exit,'slot_exit');transitions.push({time:exit.availableAt,action:'exit',price:exit.close,position:0});}
+ return {symbol,slot,initial,quantity,fills,transitions,holdEvents,position,net:cash,fees,maxExposure,turnover:fills.reduce((s,f)=>s+f.quantity*f.price,0),status:fills.length?'traded':'flat_no_event',signalCount:counted.B,points:bars.slice(spec.observeEnd-1,spec.end).map(b=>({time:b.availableAt,price:b.close})),reversals:transitions.filter(t=>t.action==='reverse').length};
+}
+const nyParts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function nyTime(t){const p=Object.fromEntries(nyParts.formatToParts(new Date(t)).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));return {date:`${p.year}-${p.month}-${p.day}`,time:`${p.hour}:${p.minute}`};}
+export function validateDataset(data){
+ if(!data||data.schemaVersion!==1||!['synthetic','imported'].includes(data.kind)||typeof data.id!=='string'||!data.id.trim()||!Array.isArray(data.instruments)||!data.instruments.length||data.instruments.length>100)throw Error('資料格式無效：需要 schemaVersion＝1、kind、id 及 1–100 隻 instruments');
+ const ids=new Set();let template=null;
+ for(const instrument of data.instruments){
+  if(!/^[A-Za-z0-9._-]{1,24}$/.test(instrument.symbol)||ids.has(instrument.symbol))throw Error('股票代號無效或重複');ids.add(instrument.symbol);
+  if(!Array.isArray(instrument.sessions)||instrument.sessions.length<3||instrument.sessions.length>252)throw Error(`${instrument.symbol} 須有 3–252 個時段`);
+  let last='';const dates=[];
+  for(const session of instrument.sessions){
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(session.date)||session.date<=last)throw Error('日期須唯一並由舊至新排列');last=session.date;dates.push(session.date);
+   if(!Number.isFinite(session.marketCap)||session.marketCap<=0||!Number.isFinite(session.previousClose)||session.previousClose<=0)throw Error(`${instrument.symbol} ${session.date} 缺市值或前收市價`);
+   if(!Array.isArray(session.bars)||session.bars.length!==390)throw Error(`${instrument.symbol} ${session.date} 缺完整 390 分鐘；不支援半日市／補值`);
+   const first=Date.parse(session.bars[0].time);if(!Number.isFinite(first))throw Error('分鐘時間無效');const start=nyTime(first),end=nyTime(first+390*60000);
+   if(!Number.isFinite(first)||start.date!==session.date||start.time!=='09:30'||end.date!==session.date||end.time!=='16:00')throw Error('分鐘線須覆蓋紐約正常交易日 09:30–16:00');
+   if(!/(?:Z|[+-]\d{2}:\d{2})$/.test(session.marketCapAvailableAt)||!Number.isFinite(Date.parse(session.marketCapAvailableAt))||Date.parse(session.marketCapAvailableAt)>first+390*60000)throw Error('市值可用時間不可遲於該日收市');
+   for(let i=0;i<390;i++){
+    const b=session.bars[i];if(!/(?:Z|[+-]\d{2}:\d{2})$/.test(b.time)||!/(?:Z|[+-]\d{2}:\d{2})$/.test(b.availableAt))throw Error('時間必須明確包含 UTC 或時區偏移');if(Date.parse(b.time)!==first+i*60000||Date.parse(b.availableAt)!==first+(i+1)*60000)throw Error(`${instrument.symbol} 有分鐘時間缺漏／重複或可用時間不符 A05`);
+    if(!['open','high','low','close','volume'].every(k=>Number.isFinite(b[k]))||Math.min(b.open,b.high,b.low,b.close)<=0||b.volume<0||b.high<Math.max(b.open,b.close)||b.low>Math.min(b.open,b.close)||b.low>b.high)throw Error(`${instrument.symbol} 有無效價量`);
+   }
+  }
+  const signature=dates.join(',');if(template&&template!==signature)throw Error('各股須有相同日期；缺資料不可重組名單');template=signature;
+ }
+ return data;
+}
+export function runReplay(dataset,config){
+ validateConfig(config);validateDataset(dataset);
+ const currentDate=dataset.instruments[0].sessions.at(-1).date;
+ const screening=dataset.instruments.map(instrument=>{
+  const previous=instrument.sessions.slice(0,-1);if(previous.length<config.lookback)throw Error(`回看資料不足：需要 ${config.lookback} 個已完成時段`);
+  const history=previous.slice(-config.lookback),avg=k=>history.reduce((sum,s)=>sum+k(s),0)/history.length;
+  const cap=avg(s=>s.marketCap),volume=avg(s=>s.bars.reduce((a,b)=>a+b.volume,0)),range=avg(s=>(Math.max(...s.bars.map(b=>b.high))-Math.min(...s.bars.map(b=>b.low)))/s.previousClose),price=avg(s=>s.bars.at(-1).close);
+  const checks={cap:cap>config.capMin,volume:volume>config.volumeMin,range:range>config.rangeMin,price:price>=config.priceMin&&price<=config.priceMax};
+  return {symbol:instrument.symbol,cap,volume,range,price,checks,pass:Object.values(checks).every(Boolean)};
+ });
+ const eligible=new Set(screening.filter(s=>s.pass).map(s=>s.symbol));const slots={};
+ for(const [slot,spec] of Object.entries(SLOT)){
+  const ranked=dataset.instruments.filter(i=>eligible.has(i.symbol)).map(i=>{
+   const previous=i.sessions.at(-2);const c=countEvents(previous.bars.slice(spec.start,spec.end),{threshold:config.threshold,mode:config.mode});
+   const ref=previous.bars.at(-1).close,q=nearestQuantity(ref,config.target,config.quantityTie);
+   return {symbol:i.symbol,B:c.B,R:c.R,rr:c.B/(c.R+config.k),quantity:q,reference:ref,notional:q*ref,delta:q*ref-config.target};
+  }).sort((a,b)=>(b.B*(a.R+config.k)-a.B*(b.R+config.k))||a.symbol.localeCompare(b.symbol,'en'));
+  const selected=ranked.slice(0,config.candidates),previous={B:0,R:0},current={B:0,R:0};const symbolResults=[];
+  for(const row of selected){
+   previous.B+=row.B;previous.R+=row.R;
+   const i=dataset.instruments.find(i=>i.symbol===row.symbol);const session=i.sessions.at(-1);
+   const c=countEvents(session.bars.slice(spec.start,spec.observeEnd),{threshold:config.threshold,mode:config.mode});current.B+=c.B;current.R+=c.R;
+  }
+  const gate=selected.length?decideGate(previous,current,config.gateEnabled,config.equalPolicy):{pass:false,status:'no_candidates',reason:'篩選後沒有候選股票'};
+  for(const row of selected){const i=dataset.instruments.find(i=>i.symbol===row.symbol);symbolResults.push(gate.pass?simulateSymbol({symbol:row.symbol,bars:i.sessions.at(-1).bars,slot,quantity:row.quantity,config}):{symbol:row.symbol,slot,status:'skipped_by_strategy',quantity:row.quantity,fills:[],transitions:[],points:[],net:0,fees:0,turnover:0,reversals:0,position:0,reason:gate.reason});}
+  slots[slot]={ranked,selected,previous:{...previous,rr:ratio(previous.B,previous.R)},current:{...current,rr:ratio(current.B,current.R)},gate,symbols:symbolResults};
+ }
+ const results=Object.values(slots).flatMap(s=>s.symbols),fills=results.flatMap(s=>s.fills).sort((a,b)=>a.time.localeCompare(b.time)||a.symbol.localeCompare(b.symbol)||Number(a.id.split('-').at(-1))-Number(b.id.split('-').at(-1)));
+ return {engineVersion:ENGINE_VERSION,data:{id:dataset.id,kind:dataset.kind,description:dataset.description??'',date:currentDate,previousDate:dataset.instruments[0].sessions.at(-2).date,providerStatement:dataset.providerStatement??null},config:structuredClone(config),screening,slots,fills,summary:{pool:screening.length,eligible:eligible.size,orders:fills.length,net:results.reduce((s,r)=>s+r.net,0),fees:results.reduce((s,r)=>s+r.fees,0),turnover:results.reduce((s,r)=>s+r.turnover,0),reversals:results.reduce((s,r)=>s+r.reversals,0),residual:results.reduce((s,r)=>s+Math.abs(r.position),0)},assumptionIds:Array.from({length:22},(_,i)=>`A${String(i+1).padStart(2,'0')}`)};
+}
+export function canonical(value){if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';return JSON.stringify(value);}
+export async function fingerprint(value){const bytes=new TextEncoder().encode(canonical(value));const hash=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');}
+export function createDemoDataset(){
+ const dates=[];let day=new Date('2026-10-13T00:00:00Z');while(dates.length<22){if(day.getUTCDay()!==0&&day.getUTCDay()!==6)dates.unshift(day.toISOString().slice(0,10));day.setUTCDate(day.getUTCDate()-1);}
+ const instruments=[];
+ for(let n=0;n<12;n++){
+  const base=45+n*23;let previousClose=base;const sessions=[];
+  for(let d=0;d<dates.length;d++){
+   const date=dates[d],start=Date.parse(date+'T09:30:00-04:00'),bars=[];let previous=base*(1+d*.0005);
+   for(let m=0;m<390;m++){
+    let variation=.012*Math.sin((m+n*2)/6)+.018*Math.sin((m+n)/34);
+    if(d===21&&m<30)variation=m<20?m*.003:(40-m)*.003;
+    if(d===21&&m>=180&&m<210)variation=.01*Math.sin((m-180)/2);
+    const close=Math.round(base*(1+d*.0005+variation)*10000)/10000;
+    bars.push({time:new Date(start+m*60000).toISOString(),availableAt:new Date(start+(m+1)*60000).toISOString(),open:previous,high:Math.max(previous,close)+.01,low:Math.min(previous,close)-.01,close,volume:n===10?15000:35000+n*1000});previous=close;
+   }
+   sessions.push({date,marketCap:n===11?1500000000:5000000000+n*1000000000,marketCapAvailableAt:new Date(start-60000).toISOString(),previousClose,bars});previousClose=bars.at(-1).close;
+  }
+  instruments.push({symbol:`DEMO${String(n+1).padStart(2,'0')}`,name:`合成股票 ${n+1}`,sessions});
+ }
+ return {schemaVersion:1,id:'synthetic-22sessions-v1',kind:'synthetic',description:'12 隻虛構股票、22 個合成正常交易日；僅供驗證操作及暫定規則。不是市場回測。',providerStatement:'程式按固定公式生成；市值、價量及交易日均為示例，並非 IB 或任何行情供應商資料。',instruments};
+}
