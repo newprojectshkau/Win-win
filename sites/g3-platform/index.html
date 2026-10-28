@@ -1,10 +1,77 @@
 <!doctype html>
 <html lang="zh-HK">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#102f32"><meta name="description" content="Win-win G3 策略重播及假設審閱平台。合成資料示例、五階段分析、參數版本及本地審閱留言。"><title>Win-win｜G3 策略審閱平台</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23102f32'/%3E%3Cpath d='M8 12l5 16 7-11 7 11 5-16' fill='none' stroke='%2399dac7' stroke-width='3'/%3E%3C/svg%3E"><link rel="stylesheet" href="./styles.css"></head>
-<body>
-<a class="skip" href="#main">跳至主要內容</a>
-<aside class="sidebar" aria-label="主導覽"><a class="brand" href="#overview" aria-label="Win-win 工作台"><span class="brand-icon">W</span><span>win-win<span class="brand-sub">策略研究工作室</span></span></a><div class="side-label">研究空間 <span class="version">G3</span></div><nav id="nav"></nav><div class="side-bottom"><div class="pulse"></div><strong>審閱版 · 沒有實盤連線</strong><p>先驗證邏輯，再驗證表現。</p><a href="https://github.com/newprojectshkau/Win-win/tree/g3-platform-review" target="_blank" rel="noopener">查看程式及假設文件 ↗</a><span class="build">引擎 0.1.0 · 暫定規則</span></div></aside>
-<div class="workspace"><header class="topbar"><div class="breadcrumbs">研究平台 <span>/</span> <strong id="page-crumb">工作台</strong></div><div class="top-actions"><span class="local-label"><span class="dot"></span>留言僅保存在此瀏覽器</span><button class="button secondary small" data-action="export-review">匯出審閱包 <span aria-hidden="true">↗</span></button></div></header><main id="main" tabindex="-1"></main><footer class="page-footer"><span>Win-win G3 審閱平台 · 原始 v3 規格保持不變</span><span>示例、暫定假設及實際交易能力分開標示</span></footer></div>
-<div id="toast" role="status" aria-live="polite"></div><input id="dataset-input" type="file" accept=".json,application/json" hidden><input id="review-input" type="file" accept=".json,application/json" hidden>
-<noscript><p>此平台需要啟用 JavaScript，所有重播計算及留言保存均在瀏覽器內進行。</p></noscript><script type="module" src="./app.js"></script>
-</body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#102f32" />
+    <meta
+      name="description"
+      content="Win-win G3 策略重播及假設審閱平台。合成資料示例、五階段分析、參數版本及本地審閱留言。"
+    />
+    <title>Win-win｜G3 策略審閱平台</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23102f32'/%3E%3Cpath d='M8 12l5 16 7-11 7 11 5-16' fill='none' stroke='%2399dac7' stroke-width='3'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">跳至主要內容</a>
+    <aside class="sidebar" aria-label="主導覽">
+      <a class="brand" href="#overview" aria-label="Win-win 工作台"
+        ><span class="brand-icon">W</span
+        ><span>win-win<span class="brand-sub">策略研究工作室</span></span></a
+      >
+      <div class="side-label">研究空間 <span class="version">G3</span></div>
+      <nav id="nav"></nav>
+      <div class="side-bottom">
+        <div class="pulse"></div>
+        <strong>審閱版 · 沒有實盤連線</strong>
+        <p>先驗證邏輯，再驗證表現。</p>
+        <a
+          href="https://github.com/newprojectshkau/Win-win/tree/g3-platform-review"
+          target="_blank"
+          rel="noopener"
+          >查看程式及假設文件 ↗</a
+        ><span class="build">引擎 0.1.0 · 暫定規則</span>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div class="breadcrumbs">
+          研究平台 <span>/</span> <strong id="page-crumb">工作台</strong>
+        </div>
+        <div class="top-actions">
+          <span class="local-label"
+            ><span class="dot"></span>留言僅保存在此瀏覽器</span
+          ><button class="button secondary small" data-action="export-review">
+            匯出審閱包 <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </header>
+      <main id="main" tabindex="-1"></main>
+      <footer class="page-footer">
+        <span>Win-win G3 審閱平台 · 原始 v3 規格保持不變</span
+        ><span>示例、暫定假設及實際交易能力分開標示</span>
+      </footer>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <input
+      id="dataset-input"
+      type="file"
+      accept=".json,application/json"
+      hidden
+    /><input
+      id="review-input"
+      type="file"
+      accept=".json,application/json"
+      hidden
+    />
+    <noscript
+      ><p>
+        此平台需要啟用 JavaScript，所有重播計算及留言保存均在瀏覽器內進行。
+      </p></noscript
+    >
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -28,6 +28,8 @@ The reviews are analytical agent assessments through the requested perspectives,
 
 平台部署已準備 `.github/workflows/g3-review-pages.yml`：在 `g3-platform-review` 分支推送後執行測試及發布，發布內容只含平台靜態檔，不包含留言、憑證或自行匯入資料。需要 repo 的 GitHub Pages 來源設定為 GitHub Actions，並允許該分支進入 `github-pages` 環境。GitHub API 存取仍遭 Forbidden，已保存所需 `api.github.com` 及 `newprojectshkau.github.io` 網絡設定草稿；草稿本身不代表運行環境已套用或網站已部署。
 
+首次自動部署 [40761016249](https://github.com/newprojectshkau/Win-win/actions/runs/40761016249) 的驗證及打包已成功，部署階段因 `Get Pages site failed / Not Found` 中止。這次已得到 GitHub 端的具體錯誤，不再僅依賴本機代理失敗推測。管理者須到 repo **Settings → Pages → Source: GitHub Actions** 啟用，再重新執行最新工作流程。尚未取得可驗證的公開 live URL，不應把預期網址當成已上線。平台[介面截圖](images/g3-platform-desktop.png)已保存供先行查看。
+
 No public live URL for the G3 HTML review has been verified. The HTML and PDF are prepared files, not proof of hosting. The current session has no callable site-publishing capability; a GitHub Pages API discovery request was blocked by the network proxy. This does not establish whether Pages is enabled or disabled on GitHub.
 
 After these files are pushed, use the GitHub repository branch containing them. For the PDF, open `output/pdf/G3-simulator-plan-and-reviews.pdf` and choose **Download raw file**. For offline browser review, download `output/html/G3-review.html` and open it locally, then use **Print / Save as PDF** if desired. All document content and styling are embedded in that HTML; external repository source links require connectivity.

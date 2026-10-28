@@ -3,8 +3,8 @@ on:
   push:
     branches: [g3-platform-review]
     paths:
-      - 'sites/g3-platform/**'
-      - '.github/workflows/g3-review-pages.yml'
+      - "sites/g3-platform/**"
+      - ".github/workflows/g3-review-pages.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
       - name: Verify strategy fixtures and replay invariants
         run: npm test --prefix sites/g3-platform
       - name: Prepare review-only static site

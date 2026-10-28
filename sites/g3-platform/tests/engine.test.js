@@ -1,31 +1,223 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {DEFAULT_CONFIG,countEvents,nearestQuantity,decideGate,simulateSymbol,createDemoDataset,validateDataset,validateConfig,runReplay,canonical} from '../engine.js';
-const bar=(close,index=0)=>({open:100,high:Math.max(100,close),low:Math.min(100,close),close,volume:50000,time:new Date(Date.parse('2026-10-13T13:30:00Z')+index*60000).toISOString(),availableAt:new Date(Date.parse('2026-10-13T13:30:00Z')+(index+1)*60000).toISOString()});
-test('hand-calculated equality, three thresholds and first direction',()=>{
- const a=countEvents([bar(100.4999),bar(100.5,1)],{initial:100,threshold:.005});assert.equal(a.B,1);assert.equal(a.R,0);
- const b=countEvents([bar(98.5)],{initial:100});assert.equal(b.B,3);assert.equal(b.events[0].direction,-1);assert.equal(b.R,0);
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  DEFAULT_CONFIG,
+  countEvents,
+  nearestQuantity,
+  decideGate,
+  simulateSymbol,
+  createDemoDataset,
+  validateDataset,
+  validateConfig,
+  runReplay,
+  canonical,
+} from "../engine.js";
+const bar = (close, index = 0) => ({
+  open: 100,
+  high: Math.max(100, close),
+  low: Math.min(100, close),
+  close,
+  volume: 50000,
+  time: new Date(
+    Date.parse("2026-10-13T13:30:00Z") + index * 60000,
+  ).toISOString(),
+  availableAt: new Date(
+    Date.parse("2026-10-13T13:30:00Z") + (index + 1) * 60000,
+  ).toISOString(),
 });
-test('hand-calculated changes count reversals, not same-direction bricks',()=>{const r=countEvents([100.5,101,100.5,100].map(bar),{initial:100});assert.equal(r.B,4);assert.equal(r.R,1)});
-test('percentage mode compounds from each updated anchor',()=>{const r=countEvents([bar(101.0025)],{mode:'percentage',initial:100});assert.equal(r.B,2);assert.equal(r.anchor,101.0025)});
-test('nearest positive integer quantity and tie policy',()=>{assert.equal(nearestQuantity(335,1000),3);assert.equal(nearestQuantity(900,1000),1);assert.equal(nearestQuantity(100,1000),10);assert.equal(nearestQuantity(400,1000),2);assert.equal(nearestQuantity(400,1000,'higher'),3);assert.equal(nearestQuantity(2000,1000),1)});
-test('portfolio gate uses exact cross-products; zero never becomes infinity',()=>{assert.equal(decideGate({B:2,R:4},{B:1,R:2}).status,'equal_skip');assert.equal(decideGate({B:2,R:4},{B:1,R:2},true,'pass').pass,true);assert.equal(decideGate({B:50,R:0},{B:10,R:2}).status,'undefined');assert.equal(decideGate({B:50,R:0},{B:10,R:0},false).pass,true)});
-test('h > 1 and invalid configs are rejected rather than silently supported',()=>{assert.throws(()=>validateConfig({...DEFAULT_CONFIG,h:2}));assert.throws(()=>validateConfig({...DEFAULT_CONFIG,threshold:0}));assert.throws(()=>validateConfig({...DEFAULT_CONFIG,priceMax:10}));assert.throws(()=>validateConfig({...DEFAULT_CONFIG,mode:'traditional'}))});
-test('no first event remains flat with no costs',()=>{const result=simulateSymbol({symbol:'TEST',bars:Array.from({length:390},(_,i)=>bar(100,i)),slot:'AM',quantity:10,config:DEFAULT_CONFIG});assert.equal(result.fills.length,0);assert.equal(result.position,0);assert.equal(result.status,'flat_no_event')});
-test('close-before-reverse, same-direction hold, scheduled exit and ledger arithmetic',()=>{
- const bars=Array.from({length:390},(_,i)=>bar(i<30?100:i===30?100.5:i===31?100:99,i));
- const r=simulateSymbol({symbol:'TEST',bars,slot:'AM',quantity:10,config:{...DEFAULT_CONFIG,commission:1,slippageBps:0}});
- assert.deepEqual(r.fills.map(f=>f.action),['open_long','close_reverse','reverse_short','slot_exit']);
- assert.deepEqual(r.fills.map(f=>f.position),[10,0,-10,0]);assert.equal(r.reversals,1);assert.equal(r.net,1);assert.equal(r.fees,4);
- assert.equal(r.fills.at(-1).time,'2026-10-13T16:30:00.000Z');assert.equal(r.position,0);assert.equal(r.turnover,3995);
+test("hand-calculated equality, three thresholds and first direction", () => {
+  const a = countEvents([bar(100.4999), bar(100.5, 1)], {
+    initial: 100,
+    threshold: 0.005,
+  });
+  assert.equal(a.B, 1);
+  assert.equal(a.R, 0);
+  const b = countEvents([bar(98.5)], { initial: 100 });
+  assert.equal(b.B, 3);
+  assert.equal(b.events[0].direction, -1);
+  assert.equal(b.R, 0);
 });
-test('a first event exactly at slot end does not open an expired slot',()=>{const bars=Array.from({length:390},(_,i)=>bar(i===179?110:100,i));const r=simulateSymbol({symbol:'TEST',bars,slot:'AM',quantity:10,config:DEFAULT_CONFIG});assert.equal(r.fills.length,0)});
-test('future price changes cannot alter already-produced fills',()=>{const before=Array.from({length:390},(_,i)=>bar(i<30?100:i<60?100.5:101,i));const after=structuredClone(before);for(let i=90;i<390;i++)Object.assign(after[i],bar(80+(i%5),i));const opts={symbol:'TEST',slot:'AM',quantity:10,config:DEFAULT_CONFIG};const a=simulateSymbol({...opts,bars:before}),b=simulateSymbol({...opts,bars:after});const cutoff=before[89].availableAt;assert.deepEqual(a.fills.filter(f=>f.time<=cutoff),b.fills.filter(f=>f.time<=cutoff))});
-const demo=createDemoDataset();
-test('all five stages execute: pool exclusions, independent slots and reconciled closing inventory',()=>{const r=runReplay(demo,DEFAULT_CONFIG);assert.equal(r.summary.pool,12);assert.equal(r.summary.eligible,10);assert.equal(r.slots.AM.selected.length,10);assert.equal(r.slots.AM.gate.pass,true);assert.equal(r.slots.PM.gate.pass,false);assert.equal(r.summary.residual,0);assert.ok(r.summary.orders>0);for(const s of Object.values(r.slots))for(const row of s.selected)assert.equal(row.rr,row.B/(row.R+1));assert.equal(r.slots.AM.previous.rr,r.slots.AM.previous.B/r.slots.AM.previous.R)});
-test('repeating the same input produces identical canonical outputs',()=>{assert.equal(canonical(runReplay(demo,DEFAULT_CONFIG)),canonical(runReplay(demo,DEFAULT_CONFIG)))});
-test('modifying trade-day prices cannot change previous-day screening or ranking',()=>{const d=structuredClone(demo);for(const instrument of d.instruments){const bars=instrument.sessions.at(-1).bars;for(let i=240;i<390;i++){bars[i].close+=2;bars[i].high=Math.max(bars[i].high,bars[i].close)}}const a=runReplay(demo,DEFAULT_CONFIG),b=runReplay(d,DEFAULT_CONFIG);assert.deepEqual(a.screening,b.screening);for(const slot of ['AM','PM'])assert.deepEqual(a.slots[slot].selected,b.slots[slot].selected);assert.deepEqual(a.slots.AM.current,b.slots.AM.current)});
-test('settings changes really affect sizing; original configuration remains unchanged',()=>{const c={...DEFAULT_CONFIG,target:2000},r=runReplay(demo,c);assert.equal(r.config.target,2000);c.target=3000;assert.equal(r.config.target,2000);assert.ok(r.slots.AM.selected[0].notional>1500);const d=runReplay(demo,{...DEFAULT_CONFIG,gateEnabled:false});assert.equal(d.slots.PM.gate.pass,true);assert.ok(d.slots.PM.symbols.some(s=>s.fills.length>0))});
-test('missing/duplicate minutes and future market-cap information fail validation',()=>{let d=structuredClone(demo);d.instruments[0].sessions[0].bars.pop();assert.throws(()=>validateDataset(d),/390/);d=structuredClone(demo);d.instruments[0].sessions[0].bars[1].time=d.instruments[0].sessions[0].bars[0].time;assert.throws(()=>validateDataset(d),/時間/);d=structuredClone(demo);d.instruments[0].sessions[0].marketCapAvailableAt='2030-01-01T00:00:00Z';assert.throws(()=>validateDataset(d),/市值可用/)});
-test('shortage does not relax filters; empty pool is an explicit no-candidate result',()=>{const a=runReplay(demo,{...DEFAULT_CONFIG,candidates:12});assert.equal(a.slots.AM.selected.length,10);const b=runReplay(demo,{...DEFAULT_CONFIG,capMin:1e20});assert.equal(b.slots.AM.gate.status,'no_candidates');assert.equal(b.summary.orders,0)});
-test('timestamps require explicit timezone; extreme event jumps fail visibly',()=>{const d=structuredClone(demo);d.instruments[0].sessions[0].bars[0].time='2026-09-14T09:30:00';assert.throws(()=>validateDataset(d),/時間|分鐘/);assert.throws(()=>countEvents([bar(50000)],{initial:1}),/事件過多/)});
+test("hand-calculated changes count reversals, not same-direction bricks", () => {
+  const r = countEvents([100.5, 101, 100.5, 100].map(bar), { initial: 100 });
+  assert.equal(r.B, 4);
+  assert.equal(r.R, 1);
+});
+test("percentage mode compounds from each updated anchor", () => {
+  const r = countEvents([bar(101.0025)], { mode: "percentage", initial: 100 });
+  assert.equal(r.B, 2);
+  assert.equal(r.anchor, 101.0025);
+});
+test("nearest positive integer quantity and tie policy", () => {
+  assert.equal(nearestQuantity(335, 1000), 3);
+  assert.equal(nearestQuantity(900, 1000), 1);
+  assert.equal(nearestQuantity(100, 1000), 10);
+  assert.equal(nearestQuantity(400, 1000), 2);
+  assert.equal(nearestQuantity(400, 1000, "higher"), 3);
+  assert.equal(nearestQuantity(2000, 1000), 1);
+});
+test("portfolio gate uses exact cross-products; zero never becomes infinity", () => {
+  assert.equal(decideGate({ B: 2, R: 4 }, { B: 1, R: 2 }).status, "equal_skip");
+  assert.equal(
+    decideGate({ B: 2, R: 4 }, { B: 1, R: 2 }, true, "pass").pass,
+    true,
+  );
+  assert.equal(
+    decideGate({ B: 50, R: 0 }, { B: 10, R: 2 }).status,
+    "undefined",
+  );
+  assert.equal(decideGate({ B: 50, R: 0 }, { B: 10, R: 0 }, false).pass, true);
+});
+test("h > 1 and invalid configs are rejected rather than silently supported", () => {
+  assert.throws(() => validateConfig({ ...DEFAULT_CONFIG, h: 2 }));
+  assert.throws(() => validateConfig({ ...DEFAULT_CONFIG, threshold: 0 }));
+  assert.throws(() => validateConfig({ ...DEFAULT_CONFIG, priceMax: 10 }));
+  assert.throws(() =>
+    validateConfig({ ...DEFAULT_CONFIG, mode: "traditional" }),
+  );
+});
+test("no first event remains flat with no costs", () => {
+  const result = simulateSymbol({
+    symbol: "TEST",
+    bars: Array.from({ length: 390 }, (_, i) => bar(100, i)),
+    slot: "AM",
+    quantity: 10,
+    config: DEFAULT_CONFIG,
+  });
+  assert.equal(result.fills.length, 0);
+  assert.equal(result.position, 0);
+  assert.equal(result.status, "flat_no_event");
+});
+test("close-before-reverse, same-direction hold, scheduled exit and ledger arithmetic", () => {
+  const bars = Array.from({ length: 390 }, (_, i) =>
+    bar(i < 30 ? 100 : i === 30 ? 100.5 : i === 31 ? 100 : 99, i),
+  );
+  const r = simulateSymbol({
+    symbol: "TEST",
+    bars,
+    slot: "AM",
+    quantity: 10,
+    config: { ...DEFAULT_CONFIG, commission: 1, slippageBps: 0 },
+  });
+  assert.deepEqual(
+    r.fills.map((f) => f.action),
+    ["open_long", "close_reverse", "reverse_short", "slot_exit"],
+  );
+  assert.deepEqual(
+    r.fills.map((f) => f.position),
+    [10, 0, -10, 0],
+  );
+  assert.equal(r.reversals, 1);
+  assert.equal(r.net, 1);
+  assert.equal(r.fees, 4);
+  assert.equal(r.fills.at(-1).time, "2026-10-13T16:30:00.000Z");
+  assert.equal(r.position, 0);
+  assert.equal(r.turnover, 3995);
+});
+test("a first event exactly at slot end does not open an expired slot", () => {
+  const bars = Array.from({ length: 390 }, (_, i) =>
+    bar(i === 179 ? 110 : 100, i),
+  );
+  const r = simulateSymbol({
+    symbol: "TEST",
+    bars,
+    slot: "AM",
+    quantity: 10,
+    config: DEFAULT_CONFIG,
+  });
+  assert.equal(r.fills.length, 0);
+});
+test("future price changes cannot alter already-produced fills", () => {
+  const before = Array.from({ length: 390 }, (_, i) =>
+    bar(i < 30 ? 100 : i < 60 ? 100.5 : 101, i),
+  );
+  const after = structuredClone(before);
+  for (let i = 90; i < 390; i++) Object.assign(after[i], bar(80 + (i % 5), i));
+  const opts = {
+    symbol: "TEST",
+    slot: "AM",
+    quantity: 10,
+    config: DEFAULT_CONFIG,
+  };
+  const a = simulateSymbol({ ...opts, bars: before }),
+    b = simulateSymbol({ ...opts, bars: after });
+  const cutoff = before[89].availableAt;
+  assert.deepEqual(
+    a.fills.filter((f) => f.time <= cutoff),
+    b.fills.filter((f) => f.time <= cutoff),
+  );
+});
+const demo = createDemoDataset();
+test("all five stages execute: pool exclusions, independent slots and reconciled closing inventory", () => {
+  const r = runReplay(demo, DEFAULT_CONFIG);
+  assert.equal(r.summary.pool, 12);
+  assert.equal(r.summary.eligible, 10);
+  assert.equal(r.slots.AM.selected.length, 10);
+  assert.equal(r.slots.AM.gate.pass, true);
+  assert.equal(r.slots.PM.gate.pass, false);
+  assert.equal(r.summary.residual, 0);
+  assert.ok(r.summary.orders > 0);
+  for (const s of Object.values(r.slots))
+    for (const row of s.selected) assert.equal(row.rr, row.B / (row.R + 1));
+  assert.equal(
+    r.slots.AM.previous.rr,
+    r.slots.AM.previous.B / r.slots.AM.previous.R,
+  );
+});
+test("repeating the same input produces identical canonical outputs", () => {
+  assert.equal(
+    canonical(runReplay(demo, DEFAULT_CONFIG)),
+    canonical(runReplay(demo, DEFAULT_CONFIG)),
+  );
+});
+test("modifying trade-day prices cannot change previous-day screening or ranking", () => {
+  const d = structuredClone(demo);
+  for (const instrument of d.instruments) {
+    const bars = instrument.sessions.at(-1).bars;
+    for (let i = 240; i < 390; i++) {
+      bars[i].close += 2;
+      bars[i].high = Math.max(bars[i].high, bars[i].close);
+    }
+  }
+  const a = runReplay(demo, DEFAULT_CONFIG),
+    b = runReplay(d, DEFAULT_CONFIG);
+  assert.deepEqual(a.screening, b.screening);
+  for (const slot of ["AM", "PM"])
+    assert.deepEqual(a.slots[slot].selected, b.slots[slot].selected);
+  assert.deepEqual(a.slots.AM.current, b.slots.AM.current);
+});
+test("settings changes really affect sizing; original configuration remains unchanged", () => {
+  const c = { ...DEFAULT_CONFIG, target: 2000 },
+    r = runReplay(demo, c);
+  assert.equal(r.config.target, 2000);
+  c.target = 3000;
+  assert.equal(r.config.target, 2000);
+  assert.ok(r.slots.AM.selected[0].notional > 1500);
+  const d = runReplay(demo, { ...DEFAULT_CONFIG, gateEnabled: false });
+  assert.equal(d.slots.PM.gate.pass, true);
+  assert.ok(d.slots.PM.symbols.some((s) => s.fills.length > 0));
+});
+test("missing/duplicate minutes and future market-cap information fail validation", () => {
+  let d = structuredClone(demo);
+  d.instruments[0].sessions[0].bars.pop();
+  assert.throws(() => validateDataset(d), /390/);
+  d = structuredClone(demo);
+  d.instruments[0].sessions[0].bars[1].time =
+    d.instruments[0].sessions[0].bars[0].time;
+  assert.throws(() => validateDataset(d), /時間/);
+  d = structuredClone(demo);
+  d.instruments[0].sessions[0].marketCapAvailableAt = "2030-01-01T00:00:00Z";
+  assert.throws(() => validateDataset(d), /市值可用/);
+});
+test("shortage does not relax filters; empty pool is an explicit no-candidate result", () => {
+  const a = runReplay(demo, { ...DEFAULT_CONFIG, candidates: 12 });
+  assert.equal(a.slots.AM.selected.length, 10);
+  const b = runReplay(demo, { ...DEFAULT_CONFIG, capMin: 1e20 });
+  assert.equal(b.slots.AM.gate.status, "no_candidates");
+  assert.equal(b.summary.orders, 0);
+});
+test("timestamps require explicit timezone; extreme event jumps fail visibly", () => {
+  const d = structuredClone(demo);
+  d.instruments[0].sessions[0].bars[0].time = "2026-09-14T09:30:00";
+  assert.throws(() => validateDataset(d), /時間|分鐘/);
+  assert.throws(() => countEvents([bar(50000)], { initial: 1 }), /事件過多/);
+});

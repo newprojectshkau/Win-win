@@ -24,6 +24,8 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 
 原始 `model/parameters.json` 保留全部已定及未定規格；沒有把此版假設回寫成用戶已批准的規則。01c 對話仍未納入。
 
+![桌面審閱介面示例，數字來自合成資料](../../docs/images/g3-platform-desktop.png)
+
 ## 檔案與架構
 
 - `engine.js`：設定及資料驗證、整數價格 Renko 計數、四項篩選、排名、配注、整段開關、持倉／理想化成交及指紋。
@@ -69,3 +71,7 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 `.github/workflows/g3-review-pages.yml` 在 `g3-platform-review` 分支更新後測試及發布六個必要靜態檔案，不會發布匯入資料、留言或憑證。需要 repo 的 **Settings → Pages → Source: GitHub Actions** 已啟用，並允許此分支部署到 `github-pages` 環境。工作流程不得繞過 repo 的環境審批或保護設定。
 
 預期 GitHub Pages 位置須以實際部署輸出為準；僅推送程式、工作流程或發布到預備分支，不代表已成功公開或網址已驗證。
+
+首次部署的 [GitHub Actions 記錄](https://github.com/newprojectshkau/Win-win/actions/runs/40761016249) 已確認：驗證／靜態打包成功，部署在 `actions/configure-pages` 因 Pages site `Not Found` 中止。Repo 管理者需在 [Pages 設定](https://github.com/newprojectshkau/Win-win/settings/pages) 啟用 GitHub Actions 來源，再重新執行最新工作流程。官方 action 說明指出自動啟用需要另一個有管理權限的 token；不應把工作流程的預設 `GITHUB_TOKEN` 當成有此權限，亦不應把本機憑證寫入工作流程。
+
+瀏覽器互動測試：先開啟本地靜態伺服器，再執行 `python3 sites/g3-platform/tests/browser_check.py`（從 repo 根目錄）；需要 Playwright Python 及 `/usr/bin/chromium`。可用 `G3_BASE_URL` 指向實際審閱網址，`G3_TEST_ARTIFACTS` 設定測試截圖／匯出位置。測試使用隔離的瀏覽器儲存，不會提交任何留言。
