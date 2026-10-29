@@ -24,6 +24,8 @@ The reviews are analytical agent assessments through the requested perspectives,
 
 下一步是讓用戶試操作介面並匯出集中意見，確認暫定規則，再導入經核實授權及時點的歷史資料。舊計劃的四星期屬條件式估算，不能當成此審閱版已完成所有原定驗收。
 
+按最新要求，全平台字體在保留層次下放大 30%，以同一 CSS 變數控制，並檢查桌面及兩種手機寬度。另新增 [Massive 私人下載及正規化工具](../scripts/marketdata/README.md)，具備安全認證、限速、分頁、續傳、校驗及資料品質封鎖；真實資料仍未取得，不能宣稱已完成市場 dry run。最新憑證檢查為 `has_saved_binding: false` 且執行環境沒有 `MASSIVE_API_KEY`；只記錄狀態，不記錄值。
+
 ## Publication and download status
 
 平台已由 GitHub Pages 發布至 **https://newprojectshkau.github.io/Win-win/**。原部署記錄 [40761600840](https://github.com/newprojectshkau/Win-win/actions/runs/40761600840) 的第三次嘗試已成功；用戶已啟用 Pages 並允許 `g3-platform-review` 分支部署，先前的 Not Found 及環境分支保護問題已解除。

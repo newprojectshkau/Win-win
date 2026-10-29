@@ -4,6 +4,7 @@ on:
     branches: [g3-platform-review]
     paths:
       - "sites/g3-platform/**"
+      - "scripts/marketdata/**"
       - ".github/workflows/g3-review-pages.yml"
   workflow_dispatch:
 permissions:
@@ -23,6 +24,8 @@ jobs:
           node-version: "22"
       - name: Verify strategy fixtures and replay invariants
         run: npm test --prefix sites/g3-platform
+      - name: Verify private data adapter with offline fixtures
+        run: python3 -m unittest discover -s scripts/marketdata -p 'test_*.py' -v
       - name: Prepare review-only static site
         shell: bash
         run: |

@@ -76,4 +76,8 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 
 介面風格：白底、橙色重點（取代舊綠色）、頂部膠囊導覽、編號章節及暖灰分隔線；較大的字體、表格行距及留言框。此改版沒有改動引擎、資料格式或本地儲存鍵。
 
+最新閱讀調整以 `--font-scale: 1.3` 將各級字體統一增加 30%，保留原有層次；已用瀏覽器比較改動前後的計算字級，並在 1512px、390px、320px 檢查頁面寬度。沒有重設既有留言。
+
+Massive 私人資料下載／重播工具見 [scripts/marketdata](../../scripts/marketdata/README.md)。Key 只用於安全環境內的 HTTPS 請求，不放進此公開前端；付費資料亦不自動發布到 Pages。實際訂閱下載及真實資料 dry run 仍取決於憑證綁定是否可用。
+
 瀏覽器互動測試：先開啟本地靜態伺服器，再執行 `python3 sites/g3-platform/tests/browser_check.py`（從 repo 根目錄）；需要 Playwright Python 及 `/usr/bin/chromium`。可用 `G3_BASE_URL` 指向實際審閱網址，`G3_TEST_ARTIFACTS` 設定測試截圖／匯出位置。測試使用隔離的瀏覽器儲存，不會提交任何留言。

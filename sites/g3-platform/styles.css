@@ -1,5 +1,6 @@
 :root {
   color-scheme: light;
+  --font-scale: 1.3;
   --bg: #fff;
   --white: #fff;
   --ink: #302b26;
@@ -21,7 +22,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.8 var(--font);
+  font: calc(16px * var(--font-scale)) / 1.8 var(--font);
   letter-spacing: 0.015em;
 }
 button,
@@ -85,7 +86,7 @@ textarea:focus-visible,
   gap: 12px;
   color: var(--accent);
   width: max-content;
-  font-size: 19px;
+  font-size: calc(19px * var(--font-scale));
   font-weight: 700;
   letter-spacing: 3px;
   line-height: 1.4;
@@ -101,13 +102,13 @@ textarea:focus-visible,
   border: 1px solid var(--accent-border);
   border-radius: 13px;
   font-family: Georgia, serif;
-  font-size: 29px;
+  font-size: calc(29px * var(--font-scale));
   font-style: italic;
   letter-spacing: 0;
 }
 .brand-sub {
   display: block;
-  font-size: 10px;
+  font-size: calc(10px * var(--font-scale));
   font-weight: 400;
   color: var(--muted);
   letter-spacing: 2px;
@@ -118,7 +119,7 @@ textarea:focus-visible,
 }
 .studio-title strong {
   display: block;
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale));
   font-weight: 550;
   letter-spacing: 4px;
   color: var(--accent);
@@ -126,7 +127,7 @@ textarea:focus-visible,
 .studio-title > span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   letter-spacing: 1.5px;
   margin-top: 2px;
 }
@@ -140,7 +141,7 @@ textarea:focus-visible,
   border: 1px solid var(--line);
   border-radius: 30px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
 }
 .studio-status-dot,
 .dot {
@@ -155,7 +156,7 @@ textarea:focus-visible,
   color: var(--accent);
   padding-left: 9px;
   border-left: 1px solid var(--line);
-  font-size: 10px;
+  font-size: calc(10px * var(--font-scale));
 }
 .studio-navigation {
   padding: 22px 28px 4px;
@@ -181,7 +182,7 @@ textarea:focus-visible,
   padding: 10px 19px;
   border-radius: 30px;
   color: #51483f;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   white-space: nowrap;
   transition:
     background 0.15s,
@@ -207,7 +208,7 @@ textarea:focus-visible,
   background: var(--accent-soft);
   color: var(--accent);
   border-radius: 50%;
-  font-size: 10px;
+  font-size: calc(10px * var(--font-scale));
 }
 #nav a.active .nav-count {
   background: #ffffff29;
@@ -227,7 +228,7 @@ textarea:focus-visible,
   gap: 20px;
 }
 .breadcrumbs {
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   color: #81766c;
 }
 .breadcrumbs span {
@@ -248,7 +249,7 @@ textarea:focus-visible,
   align-items: center;
   gap: 8px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
 }
 .button {
   display: inline-flex;
@@ -259,7 +260,7 @@ textarea:focus-visible,
   padding: 10px 22px;
   border: 1px solid transparent;
   border-radius: 30px;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   line-height: 1.5;
   font-weight: 500;
   white-space: nowrap;
@@ -299,7 +300,7 @@ textarea:focus-visible,
 .button.small {
   min-height: 36px;
   padding: 8px 16px;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
 }
 .button.text {
   background: transparent;
@@ -324,7 +325,7 @@ textarea:focus-visible,
 .eyebrow {
   margin: 0 0 10px;
   color: var(--accent);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   letter-spacing: 2px;
   font-weight: 600;
 }
@@ -336,21 +337,21 @@ textarea:focus-visible,
   margin-bottom: 32px;
 }
 h1 {
-  font-size: 30px;
+  font-size: calc(30px * var(--font-scale));
   line-height: 1.4;
   letter-spacing: 0.025em;
   font-weight: 600;
   margin: 0 0 12px;
 }
 h2 {
-  font-size: 21px;
+  font-size: calc(21px * var(--font-scale));
   line-height: 1.6;
   font-weight: 550;
   margin: 0;
   color: var(--accent);
 }
 h3 {
-  font-size: 17px;
+  font-size: calc(17px * var(--font-scale));
   line-height: 1.6;
   font-weight: 550;
   margin: 0 0 12px;
@@ -361,7 +362,7 @@ p {
 .subtitle {
   max-width: 850px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   line-height: 1.9;
 }
 .actions {
@@ -380,7 +381,7 @@ p {
   border: 1px dashed var(--line);
   border-radius: 14px;
   background: #fffcf9;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   color: var(--muted);
 }
 .data-title {
@@ -391,7 +392,7 @@ p {
 }
 .data-title strong {
   color: #655444;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   font-weight: 500;
 }
 .badge {
@@ -402,7 +403,7 @@ p {
   padding: 5px 11px;
   border: 1px solid transparent;
   border-radius: 30px;
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   font-weight: 500;
   line-height: 1.5;
   white-space: nowrap;
@@ -449,7 +450,7 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   color: var(--muted);
   margin-bottom: 16px;
 }
@@ -457,7 +458,7 @@ p {
   color: #b99a7a;
 }
 .stat .number {
-  font-size: 35px;
+  font-size: calc(35px * var(--font-scale));
   line-height: 1.2;
   letter-spacing: -0.8px;
   font-weight: 500;
@@ -465,14 +466,14 @@ p {
   color: #49362a;
 }
 .stat .number small {
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   letter-spacing: 0;
   font-weight: 400;
   color: #8b7b6b;
   margin-left: 7px;
 }
 .stat .hint {
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   line-height: 1.8;
   color: var(--muted);
   margin-top: 14px;
@@ -509,13 +510,13 @@ p {
   gap: 14px;
 }
 .panel-head .detail {
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   color: var(--muted);
   margin-top: 9px;
   line-height: 1.8;
 }
 .panel-head > a {
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   white-space: nowrap;
 }
 .section-num {
@@ -531,7 +532,7 @@ p {
   background: #fff;
   color: var(--accent);
   font:
-    11px/1.4 ui-monospace,
+    calc(11px * var(--font-scale)) / 1.4 ui-monospace,
     SFMono-Regular,
     Consolas,
     monospace;
@@ -566,24 +567,24 @@ p {
   border-radius: 50%;
   background: #fff;
   color: var(--accent);
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .stage-item strong {
   display: block;
   color: #574a3e;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   font-weight: 500;
 }
 .stage-item small {
   display: block;
   margin-top: 5px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
 }
 .stage-link {
   margin-top: -30px;
   color: #c4a17e;
-  font-size: 18px;
+  font-size: calc(18px * var(--font-scale));
 }
 .gate-grid {
   display: grid;
@@ -603,18 +604,19 @@ p {
 }
 .gate-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 23px;
 }
 .gate-top strong {
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   font-weight: 550;
 }
 .gate-time {
   color: var(--muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   margin-top: 5px;
 }
 .ratio-row {
@@ -628,20 +630,20 @@ p {
 .ratio-metric small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   margin-bottom: 8px;
 }
 .ratio-metric b {
-  font-size: 31px;
+  font-size: calc(31px * var(--font-scale));
   font-weight: 500;
   line-height: 1.4;
 }
 .ratio-arrow {
   color: #c19b73;
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale));
 }
 .counts {
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   color: #7b6958;
   margin-top: 15px;
 }
@@ -649,7 +651,7 @@ p {
   border-top: 1px dashed #dfcdbb;
   margin-top: 20px;
   padding-top: 15px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   line-height: 1.8;
   color: #78624f;
 }
@@ -664,15 +666,15 @@ p {
 }
 .callout-icon {
   color: var(--accent);
-  font-size: 24px;
+  font-size: calc(24px * var(--font-scale));
 }
 .mini-callout h3 {
-  font-size: 16px;
+  font-size: calc(16px * var(--font-scale));
   margin-bottom: 7px;
 }
 .mini-callout p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .assumption-preview {
   padding: 0;
@@ -695,20 +697,20 @@ p {
   color: #a2602a;
   background: #fffaf5;
   font:
-    11px/1.6 ui-monospace,
+    calc(11px * var(--font-scale)) / 1.6 ui-monospace,
     SFMono-Regular,
     Consolas,
     monospace;
 }
 .assumption-preview strong {
   display: block;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   font-weight: 500;
 }
 .assumption-preview small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   margin-top: 7px;
 }
 .panel-link {
@@ -718,7 +720,7 @@ p {
   padding: 11px 18px;
   border: 1px solid var(--accent-border);
   border-radius: 30px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   color: var(--accent);
   width: max-content;
   min-width: 210px;
@@ -737,7 +739,7 @@ p {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   white-space: nowrap;
 }
 th {
@@ -746,7 +748,7 @@ th {
   border-bottom: 1px solid var(--line);
   color: #84725f;
   background: #fffcf8;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   font-weight: 500;
 }
 td {
@@ -765,7 +767,7 @@ td.symbol {
 .rank {
   display: inline-block;
   width: 28px;
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
   color: #806e5e;
   font-weight: 400;
 }
@@ -773,7 +775,7 @@ td.symbol {
   border-top: 1px solid var(--line);
   padding: 19px 0 22px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   line-height: 1.9;
 }
 .right {
@@ -799,7 +801,7 @@ td.symbol {
   color: var(--muted);
   background: transparent;
   border-radius: 30px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .tabs button.active {
   background: var(--accent);
@@ -812,7 +814,7 @@ td.symbol {
   background: #fff9f1;
   border: 1px solid #ead5bc;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   line-height: 1.9;
 }
 .notice strong {
@@ -840,7 +842,7 @@ td.symbol {
 .field label {
   display: block;
   color: #534536;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   font-weight: 550;
   margin-bottom: 11px;
 }
@@ -856,7 +858,7 @@ td.symbol {
   border-radius: 10px;
   background: white;
   color: #4c3b2d;
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   line-height: 1.5;
 }
 .field input:disabled,
@@ -867,7 +869,7 @@ td.symbol {
 .field small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   line-height: 1.9;
   margin-top: 10px;
 }
@@ -875,7 +877,7 @@ td.symbol {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   line-height: 1.9;
 }
 .toggle-label input {
@@ -897,7 +899,7 @@ td.symbol {
   max-width: 570px;
   margin-right: auto;
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
 }
 .filter-row {
   display: flex;
@@ -913,7 +915,7 @@ td.symbol {
   border-radius: 30px;
   color: var(--muted);
   background: #fff;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .filter-row > button.active {
   background: var(--accent);
@@ -931,25 +933,25 @@ td.symbol {
   background: #fff;
 }
 .assumption-card h3 {
-  font-size: 17px;
+  font-size: calc(17px * var(--font-scale));
   margin: 0 0 17px;
   color: var(--accent);
 }
 .assumption-card .choice {
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   line-height: 1.95;
   color: #5b4b3d;
   margin-bottom: 16px;
 }
 .assumption-card .reason {
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   line-height: 1.9;
   color: var(--muted);
 }
 .assumption-card select {
   max-width: 190px;
   min-height: 43px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   padding: 9px 13px;
   margin-bottom: 15px;
 }
@@ -966,7 +968,7 @@ td.symbol {
   border: 1.5px solid #dacec3;
   border-radius: 12px;
   background: #fff;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   line-height: 1.9;
   color: #44372c;
 }
@@ -976,7 +978,7 @@ td.symbol {
 .comment-label {
   display: block;
   color: #766451;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
   margin-bottom: 11px;
 }
 .review-top {
@@ -987,7 +989,7 @@ td.symbol {
 }
 .known-list {
   color: #5c4d40;
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   line-height: 2;
   padding-left: 24px;
   margin: 0;
@@ -1006,7 +1008,7 @@ td.symbol {
 }
 .chart text {
   fill: #857260;
-  font: 12px var(--font);
+  font: calc(12px * var(--font-scale)) var(--font);
 }
 .chart-grid {
   stroke: #eee4d9;
@@ -1034,7 +1036,7 @@ td.symbol {
   gap: 12px 22px;
   margin-top: 22px;
   color: #806b58;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
 }
 .legend-dot {
   display: inline-block;
@@ -1052,14 +1054,14 @@ td.symbol {
   padding: 64px 28px;
   color: var(--muted);
   text-align: center;
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale));
   line-height: 2;
 }
 .empty strong {
   display: block;
   margin-bottom: 16px;
   color: #65432a;
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale));
 }
 .metric-strip {
   display: flex;
@@ -1070,17 +1072,17 @@ td.symbol {
 }
 .metric-strip strong {
   display: block;
-  font-size: 23px;
+  font-size: calc(23px * var(--font-scale));
   font-weight: 500;
   margin-top: 6px;
 }
 .metric-strip small {
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   color: var(--muted);
 }
 .mono {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
   overflow-wrap: anywhere;
   white-space: normal;
 }
@@ -1088,7 +1090,7 @@ td.symbol {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px 30px;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .run-meta dt {
   color: var(--muted);
@@ -1113,7 +1115,7 @@ td.symbol {
   padding: 25px 40px 35px;
   color: #86796b;
   border-top: 1px solid var(--line);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale));
 }
 .pending-run {
   margin-bottom: 25px;
@@ -1122,14 +1124,14 @@ td.symbol {
   border-radius: 10px;
   background: #fff4e6;
   color: #8b561e;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .full-width {
   grid-column: 1/-1;
 }
 .count-label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale));
 }
 .section-divider {
   display: flex;
@@ -1143,7 +1145,7 @@ td.symbol {
 .alert-local {
   margin-bottom: 22px;
   color: #93470b;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale));
 }
 .danger-action {
   color: #954510 !important;
@@ -1159,7 +1161,7 @@ td.symbol {
   color: #fff;
   background: #86501f;
   box-shadow: 0 5px 24px #442a1622;
-  font-size: 14px;
+  font-size: calc(14px * var(--font-scale));
   line-height: 1.7;
   pointer-events: none;
   opacity: 0;
@@ -1186,7 +1188,7 @@ td.symbol {
     text-align: right;
   }
   .studio-title strong {
-    font-size: 19px;
+    font-size: calc(19px * var(--font-scale));
     letter-spacing: 2px;
   }
   .studio-status {
@@ -1194,7 +1196,7 @@ td.symbol {
   }
   #nav a {
     padding: 10px 15px;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
   }
   .topbar {
     padding-left: 28px;
@@ -1233,16 +1235,16 @@ td.symbol {
     grid-template-columns: 1fr;
   }
   .brand {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
     letter-spacing: 2px;
   }
   .brand-icon {
     width: 34px;
     height: 34px;
-    font-size: 25px;
+    font-size: calc(25px * var(--font-scale));
   }
   .brand-sub {
-    font-size: 9px;
+    font-size: calc(9px * var(--font-scale));
   }
   .studio-title {
     text-align: left;
@@ -1250,11 +1252,11 @@ td.symbol {
     padding-top: 15px;
   }
   .studio-title strong {
-    font-size: 18px;
+    font-size: calc(18px * var(--font-scale));
     letter-spacing: 2px;
   }
   .studio-title > span {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     margin-top: 4px;
   }
   .studio-navigation {
@@ -1273,13 +1275,13 @@ td.symbol {
     flex: 1 1 29%;
     min-height: 42px;
     padding: 9px 7px;
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     gap: 5px;
   }
   .nav-count {
     min-width: 18px;
     height: 18px;
-    font-size: 9px;
+    font-size: calc(9px * var(--font-scale));
   }
   .topbar {
     min-height: 66px;
@@ -1287,13 +1289,13 @@ td.symbol {
     gap: 10px;
   }
   .breadcrumbs {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   .breadcrumbs span {
     padding: 0 8px;
   }
   .top-actions .button {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     padding: 8px 12px;
     min-height: 35px;
   }
@@ -1308,31 +1310,31 @@ td.symbol {
     margin-top: 20px;
   }
   h1 {
-    font-size: 25px;
+    font-size: calc(25px * var(--font-scale));
     margin-bottom: 12px;
   }
   h2 {
-    font-size: 18px;
+    font-size: calc(18px * var(--font-scale));
   }
   h3 {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
   }
   .eyebrow {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     letter-spacing: 1px;
   }
   .subtitle {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
   }
   .button {
     min-height: 43px;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     padding: 10px 18px;
   }
   .data-bar {
     display: block;
     padding: 17px;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     margin-bottom: 25px;
   }
   .data-bar > span {
@@ -1355,18 +1357,18 @@ td.symbol {
     border-radius: 13px;
   }
   .stat .label {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     margin-bottom: 13px;
   }
   .stat .number {
-    font-size: 29px;
+    font-size: calc(29px * var(--font-scale));
   }
   .stat .number small {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     margin-left: 4px;
   }
   .stat .hint {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     line-height: 1.9;
   }
   .grid-two {
@@ -1385,12 +1387,12 @@ td.symbol {
     gap: 10px;
   }
   .panel-head .detail {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   .section-num {
     min-width: 44px;
     height: 27px;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
     padding: 0 8px;
   }
   .panel-body {
@@ -1405,18 +1407,18 @@ td.symbol {
   .stage-num {
     width: 29px;
     height: 29px;
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     margin-bottom: 10px;
   }
   .stage-item strong {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   .stage-item small {
-    font-size: 9px;
+    font-size: calc(9px * var(--font-scale));
     line-height: 1.7;
   }
   .stage-link {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     margin-top: -26px;
   }
   .gate-grid {
@@ -1432,39 +1434,39 @@ td.symbol {
     margin-bottom: 19px;
   }
   .gate-top strong {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
   }
   .gate-time {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
   }
   .ratio-metric small {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   .ratio-metric b {
-    font-size: 28px;
+    font-size: calc(28px * var(--font-scale));
   }
   .gate-reason {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
   }
   .mini-callout {
     gap: 12px;
     padding: 18px;
   }
   .mini-callout p {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
   }
   .assumption-preview li {
     gap: 12px;
   }
   .assumption-preview strong {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
   }
   .assumption-preview small {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   .notice {
     padding: 17px;
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     line-height: 1.95;
   }
   .row-gap {
@@ -1475,39 +1477,39 @@ td.symbol {
     gap: 27px;
   }
   .field label {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
   }
   .field input,
   .field select {
     min-height: 50px;
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
   }
   .field small {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
   }
   .form-actions {
     gap: 13px;
   }
   .settings-note {
     flex: 1 0 100%;
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
     margin-bottom: 5px;
   }
   .toggle-label {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
   }
   .assumption-card {
     display: block;
     padding: 23px 20px;
   }
   .assumption-card h3 {
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
   }
   .assumption-card .choice {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
   }
   .assumption-card .reason {
-    font-size: 12px;
+    font-size: calc(12px * var(--font-scale));
   }
   .review-controls {
     border-left: 0;
@@ -1521,19 +1523,19 @@ td.symbol {
   }
   .review-comment {
     min-height: 150px;
-    font-size: 16px;
+    font-size: calc(16px * var(--font-scale));
   }
   .known-list {
-    font-size: 14px;
+    font-size: calc(14px * var(--font-scale));
   }
   .chart {
     aspect-ratio: 1.9;
   }
   .chart text {
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
   }
   .chart-legend {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
     gap: 10px 16px;
   }
   .run-meta,
@@ -1548,35 +1550,35 @@ td.symbol {
     gap: 20px 24px;
   }
   .metric-strip strong {
-    font-size: 20px;
+    font-size: calc(20px * var(--font-scale));
   }
   .metric-strip small {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   th,
   td {
     padding: 18px 12px;
   }
   th {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   td {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
   }
   .table-note {
-    font-size: 11px;
+    font-size: calc(11px * var(--font-scale));
   }
   .page-footer {
     display: block;
     padding: 24px 20px;
-    font-size: 10px;
+    font-size: calc(10px * var(--font-scale));
   }
   .page-footer span {
     display: block;
     margin-bottom: 8px;
   }
   #toast {
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale));
     padding: 13px 20px;
   }
 }
