@@ -95,3 +95,6 @@ Massive 私人資料下載／重播工具見 [scripts/marketdata](../../scripts/
 
 
 2026-10-30 新增 `presentation.js`（數字／動態圖像及團隊筆記）及 `quality-audit.js`（固定資料指紋綁定的外部核對摘要）。動態播放器僅展示凍結結果，不修改引擎或計算設定。統計為日收市損益及回撤；成交播放器每步一筆，不宣稱時間等距。
+
+
+2026-10-30：所有公開操作頁只使用真實資料。`review.html` 與期間模擬器共用 IndexedDB；舊合成結果不再顯示，留言保留。測試生成器移至 `tests/fixture-data.js`，不包含在 Pages artifact。私人載入頁提供三股兩星期及 AAPL 長期兩個組合，瀏覽器資料庫可切換已載入的組合。詳見 `docs/DATA-INVENTORY-zh-HK.md`；全年原始資料存在不等於所有日期可回測。

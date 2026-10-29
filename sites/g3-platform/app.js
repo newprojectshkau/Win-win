@@ -1,8 +1,8 @@
+import {loadPrivateDataset,savePrivateDataset} from './dataset-store.js';
 import {
   DEFAULT_CONFIG,
   ENGINE_VERSION,
   SLOT,
-  createDemoDataset,
   validateConfig,
   runReplay,
   fingerprint,
@@ -72,7 +72,7 @@ let state = {
     ? stored.runs
         .filter(
           (r) =>
-            r.engineVersion === ENGINE_VERSION &&
+            r.engineVersion === ENGINE_VERSION && r.data?.kind === "imported" &&
             r.config &&
             r.slots &&
             r.summary &&
@@ -93,9 +93,7 @@ let state = {
   compareA: "",
   compareB: "",
 };
-let dataset = createDemoDataset(),
-  datasetHash = "";
-const demo = dataset;
+let dataset = null, datasetHash = "";
 let build = {
   revision: "development",
   ref: "local",
@@ -150,10 +148,11 @@ function head(title, subtitle, actions = "") {
   return `<div class="heading-row"><div><p class="eyebrow">G3 策略研究 ／ 介面審閱</p><h1>${title}</h1><p class="subtitle">${subtitle}</p></div><div class="actions">${actions}</div></div>`;
 }
 const runButton = () =>
-  `<button class="button primary" data-action="run" ${state.busy ? "disabled" : ""}>${state.busy ? "驗證及重播中…" : "▶　執行重播"}</button>`;
+  `<button class="button primary" data-action="run" ${state.busy || !dataset ? "disabled" : ""}>${state.busy ? "驗證及重播中…" : "▶　執行重播"}</button>`;
 function dataBar() {
+  if(!dataset)return '<div class="notice">尚未載入真實歷史資料。</div>';
   const r = run();
-  return `<div class="data-bar"><div class="data-title"><span class="badge ${dataset.kind === "synthetic" ? "amber" : "neutral"}">${dataset.kind === "synthetic" ? "合成示例資料" : "自行匯入 · 未獨立驗證"}</span><strong>${esc(dataset.id)}</strong><span>${dataset.instruments.length} 隻股票 · ${dataset.instruments[0].sessions.length} 個時段</span></div><span>${r ? "目前結果：" + esc(r.data.date) : "尚未執行"}　<span class="badge data-tag">沒有實盤下單</span></span></div>`;
+  return `<div class="data-bar"><div class="data-title"><span class="badge neutral">真實歷史資料 · 未獨立驗證</span><strong>${esc(dataset.id)}</strong><span>${dataset.instruments.length} 隻股票 · ${dataset.instruments[0].sessions.length} 個時段</span></div><span>${r ? "目前結果：" + esc(r.data.date) : "尚未執行"}　<span class="badge data-tag">沒有實盤下單</span></span></div>`;
 }
 function warnings() {
   return `${state.persistWarning ? '<div class="alert-local">本地儲存不可用，請匯出審閱包備份。</div>' : ""}${state.error ? `<div class="notice error" role="alert">運行已中止：${esc(state.error)}。先前結果保留，並非這次成功結果。</div>` : ""}${configDirty() ? '<div class="pending-run">參數草稿已修改。下方仍顯示上一次的鎖定版本；請執行重播更新結果。</div>' : ""}${run() && run().dataHash !== datasetHash ? '<div class="pending-run">已切換資料集；下方仍是上一資料集的結果，請重新執行。</div>' : ""}`;
@@ -194,12 +193,12 @@ function overview() {
     return (
       head(
         "策略重播工作台",
-        "設定已準備好。執行一次合成資料重播，即可查看五階段流程及每項暫定假設。",
+        "執行真實歷史資料重播，查看五階段流程及每項暫定假設。",
         runButton(),
       ) +
       dataBar() +
       warnings() +
-      `<section class="panel"><div class="empty"><strong>由可追溯的一次重播開始</strong><p>12 隻虛構股票、完整歷史窗口；計算在你的瀏覽器執行。</p><p>每次運行會鎖定參數、資料指紋及所採用假設。</p><br>${runButton()}</div></section>`
+      `<section class="panel"><div class="empty"><strong>由可追溯的一次重播開始</strong><p>使用已載入的真實股票及歷史窗口，計算在你的瀏覽器執行。</p><p>每次運行會鎖定參數、資料指紋及所採用假設。</p><br>${runButton()}</div></section>`
     );
   return (
     head(
@@ -220,7 +219,7 @@ function overview() {
       })
       .join(
         "",
-      )}</ul><a class="panel-link" href="#assumptions">前往假設與留言 <span>→</span></a></div></section></div><section class="panel row-gap"><div class="panel-head"><div><h2>候選名單與配注</h2><p class="detail">個股 RR＝B／(R＋${r.config.k})；股數以 ${money(r.config.target)} 為目標</p></div>${slotTabs()}</div>${selectedTable(state.slot, 5)}<div class="table-note">只列首五隻。配注用前日收市價；不代表實際成交金額。 <a href="#results">查看完整五階段結果 →</a></div></section><div class="notice row-gap">${r.data.kind === "synthetic" ? "<strong>這是合成資料示例。</strong> 所有股票、價量及結果均由公式生成，不能解讀為市場回測或盈利證據。" : "<strong>自行匯入資料。</strong> 系統只驗證格式及已聲明的時點；歷史股票池、資料授權及公司行動仍須由供應方核實。"}</div>`
+      )}</ul><a class="panel-link" href="#assumptions">前往假設與留言 <span>→</span></a></div></section></div><section class="panel row-gap"><div class="panel-head"><div><h2>候選名單與配注</h2><p class="detail">個股 RR＝B／(R＋${r.config.k})；股數以 ${money(r.config.target)} 為目標</p></div>${slotTabs()}</div>${selectedTable(state.slot, 5)}<div class="table-note">只列首五隻。配注用前日收市價；不代表實際成交金額。 <a href="#results">查看完整五階段結果 →</a></div></section><div class="notice row-gap"><strong>真實歷史資料。</strong> 系統驗證格式及已聲明的時點；股票池、資料口徑及公司行動仍須另行核實。</div>`
   );
 }
 const FIELD_LABELS = {
@@ -291,7 +290,7 @@ function settings() {
         ],
         hint: "A13：無論此選項，零分母仍顯示未定義。",
       },
-    )}${field("h", { disabled: true, hint: "固定 h＝1；h＝2／3 完整規則未定，未開放。" })}${field("commission", { suffix: "美元／筆", min: 0, max: 100, hint: "A18：每個 fill 計一次；反手是兩筆。" })}${field("slippageBps", { suffix: "基點／單邊", min: 0, max: 1000, hint: "5 基點＝0.05%；買價上調、賣價下調，不重複扣費。" })}</div></div></section><div class="notice success">固定紐約時間：早市觀察 09:30–10:00、監察至 12:30；午市觀察 12:30–13:00、監察至 16:00。此版不支援半日市或自訂時段。</div><div class="form-actions"><p class="settings-note">改動先存成草稿；只有重新執行才產生新結果。舊運行設定不會跟隨草稿改動。</p><button class="button secondary" type="button" data-action="reset-config">還原 v3 審閱預設</button><button class="button primary" type="submit">儲存設定草稿</button></div></form><section class="panel row-gap"><div class="panel-head"><h2>資料集</h2><span class="badge ${dataset.kind === "synthetic" ? "amber" : "neutral"}">${dataset.kind === "synthetic" ? "合成示例" : "自行匯入"}</span></div><div class="panel-body"><p class="subtitle">JSON 格式，最大 40 MB。所有資料在瀏覽器處理，不會上傳。匯入先驗證，失敗不會替換現有資料集。</p><div class="actions row-gap"><button class="button secondary" type="button" data-action="import-data">匯入資料 JSON</button><button class="button secondary" type="button" data-action="export-data">下載目前資料（含格式範本）</button><button class="button ghost" type="button" data-action="demo-data">還原合成示例</button></div><p class="subtitle row-gap">${esc(dataset.description)} 實際歷史資料須另行核實授權、日曆、股票池及公司行動；此版沒有即時行情。</p></div></section>`
+    )}${field("h", { disabled: true, hint: "固定 h＝1；h＝2／3 完整規則未定，未開放。" })}${field("commission", { suffix: "美元／筆", min: 0, max: 100, hint: "A18：每個 fill 計一次；反手是兩筆。" })}${field("slippageBps", { suffix: "基點／單邊", min: 0, max: 1000, hint: "5 基點＝0.05%；買價上調、賣價下調，不重複扣費。" })}</div></div></section><div class="notice success">固定紐約時間：早市觀察 09:30–10:00、監察至 12:30；午市觀察 12:30–13:00、監察至 16:00。此版不支援半日市或自訂時段。</div><div class="form-actions"><p class="settings-note">改動先存成草稿；只有重新執行才產生新結果。舊運行設定不會跟隨草稿改動。</p><button class="button secondary" type="button" data-action="reset-config">還原 v3 審閱預設</button><button class="button primary" type="submit">儲存設定草稿</button></div></form><section class="panel row-gap"><div class="panel-head"><h2>資料集</h2><span class="badge neutral">真實歷史資料</span></div><div class="panel-body"><p class="subtitle">JSON 格式，最大 40 MB。所有資料在瀏覽器處理，不會上傳。匯入先驗證，失敗不會替換現有資料集。</p><div class="actions row-gap"><button class="button secondary" type="button" data-action="import-data">匯入資料 JSON</button><button class="button secondary" type="button" data-action="export-data">下載目前資料（含格式範本）</button></div><p class="subtitle row-gap">${esc(dataset.description)} 實際歷史資料須另行核實授權、日曆、股票池及公司行動；此版沒有即時行情。</p></div></section>`
   );
 }
 function results() {
@@ -505,7 +504,7 @@ function render() {
   $("#nav").insertAdjacentHTML("beforeend", '<a href="./simulator.html" aria-label="期間績效模擬"><span>期間績效模擬 ↗</span></a>');
   $("#page-crumb").textContent = PAGES[page];
   $("#main").innerHTML =
-    `<div class="page">${{ overview, settings, results, replay, assumptions, compare }[page]()}</div>`;
+    `<div class="page">${!dataset && page!=="assumptions" ? head("載入真實股票開始審閱", "此工作台與績效模擬器共用本機已保存的真實資料。", '<a class="button primary" href="./simulator.html">前往真實資料模擬器</a><button class="button secondary" data-action="import-data">匯入真實資料 JSON</button>') + warnings() : { overview, settings, results, replay, assumptions, compare }[page]()}</div>`;
   document.querySelectorAll("#main .panel").forEach((panel, index) => {
     const heading = panel.querySelector(":scope > .panel-head h2");
     if (heading && !heading.querySelector(".section-num")) {
@@ -519,7 +518,7 @@ function render() {
   document.title = `${PAGES[page]}｜Win-win G3 審閱平台`;
 }
 async function execute() {
-  if (state.busy) return;
+  if (state.busy || !dataset) return;
   state.busy = true;
   state.error = "";
   render();
@@ -638,13 +637,6 @@ document.addEventListener("click", async (e) => {
       download("winwin-g3-" + dataset.id + ".json", dataset);
       toast("資料已下載，可作 JSON 格式範本。");
       break;
-    case "demo-data":
-      dataset = demo;
-      datasetHash = await fingerprint(demo);
-      state.error = "";
-      render();
-      toast("已還原合成資料。請重新執行。");
-      break;
     case "reset-config":
       state.draft = { ...DEFAULT_CONFIG };
       save();
@@ -742,9 +734,9 @@ $("#dataset-input").addEventListener("change", async (e) => {
     const data = JSON.parse(await file.text());
     const { validateDataset } = await import("./engine.js");
     validateDataset(data);
-    if (data.kind === "synthetic" && data.id !== demo.id)
-      throw Error("自訂資料請標記 kind 為 imported");
+    if (data.kind !== "imported") throw Error("此工作台只接受真實歷史資料");
     dataset = data;
+    try{await savePrivateDataset(data);}catch{}
     datasetHash = await fingerprint(dataset);
     state.error = "";
     render();
@@ -800,10 +792,12 @@ async function start() {
     if (response.ok) build = await response.json();
   } catch {}
   state.page = location.hash.slice(1) || "overview";
+  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js");validateDataset(saved);dataset=saved;} }catch(e){state.error="未能載入本機真實資料："+e.message;}
   render();
+  if(!dataset)return;
   try {
     datasetHash = await fingerprint(dataset);
-    if (!run()) {
+    if (!run() || run().dataHash !== datasetHash) {
       await execute();
     } else render();
   } catch (e) {

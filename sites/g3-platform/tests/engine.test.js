@@ -1,3 +1,4 @@
+import {createDemoDataset} from './fixture-data.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -6,7 +7,6 @@ import {
   nearestQuantity,
   decideGate,
   simulateSymbol,
-  createDemoDataset,
   validateDataset,
   validateConfig,
   runReplay,

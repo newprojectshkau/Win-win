@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {summarizeRuns,runWindow} from '../performance.js';
-import {createDemoDataset,DEFAULT_CONFIG} from '../engine.js';
+import {DEFAULT_CONFIG} from '../engine.js';
+import {createDemoDataset} from './fixture-data.js';
 
 function manualDay(date,net,fees=0,fills=[]) {
   return {data:{date},fills,slots:{AM:{gate:{status:'passed'},symbols:[{symbol:'TEST',net,fees,fills}]},PM:{gate:{status:'below'},symbols:[]}},summary:{net,fees,orders:fills.length,eligible:1,residual:0}};
