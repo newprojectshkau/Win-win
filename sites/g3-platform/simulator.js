@@ -1,3 +1,4 @@
+import {initPresentation} from './presentation.js';
 import {savePrivateDataset,loadPrivateDataset} from './dataset-store.js';
 import {DEFAULT_CONFIG,validateDataset,fingerprint} from './engine.js';
 import {runWindow} from './performance.js';
@@ -19,7 +20,7 @@ function installDataset(next){
   el('start').value=dates[first];el('end').value=dates.at(-1);el('run').disabled=false;
   el('available-dates').innerHTML=dates.slice(DEFAULT_CONFIG.lookback).map(d=>`<option value="${d}">${d}</option>`).join('');
   el('coverage').textContent=`可測試日期：${dates[DEFAULT_CONFIG.lookback]} 至 ${dates.at(-1)}（${dates.length-DEFAULT_CONFIG.lookback} 個交易日）；另有 20 日前置資料。`;
-  syncDates();
+  syncDates();presentation.refresh();
   el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
   el('source').textContent=`${data.kind==='synthetic'?'合成示例，不是真實績效':'已載入真實行情研究檔（供應商聲明；未獨立驗證）'}｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
 }
@@ -40,7 +41,7 @@ function renderResult(){
   el('daily-table').innerHTML=table(['日期','費前損益','手續費','滑點','淨盈虧','累計淨盈虧','成交筆數','通過篩選'],result.days.map(d=>row([`<button class="button ghost small" data-date="${escapeHTML(d.date)}">${escapeHTML(d.date)}</button>`,usd(d.grossBeforeCosts),usd(d.fees),usd(d.slippage),usd(d.net),usd(d.cumulative),d.orders,`${d.eligible} / ${result.data.symbols.length}`])));
   el('symbols').innerHTML=table(['股票','淨盈虧','手續費','成交筆數','有成交時段'],result.symbols.map(s=>row([escapeHTML(s.symbol),usd(s.net),usd(s.fees),s.fills,s.tradedSessions])));
   el('detail-date').innerHTML=result.days.map(d=>`<option value="${d.date}">${d.date}</option>`).join('');
-  renderDetail();el('output').hidden=false;
+  renderDetail();el('output').hidden=false;presentation.refresh();
 }
 function renderDetail(){
   const r=result.runs.find(r=>r.data.date===el('detail-date').value);if(!r)return;
@@ -51,6 +52,7 @@ function renderDetail(){
   const ny=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false});
   const actions={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉／準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
   el('fills').innerHTML=r.fills.length?table(['紐約時間','股票','時段','動作','方向','股數','參考價','成交價','費用'],r.fills.map(f=>row([ny.format(new Date(f.time)),escapeHTML(f.symbol),f.slot==='AM'?'早市':'午市',actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.fee)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
+  presentation.refreshDetail();
 }
 function download(name,value,type='application/json'){
   const url=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -97,4 +99,5 @@ async function initialize(){
   else{el('source').textContent='首次使用：請匯入 Massive 私人歷史資料 JSON。匯入一次後，此瀏覽器會記住資料；不會自動轉用 DEMO。';el('scope').textContent='等待 Massive 歷史資料';}
  }catch(e){error('未能載入已保存資料：'+e.message+'。請重新匯入私人 JSON。');el('source').textContent='等待匯入真實歷史資料；沒有載入 DEMO。';}
 }
+const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,money:usd,format,escapeHTML,onSelectDate:date=>{el('detail-date').value=date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}});
 initialize();
