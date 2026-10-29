@@ -30,7 +30,7 @@ python3 -m http.server 8010 --bind 0.0.0.0 --directory sites/g3-platform
 npm test --prefix sites/g3-platform
 ```
 
-發布來源分支為 `g3-platform-review`，部署工作流程為 [G3 review platform](.github/workflows/g3-review-pages.yml)。GitHub Pages 須由 repo Settings 啟用 GitHub Actions 來源並允許此分支；推送程式不代表網址已上線。實際部署狀態見 [docs/STATUS.md](docs/STATUS.md)。
+審閱平台網址：**https://newprojectshkau.github.io/Win-win/**。發布來源分支為 `g3-platform-review`，部署工作流程為 [G3 review platform](.github/workflows/g3-review-pages.yml)。已啟用 GitHub Pages 並允許該分支；每次更新仍需等待自動測試及部署成功。介面採白底、橙色、頂部按鈕導覽及較大的章節／表格間距。實際部署狀態見 [docs/STATUS.md](docs/STATUS.md)。
 
 The G3 implementation plan has been reviewed through three independent agent perspectives: programmatic trading, software engineering, and investor usability. A review implementation now runs on explicit provisional assumptions; the complete v3 simulator and historical-data workflow have not been accepted as G3-complete. Earlier plans and briefings retain their original preparation context.
 
@@ -41,7 +41,7 @@ The G3 implementation plan has been reviewed through three independent agent per
 - [Current project status and next steps](docs/STATUS.md)
 - 香港繁體中文六頁簡報：[PowerPoint](output/slides/G3-engine-briefing-zh-HK.pptx)｜[PDF](output/slides/G3-engine-briefing-zh-HK.pdf)｜[離線瀏覽器版](output/slides/G3-engine-briefing-zh-HK.html)。內容包括引擎架構、建置路線、16 項開工前決策及系統限制；下載後開啟。
 
-No public live URL for the G3 review page has been verified. A repository file URL is not a hosted website; publishing the prepared HTML requires a connected hosting service or GitHub Pages configuration.
+The live URL above serves the interactive platform. The separate plan/review HTML and PDF remain downloadable repository files; they are not additional hosted pages.
 
 ## Open in browser Codex
 

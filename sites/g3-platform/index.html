@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#102f32" />
+    <meta name="theme-color" content="#bf5c13" />
     <meta
       name="description"
       content="Win-win G3 策略重播及假設審閱平台。合成資料示例、五階段分析、參數版本及本地審閱留言。"
@@ -11,31 +11,29 @@
     <title>Win-win｜G3 策略審閱平台</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23102f32'/%3E%3Cpath d='M8 12l5 16 7-11 7 11 5-16' fill='none' stroke='%2399dac7' stroke-width='3'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23bf5c13'/%3E%3Cpath d='M8 12l5 16 7-11 7 11 5-16' fill='none' stroke='%23ffffff' stroke-width='3'/%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20261029-orange" />
   </head>
   <body>
     <a class="skip" href="#main">跳至主要內容</a>
-    <aside class="sidebar" aria-label="主導覽">
+    <header class="studio-header">
       <a class="brand" href="#overview" aria-label="Win-win 工作台"
         ><span class="brand-icon">W</span
-        ><span>win-win<span class="brand-sub">策略研究工作室</span></span></a
+        ><span>WIN-WIN<span class="brand-sub">策略研究工作室</span></span></a
       >
-      <div class="side-label">研究空間 <span class="version">G3</span></div>
-      <nav id="nav"></nav>
-      <div class="side-bottom">
-        <div class="pulse"></div>
-        <strong>審閱版 · 沒有實盤連線</strong>
-        <p>先驗證邏輯，再驗證表現。</p>
-        <a
-          href="https://github.com/newprojectshkau/Win-win/tree/g3-platform-review"
-          target="_blank"
-          rel="noopener"
-          >查看程式及假設文件 ↗</a
-        ><span class="build">引擎 0.1.0 · 暫定規則</span>
+      <div class="studio-title">
+        <strong>策略研究與審閱工作室</strong
+        ><span>G3 模擬重播 · 規則核對 · 集中審閱</span>
       </div>
-    </aside>
+      <div class="studio-status">
+        <span class="studio-status-dot"></span>介面審閱版
+        <span class="studio-status-version">G3 · 0.1</span>
+      </div>
+    </header>
+    <div class="studio-navigation">
+      <nav id="nav" aria-label="主導覽"></nav>
+    </div>
     <div class="workspace">
       <header class="topbar">
         <div class="breadcrumbs">
@@ -72,6 +70,6 @@
         此平台需要啟用 JavaScript，所有重播計算及留言保存均在瀏覽器內進行。
       </p></noscript
     >
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./app.js?v=20261029-orange"></script>
   </body>
 </html>

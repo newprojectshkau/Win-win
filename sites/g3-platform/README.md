@@ -72,6 +72,8 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 
 預期 GitHub Pages 位置須以實際部署輸出為準；僅推送程式、工作流程或發布到預備分支，不代表已成功公開或網址已驗證。
 
-首次部署的 [GitHub Actions 記錄](https://github.com/newprojectshkau/Win-win/actions/runs/40761016249) 已確認：驗證／靜態打包成功，部署在 `actions/configure-pages` 因 Pages site `Not Found` 中止。Repo 管理者需在 [Pages 設定](https://github.com/newprojectshkau/Win-win/settings/pages) 啟用 GitHub Actions 來源，再重新執行最新工作流程。官方 action 說明指出自動啟用需要另一個有管理權限的 token；不應把工作流程的預設 `GITHUB_TOKEN` 當成有此權限，亦不應把本機憑證寫入工作流程。
+公開審閱網址：**https://newprojectshkau.github.io/Win-win/**。用戶已啟用 Pages 及允許審閱分支；[部署記錄](https://github.com/newprojectshkau/Win-win/actions/runs/40761600840) 第三次嘗試成功。舊有 Not Found／分支保護問題已解除；往後更新仍須通過測試及部署。
+
+介面風格：白底、橙色重點（取代舊綠色）、頂部膠囊導覽、編號章節及暖灰分隔線；較大的字體、表格行距及留言框。此改版沒有改動引擎、資料格式或本地儲存鍵。
 
 瀏覽器互動測試：先開啟本地靜態伺服器，再執行 `python3 sites/g3-platform/tests/browser_check.py`（從 repo 根目錄）；需要 Playwright Python 及 `/usr/bin/chromium`。可用 `G3_BASE_URL` 指向實際審閱網址，`G3_TEST_ARTIFACTS` 設定測試截圖／匯出位置。測試使用隔離的瀏覽器儲存，不會提交任何留言。

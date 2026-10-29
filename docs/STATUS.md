@@ -26,15 +26,15 @@ The reviews are analytical agent assessments through the requested perspectives,
 
 ## Publication and download status
 
-平台部署已準備 `.github/workflows/g3-review-pages.yml`：在 `g3-platform-review` 分支推送後執行測試及發布，發布內容只含平台靜態檔，不包含留言、憑證或自行匯入資料。需要 repo 的 GitHub Pages 來源設定為 GitHub Actions，並允許該分支進入 `github-pages` 環境。GitHub API 存取仍遭 Forbidden，已保存所需 `api.github.com` 及 `newprojectshkau.github.io` 網絡設定草稿；草稿本身不代表運行環境已套用或網站已部署。
+平台已由 GitHub Pages 發布至 **https://newprojectshkau.github.io/Win-win/**。原部署記錄 [40761600840](https://github.com/newprojectshkau/Win-win/actions/runs/40761600840) 的第三次嘗試已成功；用戶已啟用 Pages 並允許 `g3-platform-review` 分支部署，先前的 Not Found 及環境分支保護問題已解除。
 
-首次自動部署 [40761016249](https://github.com/newprojectshkau/Win-win/actions/runs/40761016249) 的驗證及打包已成功，部署階段因 `Get Pages site failed / Not Found` 中止。這次已得到 GitHub 端的具體錯誤，不再僅依賴本機代理失敗推測。管理者須到 repo **Settings → Pages → Source: GitHub Actions** 啟用，再重新執行最新工作流程。尚未取得可驗證的公開 live URL，不應把預期網址當成已上線。平台[介面截圖](images/g3-platform-desktop.png)已保存供先行查看。
+介面按用戶提供的截圖改為白底、橙色重點、頂部膠囊按鈕導覽、章節編號及分隔線。加大字體、輸入欄、表格行距與留言框；手機版頂部顯示全部導覽按鈕。這次改動不涉及策略計算、儲存鍵或既有留言資料。新版本的發布仍以該次 GitHub Actions 結果為準。
 
-No public live URL for the G3 HTML review has been verified. The HTML and PDF are prepared files, not proof of hosting. The current session has no callable site-publishing capability; a GitHub Pages API discovery request was blocked by the network proxy. This does not establish whether Pages is enabled or disabled on GitHub.
+此環境對 `newprojectshkau.github.io` 的直接請求仍可能被代理擋住；部署成功證據與本環境 HTTP／瀏覽器檢查須分開記錄。平台[介面截圖](images/g3-platform-desktop.png)及[設定頁截圖](images/g3-platform-settings.png)已更新。發布只含平台靜態檔，不包含留言、憑證或自行匯入資料。
 
 After these files are pushed, use the GitHub repository branch containing them. For the PDF, open `output/pdf/G3-simulator-plan-and-reviews.pdf` and choose **Download raw file**. For offline browser review, download `output/html/G3-review.html` and open it locally, then use **Print / Save as PDF** if desired. All document content and styling are embedded in that HTML; external repository source links require connectivity.
 
-Publishing an actual live review page still requires a supported hosting connection or GitHub Pages access. No localhost address, speculative hostname or file-browser link is presented as a live site.
+The downloadable briefing and source-review documents are separate from the hosted platform; repository links are file views, not substitutes for the live URL.
 
 ## Verification evidence
 
@@ -42,4 +42,4 @@ Publishing an actual live review page still requires a supported hosting connect
 
 Earlier validation confirmed Python 3.12, a successful local HTTP response for the original static website, and offline reproduction of all 20 saved symbol/session RR results and event logs. This was a check of the existing assumed research model, not the proposed v3 simulator. The G3 HTML was separately checked in Chromium for four document sections, internal navigation, tables, mobile width and print rendering. The PDF was checked for all four document titles.
 
-These are recorded checks from the prior preparation/export work, not claims of a new clean-environment simulator test. Repository source code, strategy parameters and historical research results remain unchanged by this documentation update.
+The research/export checks above were recorded during the earlier preparation work. The latest interface change passed the existing browser interaction suite, plus layout checks for six pages at 390px and 320px. It does not constitute a new historical-data or execution-realism validation. Strategy parameters and historical research outputs were not changed.

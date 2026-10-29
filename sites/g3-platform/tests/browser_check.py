@@ -24,7 +24,7 @@ with sync_playwright() as p:
  expect(page.locator('main')).to_contain_text('每股目標名義金額')
  assert page.locator('table').first.locator('tbody').inner_text().find('1500')>=0
  page.get_by_role('link',name='假設與留言',exact=True).click()
- assert page.locator('.assumption-card').count()==22
+ expect(page.locator('.assumption-card')).to_have_count(22)
  page.locator('#status-A05').select_option('change')
  page.locator('#comment-A05').fill('請比較分鐘 close 與另一種取價方法；<script>alert(1)</script>')
  page.locator('#general-comment').fill('請把價格圖及持倉放在同一頁。')
@@ -38,11 +38,11 @@ with sync_playwright() as p:
  assert data['runs'][0]['config']['target']==1500
  assert data['runs'][1]['config']['target']==1000
  page.get_by_role('link',name='逐股重播',exact=True).click()
- assert page.locator('svg.chart').count()==1
+ expect(page.locator('svg.chart')).to_have_count(1)
  assert page.locator('tbody tr').count()>2
  page.screenshot(path=str(ARTIFACTS/'replay.png'),full_page=True)
  page.get_by_role('button',name='午市',exact=True).click()
- assert '整段開關未通過' in page.locator('main').inner_text()
+ expect(page.locator('main')).to_contain_text('整段開關未通過')
  page.get_by_role('link',name='五階段結果',exact=True).click()
  expect(page.locator('table')).to_have_count(3)
  page.screenshot(path=str(ARTIFACTS/'results.png'),full_page=True)
