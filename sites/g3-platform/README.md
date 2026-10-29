@@ -89,3 +89,6 @@ Massive 私人資料下載／重播工具見 [scripts/marketdata](../../scripts/
 公開版需要匯入私人 schema-v1 dataset，或明確選擇合成示例；不公開訂閱行情。私人預載版由 `scripts/marketdata/package_private_review.py` 生成，可離線開啟。資料與結果均可在瀏覽器內處理及匯出，沒有新增資料上傳服務。
 
 `performance.js` 使用原有引擎逐日計算，只傳入當日及之前的回看視窗。`tests/performance.test.js` 覆蓋手算成本、收市回撤、零成交及未來資料隔離。收市回撤並非日內最大回撤；未模擬賬戶資金／保證金，因此不顯示年化及本金收益百分比。
+
+
+2026-10-30：網站根入口現在開啟真實資料績效模擬器。原六頁規則工作台在 `review.html`。績效頁已移除合成示例入口，只接受 imported 資料；匯入後透過 IndexedDB 在本機保存。提供單日及日期範圍模式，可用起日會預留 20 個完整回看日。公開網站沒有私人資料伺服器，因此首次仍需匯入私人 JSON，或使用預載單檔 HTML。

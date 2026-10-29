@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright, expect
 from pathlib import Path
 import json, os
 ARTIFACTS=Path(os.environ.get('G3_TEST_ARTIFACTS','/tmp/g3-platform-check'));ARTIFACTS.mkdir(parents=True,exist_ok=True)
-BASE_URL=os.environ.get('G3_BASE_URL','http://127.0.0.1:8010/')
+BASE_URL=os.environ.get('G3_BASE_URL','http://127.0.0.1:8010/review.html')
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
  c=b.new_context(viewport={'width':1512,'height':1100},accept_downloads=True)

@@ -1,4 +1,5 @@
-import {DEFAULT_CONFIG,createDemoDataset,validateDataset,fingerprint} from './engine.js';
+import {savePrivateDataset,loadPrivateDataset} from './dataset-store.js';
+import {DEFAULT_CONFIG,validateDataset,fingerprint} from './engine.js';
 import {runWindow} from './performance.js';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -10,11 +11,15 @@ const row=items=>`<tr>${items.map(i=>`<td>${i}</td>`).join('')}</tr>`;
 function error(message){el('error').textContent=message;el('error').hidden=!message;}
 function installDataset(next){
   validateDataset(next);
+  if(next.kind!=='imported')throw Error('此頁只接受真實歷史資料，不能使用 DEMO／合成資料。');
   if(next.instruments[0].sessions.length<=DEFAULT_CONFIG.lookback)throw Error('資料需有至少 20 個前置交易日及 1 個測試日。');
   data=next;result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
   const dates=next.instruments[0].sessions.map(s=>s.date),first=Math.max(DEFAULT_CONFIG.lookback,dates.length-10);
   for(const key of ['start','end']){el(key).min=dates[DEFAULT_CONFIG.lookback];el(key).max=dates.at(-1);}
   el('start').value=dates[first];el('end').value=dates.at(-1);el('run').disabled=false;
+  el('available-dates').innerHTML=dates.slice(DEFAULT_CONFIG.lookback).map(d=>`<option value="${d}">${d}</option>`).join('');
+  el('coverage').textContent=`可測試日期：${dates[DEFAULT_CONFIG.lookback]} 至 ${dates.at(-1)}（${dates.length-DEFAULT_CONFIG.lookback} 個交易日）；另有 20 日前置資料。`;
+  syncDates();
   el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
   el('source').textContent=`${data.kind==='synthetic'?'合成示例，不是真實績效':'已載入真實行情研究檔（供應商聲明；未獨立驗證）'}｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
 }
@@ -52,27 +57,44 @@ function download(name,value,type='application/json'){
 }
 async function execute(event){
   event?.preventDefault();if(!data||busy)return;
-  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#demo').forEach(e=>e.disabled=true);
+  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import').forEach(e=>e.disabled=true);
   try{
     const config=currentConfig();
     const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
     next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
   }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
-  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#demo').forEach(e=>e.disabled=false);}
+  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import').forEach(e=>e.disabled=false);}
 }
 el('config').addEventListener('submit',execute);
 el('config').addEventListener('input',()=>{if(result)el('dirty').hidden=false;});
 el('import').onclick=()=>{if(!busy)el('file').click();};
 el('file').onchange=async event=>{
   const file=event.target.files[0];if(!file||busy)return;
-  try{if(file.size>40*1024**2)throw Error('檔案超過 40 MB');const next=JSON.parse(await file.text());if(next.kind!=='imported')throw Error('私人行情資料須標記 kind＝imported');installDataset(next);}catch(e){error('匯入失敗：'+e.message+'；原有資料及結果保留。');}finally{event.target.value='';}
+  try{if(file.size>40*1024**2)throw Error('檔案超過 40 MB');const next=JSON.parse(await file.text());if(next.kind!=='imported')throw Error('私人行情資料須標記 kind＝imported');installDataset(next);await rememberDataset(next);}catch(e){error('匯入失敗：'+e.message+'；原有資料及結果保留。');}finally{event.target.value='';}
 };
-el('demo').onclick=()=>{if(!busy)installDataset(createDemoDataset());};
+
 el('detail-date').onchange=renderDetail;
 el('daily-table').onclick=event=>{const button=event.target.closest('[data-date]');if(button){el('detail-date').value=button.dataset.date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}};
 el('export-json').onclick=()=>download(`winwin-performance-${result.startDate}-${result.endDate}.json`,result);
 el('export-csv').onclick=()=>{const keys=['date','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','AM','PM'];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
 el('print').onclick=()=>window.print();
-const preload=document.getElementById('private-dataset');
-if(preload){try{installDataset(JSON.parse(preload.textContent));execute();}catch(e){error(e.message);}}
-else{el('source').textContent='尚未載入真實行情。匯入私人資料 JSON，或按「試用合成示例」檢查介面。';el('scope').textContent='等待資料';}
+function syncDates(){
+  const single=el('period-mode').value==='single';
+  el('end-wrap').hidden=single;
+  if(single)el('end').value=el('start').value;
+}
+el('period-mode').onchange=syncDates;
+el('start').addEventListener('change',syncDates);
+async function rememberDataset(next){
+ try{await savePrivateDataset(next);el('storage-status').textContent='已保存在此瀏覽器；下次開啟會自動載入。清除網站資料或轉用另一裝置後需重新匯入。';}
+ catch{el('storage-status').textContent='此瀏覽器未能保存資料；今次仍可重播，下次需重新匯入。';}
+}
+async function initialize(){
+ const preload=document.getElementById('private-dataset');
+ try{
+  const next=preload?JSON.parse(preload.textContent):await loadPrivateDataset();
+  if(next){installDataset(next);await rememberDataset(next);await execute();}
+  else{el('source').textContent='首次使用：請匯入 Massive 私人歷史資料 JSON。匯入一次後，此瀏覽器會記住資料；不會自動轉用 DEMO。';el('scope').textContent='等待 Massive 歷史資料';}
+ }catch(e){error('未能載入已保存資料：'+e.message+'。請重新匯入私人 JSON。');el('source').textContent='等待匯入真實歷史資料；沒有載入 DEMO。';}
+}
+initialize();

@@ -6,6 +6,7 @@ import argparse
 import datetime as dt
 import gzip
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
@@ -103,6 +104,9 @@ class Archive:
                 if '403' in reason or 'Forbidden' in reason:raise StopArchive('Network proxy blocked api.massive.com; saved secret alone does not apply network settings') from None
                 if attempt<4:time.sleep(2**attempt);continue
                 raise StopArchive('API transport unavailable; no credential values logged') from None
+            except (http.client.HTTPException, TimeoutError, ConnectionError):
+                if attempt<4:time.sleep(2**attempt);continue
+                raise StopArchive('Incomplete API response; verified cache retained for resume') from None
         raise StopArchive('Retry limit reached')
     def pages(self,path,params=None):
         page=self.fetch(path,params);seen=set()

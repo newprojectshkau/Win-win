@@ -12,7 +12,7 @@ html=(site/'simulator.html').read_text()
 for name in ['styles.css','simulator.css']:
  html=re.sub(r'<link rel="stylesheet" href="\./'+re.escape(name)+r'[^"\n]*">',lambda _: '<style>'+(site/name).read_text()+'</style>',html)
 modules=[]
-for name in ['engine.js','performance.js','simulator.js']:
+for name in ['engine.js','performance.js','dataset-store.js','simulator.js']:
  source=(site/name).read_text()
  source=re.sub(r'^import .*?;\s*','',source,flags=re.M)
  source=re.sub(r'^export ', '',source,flags=re.M)
@@ -21,6 +21,6 @@ for name in ['engine.js','performance.js','simulator.js']:
  modules.append(source)
 script='<script id="private-dataset" type="application/json">'+json.dumps(data,separators=(',',':')).replace('<','\\u003c')+'</script><script type="module">'+'\n'.join(modules)+'</script>'
 html=re.sub(r'<script type="module" src="[^"\n]+"></script>',lambda _:script,html)
-html=html.replace('href="./index.html"','href="https://newprojectshkau.github.io/Win-win/"')
+html=html.replace('href="./review.html"','href="https://newprojectshkau.github.io/Win-win/"')
 out.parent.mkdir(parents=True,exist_ok=True);out.write_text(html);out.chmod(0o600)
 print(json.dumps({'privateReview':str(out),'bytes':out.stat().st_size}))
