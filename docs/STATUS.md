@@ -24,7 +24,7 @@ The reviews are analytical agent assessments through the requested perspectives,
 
 下一步是讓用戶試操作介面並匯出集中意見，確認暫定規則，再導入經核實授權及時點的歷史資料。舊計劃的四星期屬條件式估算，不能當成此審閱版已完成所有原定驗收。
 
-按最新要求，全平台字體在保留層次下放大 30%，以同一 CSS 變數控制，並檢查桌面及兩種手機寬度。另新增 [Massive 私人下載及正規化工具](../scripts/marketdata/README.md)，具備安全認證、限速、分頁、續傳、校驗及資料品質封鎖；真實資料仍未取得，不能宣稱已完成市場 dry run。最新憑證檢查為 `has_saved_binding: false` 且執行環境沒有 `MASSIVE_API_KEY`；只記錄狀態，不記錄值。
+按最新要求，全平台字體在保留層次下放大 30%，以同一 CSS 變數控制，並檢查桌面及兩種手機寬度。另新增 [Massive 私人下載及正規化工具](../scripts/marketdata/README.md)，具備安全認證、限速、分頁、續傳、校驗及資料品質封鎖；2026-10-29 Publish 後已驗證 Massive 安全綁定及 API 成功，首批 12 隻股票已保存 413,381 筆分鐘行情。按最新授權，已啟動 2025-10-29 至 2026-10-28 的全年私人保存：12 隻核心及最多 50 隻分鐘線、全市場每日行情、12 隻逐日 reference。採每分鐘 8 次請求，保存仍在進行；尚未完成全年覆蓋檢查或真實市場 dry run。詳見下載工具 README。
 
 ## Publication and download status
 

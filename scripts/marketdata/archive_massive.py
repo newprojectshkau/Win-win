@@ -138,6 +138,8 @@ def main():
     archive=Archive(root,key,args.requests_per_minute,args.max_requests,args.max_bytes)
     report={'scope':'private licensed research archive; not a point-in-time IB universe or profitability validation','requestedStart':str(start),'requestedEnd':str(end),'primarySymbols':symbols,'completed':[],'limitations':[]}
     def progress(stage):
+        report['currentStage']=stage
+        write_report()
         print(json.dumps({'stage':stage,'networkRequests':archive.requests,'newRawBytes':archive.bytes}),flush=True)
     def write_report():
         report.update({'newRequests':archive.requests,'newRawBytes':archive.bytes,'lastUpdatedAt':dt.datetime.now(dt.timezone.utc).isoformat()})
@@ -149,27 +151,18 @@ def main():
         if args.probe_only:report['completed'].append('probe');return
         # Preserve the hard-to-recover minute series first, before subscription expiry.
         for symbol in symbols:
-            for _ in archive.pages(f'/v2/aggs/ticker/{symbol}/range/1/minute/{start}/{end}',{'adjusted':'true','sort':'asc','limit':50000}):pass
+            for page_number, _ in enumerate(archive.pages(f'/v2/aggs/ticker/{symbol}/range/1/minute/{start}/{end}',{'adjusted':'true','sort':'asc','limit':50000}),1):
+                progress(f'minutes_{symbol}_page_{page_number}')
             progress('minutes_'+symbol)
         report['completed'].append('primary_minutes');write_report()
         grouped={}
-        for day in weekdays(start,end):
-            try:grouped[str(day)]=archive.fetch(f'/v2/aggs/grouped/locale/us/market/stocks/{day}',{'adjusted':'true','include_otc':'false'})
-            except EntitlementError as e:report['limitations'].append('grouped_daily: '+str(e));break
-            progress('grouped_'+str(day))
-        report['completed'].append('grouped_daily_attempted');write_report()
-        # As-of reference snapshots are stored as provider claims, never invented historical caps.
-        reference_allowed=True
-        for symbol in symbols:
-            if not reference_allowed:break
-            for day,page in grouped.items():
-                if not any(row.get('T')==symbol for row in page.get('results',[])):continue
-                try:archive.fetch('/v3/reference/tickers/'+symbol,{'date':day})
-                except EntitlementError as e:
-                    report['limitations'].append('historical_reference: '+str(e));reference_allowed=False;break
-            progress('reference_'+symbol)
-        report['completed'].append('primary_reference_attempted');write_report()
-        # Broad daily market data is already cached. Use volume only to choose extra archives,
+        for day in list(weekdays(start,end))[-5:][::-1]:
+            try:
+                grouped[str(day)]=archive.fetch(f'/v2/aggs/grouped/locale/us/market/stocks/{day}',{'adjusted':'true','include_otc':'false'})
+            except EntitlementError as e:
+                report['limitations'].append('expansion_selection: '+str(e));break
+            if grouped[str(day)].get('results'):break
+        # A recent daily snapshot chooses extra archives before lengthy reference requests,
         # not to claim an unbiased historical stock selection or an IB stock universe.
         last=next((grouped[d] for d in sorted(grouped,reverse=True) if grouped[d].get('results')),None)
         if last:
@@ -181,6 +174,22 @@ def main():
                     for _ in archive.pages(f'/v2/aggs/ticker/{symbol}/range/1/minute/{start}/{end}',{'adjusted':'true','sort':'asc','limit':50000}):pass
                 except EntitlementError as e:report['limitations'].append('extra_minutes: '+str(e));break
                 progress('extra_minutes_'+symbol)
+        for day in reversed(list(weekdays(start,end))):
+            try:grouped[str(day)]=archive.fetch(f'/v2/aggs/grouped/locale/us/market/stocks/{day}',{'adjusted':'true','include_otc':'false'})
+            except EntitlementError as e:report['limitations'].append('grouped_daily: '+str(e));break
+            progress('grouped_'+str(day))
+        report['completed'].append('grouped_daily_attempted');write_report()
+        # As-of reference snapshots are stored as provider claims, never invented historical caps.
+        reference_allowed=True
+        for symbol in symbols:
+            if not reference_allowed:break
+            for day,page in sorted(grouped.items(),reverse=True):
+                if not any(row.get('T')==symbol for row in page.get('results',[])):continue
+                try:archive.fetch('/v3/reference/tickers/'+symbol,{'date':day})
+                except EntitlementError as e:
+                    report['limitations'].append('historical_reference: '+str(e));reference_allowed=False;break
+            progress('reference_'+symbol)
+        report['completed'].append('primary_reference_attempted');write_report()
         report['completed'].append('archive_pass')
     except (EntitlementError,StopArchive) as error:
         report['stoppedReason']=str(error);print('Stopped:',str(error),flush=True);return 3

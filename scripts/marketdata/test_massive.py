@@ -33,6 +33,20 @@ class ArchiveTests(unittest.TestCase):
             saved=next(Path(directory).glob('raw/*'))
             self.assertNotIn('fixture-secret',gzip.decompress(saved.read_bytes()).decode())
             with self.assertRaises(StopArchive):api.fetch('/different')
+    def test_all_pages_retained_for_long_range(self):
+        with tempfile.TemporaryDirectory() as directory:
+            api=Archive(directory,'fixture-secret',rpm=1e9)
+            class Pages:
+                def open(self,request,timeout):
+                    second='cursor=second' in request.full_url
+                    value={'ticker':'TEST','results':[{'t':2 if second else 1}]}
+                    if not second:value['next_url']='https://api.massive.com/series?cursor=second&apiKey=fixture-secret'
+                    return io.BytesIO(json.dumps(value).encode())
+            api.opener=Pages()
+            pages=list(api.pages('/series'))
+            self.assertEqual([p['results'][0]['t'] for p in pages],[1,2])
+            self.assertEqual(len(api.index),2)
+            self.assertNotIn('fixture-secret',api.manifest.read_text())
     def test_response_echoing_credential_is_not_saved(self):
         with tempfile.TemporaryDirectory() as directory:
             api=Archive(directory,'fixture-secret');api.opener=FakeOpener({'message':'fixture-secret'})
