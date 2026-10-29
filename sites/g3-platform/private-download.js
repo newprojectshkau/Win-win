@@ -1,6 +1,7 @@
 import {savePrivateDataset} from './dataset-store.js';
 import {validateDataset} from './engine.js';
 const status=document.getElementById('status'),download=document.getElementById('download'),useData=document.getElementById('use-data');
+window.addEventListener('hashchange',()=>location.reload());
 const encodedKey=location.hash.slice(1);
 // The fragment is never sent in HTTP requests. Remove it from the current history entry.
 history.replaceState(null,'',location.pathname+location.search);
