@@ -502,6 +502,7 @@ function render() {
         `<a href="#${key}" aria-label="${label}" class="${page === key ? "active" : ""}" ${page === key ? 'aria-current="page"' : ""}>${icon(key)}<span>${label}</span>${key === "assumptions" ? `<span class="nav-count">${ASSUMPTIONS.length - reviewed()}</span>` : ""}</a>`,
     )
     .join("");
+  $("#nav").insertAdjacentHTML("beforeend", '<a href="./simulator.html" aria-label="期間績效模擬"><span>期間績效模擬 ↗</span></a>');
   $("#page-crumb").textContent = PAGES[page];
   $("#main").innerHTML =
     `<div class="page">${{ overview, settings, results, replay, assumptions, compare }[page]()}</div>`;

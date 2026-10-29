@@ -81,3 +81,11 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 Massive 私人資料下載／重播工具見 [scripts/marketdata](../../scripts/marketdata/README.md)。Key 只用於安全環境內的 HTTPS 請求，不放進此公開前端；付費資料亦不自動發布到 Pages。實際訂閱下載及真實資料 dry run 仍取決於憑證綁定是否可用。
 
 瀏覽器互動測試：先開啟本地靜態伺服器，再執行 `python3 sites/g3-platform/tests/browser_check.py`（從 repo 根目錄）；需要 Playwright Python 及 `/usr/bin/chromium`。可用 `G3_BASE_URL` 指向實際審閱網址，`G3_TEST_ARTIFACTS` 設定測試截圖／匯出位置。測試使用隔離的瀏覽器儲存，不會提交任何留言。
+
+## 期間績效模擬
+
+`simulator.html` 新增多日向前滾動重播、成本拆解、累計美元損益、收市最大回撤、逐日篩選／開關、逐股貢獻及成交追溯。原有六頁審閱平台保持可用，頂部新增入口。
+
+公開版需要匯入私人 schema-v1 dataset，或明確選擇合成示例；不公開訂閱行情。私人預載版由 `scripts/marketdata/package_private_review.py` 生成，可離線開啟。資料與結果均可在瀏覽器內處理及匯出，沒有新增資料上傳服務。
+
+`performance.js` 使用原有引擎逐日計算，只傳入當日及之前的回看視窗。`tests/performance.test.js` 覆蓋手算成本、收市回撤、零成交及未來資料隔離。收市回撤並非日內最大回撤；未模擬賬戶資金／保證金，因此不顯示年化及本金收益百分比。

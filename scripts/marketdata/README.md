@@ -71,3 +71,19 @@ python3 -u scripts/marketdata/archive_massive.py --output /workspace/private/mar
 因觀察到 429，採每分鐘 8 次請求。上限為每次 6,000 次請求及 4 GiB 未壓縮回應；不是承諾已取得這個數量。全年多頁分鐘線優先於逐日市值。`manifest.jsonl` 記錄每頁 URL、時間及 SHA-256；`archive-status.json`、`download.log` 記錄進度及停止原因。API key 不會寫入這些檔案。
 
 此範圍不含全市場逐分鐘資料、逐筆成交、bid/ask、借券／可沽空狀態或完整歷史 IB 股票池；第一個月亦未包含足夠的範圍前 20 日熱身資料。已保存不等於已通過資料品質及策略驗收。訂閱到期後的保存及研究使用仍依供應商授權條款。應將私人資料另作備份，不依賴此暫存工作環境作唯一長期儲存。
+
+## 最近兩星期：固定三股私人績效審閱
+
+首版範圍為 NVDA、TSLA、AMD，10 個交易日（2026-10-15 至 2026-10-28），另保留 20 個前置完整交易日及最早一日前收市價來源。這是明確採用的研究子集，不是經績效優化或完整 IB 股票池。
+
+先暫停另一下載程序，避免多個程序同時寫入相同 manifest 或合計請求超過限速；補齊後接續全年保存。
+
+```sh
+python3 scripts/marketdata/fetch_window_references.py --archive /workspace/private/market-data/massive --output /workspace/private/market-data/recent-review.dataset.json --date 2026-10-28
+node scripts/marketdata/run_window_replay.mjs /workspace/private/market-data/recent-review.dataset.json /workspace/private/market-data/recent-review.results.json 2026-10-15 2026-10-28
+python3 scripts/marketdata/package_private_review.py --dataset /workspace/private/market-data/recent-review.dataset.json --output /workspace/private/market-data/Win-win-private-review.html
+```
+
+私人 HTML 內嵌資料、樣式及引擎，可下載後直接以瀏覽器開啟並調整參數，不依賴公開網站預載行情。檔案帶有訂閱資料，只供用戶私人保存與審閱。公開 `simulator.html` 只含介面、計算程式及合成示例入口。
+
+績效計算：每交易日獨立向前滾動 20 日篩選；每段平倉後累加美元損益；費前損益＝淨盈虧＋手續費＋滑點差額；盈利日比例以有成交日為分母，零成交為未定義；回撤從期初 0 至每個收市點計算。不年化、不宣稱資金回報率或日內最大回撤。

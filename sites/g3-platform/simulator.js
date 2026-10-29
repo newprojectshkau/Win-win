@@ -1,0 +1,77 @@
+import {DEFAULT_CONFIG,createDemoDataset,validateDataset,fingerprint} from './engine.js';
+import {runWindow} from './performance.js';
+const el=id=>document.getElementById(id);
+const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const usd=n=>`${n<0?'−':''}US$ ${format(Math.abs(n))}`;
+let data=null,result=null,busy=false;
+const table=(headers,rows)=>`<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+const row=items=>`<tr>${items.map(i=>`<td>${i}</td>`).join('')}</tr>`;
+function error(message){el('error').textContent=message;el('error').hidden=!message;}
+function installDataset(next){
+  validateDataset(next);
+  if(next.instruments[0].sessions.length<=DEFAULT_CONFIG.lookback)throw Error('資料需有至少 20 個前置交易日及 1 個測試日。');
+  data=next;result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
+  const dates=next.instruments[0].sessions.map(s=>s.date),first=Math.max(DEFAULT_CONFIG.lookback,dates.length-10);
+  for(const key of ['start','end']){el(key).min=dates[DEFAULT_CONFIG.lookback];el(key).max=dates.at(-1);}
+  el('start').value=dates[first];el('end').value=dates.at(-1);el('run').disabled=false;
+  el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
+  el('source').textContent=`${data.kind==='synthetic'?'合成示例，不是真實績效':'已載入真實行情研究檔（供應商聲明；未獨立驗證）'}｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
+}
+function currentConfig(){return {...DEFAULT_CONFIG,target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
+function curve(days){
+  const values=[0,...days.map(d=>d.cumulative)],width=1050,height=300,pad=70;
+  const lo=Math.min(0,...values),hi=Math.max(0,...values),span=hi-lo||1;
+  const x=i=>pad+i*(width-2*pad)/(values.length-1||1),y=v=>height-pad-(v-lo)*(height-2*pad)/span;
+  let lines='';for(let i=0;i<5;i++){const value=lo+(hi-lo)*i/4;lines+=`<line x1="${pad}" x2="${width-pad}" y1="${y(value)}" y2="${y(value)}" stroke="#dfd6ce"/><text x="${pad-10}" y="${y(value)+5}" text-anchor="end" font-size="15" fill="#786f66">${format(value,0)}</text>`;}
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每日收市累計淨盈虧圖；詳細數字見逐日結果表"><title>累計淨盈虧（美元）</title>${lines}<polyline fill="none" stroke="#b95b10" stroke-width="3" points="${values.map((v,i)=>`${x(i)},${y(v)}`).join(' ')}"/>${values.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="#b95b10"><title>${i?days[i-1].date:'期初'}：${usd(v)}</title></circle>`).join('')}<text x="${pad}" y="${height-20}" font-size="17" fill="#786f66">期初 0</text><text x="${width-pad}" y="${height-20}" text-anchor="end" font-size="17" fill="#786f66">${escapeHTML(days.at(-1).date)}</text></svg>`;
+}
+function renderResult(){
+  const s=result.summary;
+  const stats=[['淨盈虧',usd(s.net),'已扣手續費及滑點'],['費前損益',usd(s.grossBeforeCosts),'按參考價計算，未扣費用及滑點'],['模擬成本',usd(s.fees+s.slippage),`手續費 ${usd(s.fees)} · 滑點 ${usd(s.slippage)}`],['收市最大回撤',usd(s.maxCloseDrawdown),'只量度收市點；不是日內最大回撤'],['有成交的交易日',`${s.activeDays} / ${s.days}`,`${s.orders} 筆成交 · 淨持倉殘留 ${s.residual}`],['盈利日比例',s.winningDayRate===null?'沒有成交':format(s.winningDayRate*100,1)+'%',`${s.winningDays} 個盈利日／${s.activeDays} 個有成交日`]];
+  el('stats').innerHTML=stats.map(([label,value,detail])=>`<div class="sim-stat"><span>${label}</span><strong>${value}</strong><small>${detail}</small></div>`).join('');
+  el('run-label').textContent=`${result.startDate} → ${result.endDate} · ${result.data.kind==='synthetic'?'合成示例':'真實行情／暫定成交假設'} · ${result.data.symbols.join('、')} · 每股名義金額 ${usd(result.config.target)} · 手續費 ${usd(result.config.commission)}/筆 · 滑點 ${result.config.slippageBps} 基點 · 資料指紋 ${result.dataHash?.slice(0,12)||'未提供'}`;
+  el('curve').innerHTML=curve(result.days);
+  el('daily-table').innerHTML=table(['日期','費前損益','手續費','滑點','淨盈虧','累計淨盈虧','成交筆數','通過篩選'],result.days.map(d=>row([`<button class="button ghost small" data-date="${escapeHTML(d.date)}">${escapeHTML(d.date)}</button>`,usd(d.grossBeforeCosts),usd(d.fees),usd(d.slippage),usd(d.net),usd(d.cumulative),d.orders,`${d.eligible} / ${result.data.symbols.length}`])));
+  el('symbols').innerHTML=table(['股票','淨盈虧','手續費','成交筆數','有成交時段'],result.symbols.map(s=>row([escapeHTML(s.symbol),usd(s.net),usd(s.fees),s.fills,s.tradedSessions])));
+  el('detail-date').innerHTML=result.days.map(d=>`<option value="${d.date}">${d.date}</option>`).join('');
+  renderDetail();el('output').hidden=false;
+}
+function renderDetail(){
+  const r=result.runs.find(r=>r.data.date===el('detail-date').value);if(!r)return;
+  el('gates').textContent=`早市：${r.slots.AM.gate.reason}。午市：${r.slots.PM.gate.reason}。前日準備：${r.data.previousDate}。`;
+  const labels={cap:'市值',volume:'成交量',range:'波幅',price:'股價'};
+  el('screening').innerHTML=table(['股票','20 日平均成交量','20 日平均波幅','篩選結果'],r.screening.map(s=>row([escapeHTML(s.symbol),format(s.volume,0),format(s.range*100)+'%',s.pass?'通過':Object.entries(s.checks).filter(([,v])=>!v).map(([k])=>labels[k]).join('、')+'未通過'])));
+  const ny=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false});
+  const actions={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉／準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
+  el('fills').innerHTML=r.fills.length?table(['紐約時間','股票','時段','動作','方向','股數','參考價','成交價','費用'],r.fills.map(f=>row([ny.format(new Date(f.time)),escapeHTML(f.symbol),f.slot==='AM'?'早市':'午市',actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.fee)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
+}
+function download(name,value,type='application/json'){
+  const url=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function execute(event){
+  event?.preventDefault();if(!data||busy)return;
+  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#demo').forEach(e=>e.disabled=true);
+  try{
+    const config=currentConfig();
+    const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
+    next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
+  }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
+  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#demo').forEach(e=>e.disabled=false);}
+}
+el('config').addEventListener('submit',execute);
+el('config').addEventListener('input',()=>{if(result)el('dirty').hidden=false;});
+el('import').onclick=()=>{if(!busy)el('file').click();};
+el('file').onchange=async event=>{
+  const file=event.target.files[0];if(!file||busy)return;
+  try{if(file.size>40*1024**2)throw Error('檔案超過 40 MB');const next=JSON.parse(await file.text());if(next.kind!=='imported')throw Error('私人行情資料須標記 kind＝imported');installDataset(next);}catch(e){error('匯入失敗：'+e.message+'；原有資料及結果保留。');}finally{event.target.value='';}
+};
+el('demo').onclick=()=>{if(!busy)installDataset(createDemoDataset());};
+el('detail-date').onchange=renderDetail;
+el('daily-table').onclick=event=>{const button=event.target.closest('[data-date]');if(button){el('detail-date').value=button.dataset.date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}};
+el('export-json').onclick=()=>download(`winwin-performance-${result.startDate}-${result.endDate}.json`,result);
+el('export-csv').onclick=()=>{const keys=['date','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','AM','PM'];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
+el('print').onclick=()=>window.print();
+const preload=document.getElementById('private-dataset');
+if(preload){try{installDataset(JSON.parse(preload.textContent));execute();}catch(e){error(e.message);}}
+else{el('source').textContent='尚未載入真實行情。匯入私人資料 JSON，或按「試用合成示例」檢查介面。';el('scope').textContent='等待資料';}

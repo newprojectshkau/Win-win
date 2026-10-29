@@ -45,3 +45,12 @@ The downloadable briefing and source-review documents are separate from the host
 Earlier validation confirmed Python 3.12, a successful local HTTP response for the original static website, and offline reproduction of all 20 saved symbol/session RR results and event logs. This was a check of the existing assumed research model, not the proposed v3 simulator. The G3 HTML was separately checked in Chromium for four document sections, internal navigation, tables, mobile width and print rendering. The PDF was checked for all four document titles.
 
 The research/export checks above were recorded during the earlier preparation work. The latest interface change passed the existing browser interaction suite, plus layout checks for six pages at 390px and 320px. It does not constitute a new historical-data or execution-realism validation. Strategy parameters and historical research outputs were not changed.
+
+
+## 多日績效模擬（2026-10-29）
+
+新增 `simulator.html` 期間績效頁，沿用原有五階段引擎、20 個前置交易日及暫定成交規則。支援累計美元損益、費用與滑點拆解、收市最大回撤、逐日／逐股結果、篩選及開關原因、成交明細及 JSON／CSV 匯出。回撤僅按收市點計算；未實作賬戶保證金限制，不顯示本金回報率或年化績效。
+
+公開版不預載訂閱行情，提供私人 JSON 匯入及明確標示的合成示例。私人單檔 HTML 內嵌資料與引擎，可離線審閱。首個真實資料範圍預定為 NVDA、TSLA、AMD 的 2026-10-15 至 2026-10-28，固定三股子集不等於完整歷史股票池。
+
+20 項 Node 測試及 6 項資料適配器測試通過。瀏覽器驗證原有六頁、新績效頁、設定重算、逐日切換、匯入拒絕保留舊結果、JSON／CSV 匯出及 390／320px 排版。離線打包測試確認無網絡請求，載入後可自動重播。
