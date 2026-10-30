@@ -30,11 +30,18 @@ function installDataset(next){
 }
 function currentConfig(){return {...DEFAULT_CONFIG,execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
-  const values=[0,...days.map(d=>d.cumulative)],width=1050,height=300,pad=70;
-  const lo=Math.min(0,...values),hi=Math.max(0,...values),span=hi-lo||1;
+  const values=[0,...days.map(d=>d.cumulative)],width=1050,height=380,pad=80;
+  // Both series share one USD scale and the same zero baseline.
+  const minValue=Math.min(0,...values,...days.map(d=>d.net)),maxValue=Math.max(0,...values,...days.map(d=>d.net));
+  const flat=minValue===0&&maxValue===0,lo=flat?-1:minValue,hi=flat?1:maxValue,span=hi-lo;
   const x=i=>pad+i*(width-2*pad)/(values.length-1||1),y=v=>height-pad-(v-lo)*(height-2*pad)/span;
-  let lines='';for(let i=0;i<5;i++){const value=lo+(hi-lo)*i/4;lines+=`<line x1="${pad}" x2="${width-pad}" y1="${y(value)}" y2="${y(value)}" stroke="#dfd6ce"/><text x="${pad-10}" y="${y(value)+5}" text-anchor="end" font-size="15" fill="#786f66">${format(value,0)}</text>`;}
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每日收市累計淨盈虧圖；詳細數字見逐日結果表"><title>累計淨盈虧（美元）</title>${lines}<polyline fill="none" stroke="#b95b10" stroke-width="3" points="${values.map((v,i)=>`${x(i)},${y(v)}`).join(' ')}"/>${values.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="#b95b10"><title>${i?days[i-1].date:'期初'}：${usd(v)}</title></circle>`).join('')}<text x="${pad}" y="${height-20}" font-size="17" fill="#786f66">期初 0</text><text x="${width-pad}" y="${height-20}" text-anchor="end" font-size="17" fill="#786f66">${escapeHTML(days.at(-1).date)}</text></svg>`;
+  const barWidth=Math.min(24,(width-2*pad)/Math.max(days.length,1)*0.65);
+  let lines='';for(let i=0;i<5;i++){const value=lo+(hi-lo)*i/4;lines+=`<line x1="${pad}" x2="${width-pad}" y1="${y(value)}" y2="${y(value)}" stroke="#dfd6ce"/><text x="${pad-10}" y="${y(value)+5}" text-anchor="end" font-size="15" fill="#786f66">${format(value,span<4?1:0)}</text>`;}
+  const bars=days.map((d,i)=>{
+    const label=`${d.date}：當日淨盈虧 ${usd(d.net)}；累計 ${usd(d.cumulative)}；缺資料阻擋 ${d.blockedSlots||0} 段`;
+    return `<g class="daily-pnl-bar" tabindex="0" role="img" aria-label="${escapeHTML(label)}"><title>${escapeHTML(label)}</title><rect data-date="${d.date}" data-net="${d.net}" x="${x(i+1)-barWidth/2}" y="${Math.min(y(0),y(d.net))}" width="${barWidth}" height="${Math.abs(y(d.net)-y(0))}" fill="${d.net>=0?'#246b9c':'#76509c'}" fill-opacity="0.65" stroke="${d.net>=0?'#246b9c':'#76509c'}"/>${d.net===0?`<line x1="${x(i+1)-barWidth/2}" x2="${x(i+1)+barWidth/2}" y1="${y(0)}" y2="${y(0)}" stroke="#526273"/>`:''}</g>`;
+  }).join('');
+  return `<div class="chart-legend pnl-legend"><span><svg width="32" height="12" aria-hidden="true"><line x1="0" x2="32" y1="6" y2="6" stroke="#b95b10" stroke-width="3"/></svg>累計淨盈虧（橙線）</span><span><b style="color:#246b9c">▮</b>當日盈利（零線上方）</span><span><b style="color:#76509c">▮</b>當日虧損（零線下方）</span></div><svg class="pnl-combo" viewBox="0 0 ${width} ${height}" role="img" aria-label="每日淨盈虧柱及累計淨盈虧線；共用美元尺度，詳細數字見逐日結果表"><title>每日及累計淨盈虧（美元）</title>${lines}<line x1="${pad}" x2="${width-pad+barWidth}" y1="${y(0)}" y2="${y(0)}" stroke="#80766b" stroke-width="1.5"/><text x="${width-pad+barWidth+5}" y="${y(0)+5}" font-size="15" fill="#786f66">0</text>${bars}<polyline fill="none" stroke="#b95b10" stroke-width="3" points="${values.map((v,i)=>`${x(i)},${y(v)}`).join(' ')}"/>${values.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="#b95b10"><title>${i?days[i-1].date:'期初'}：累計 ${usd(v)}</title></circle>`).join('')}<text x="${pad}" y="${height-20}" font-size="17" fill="#786f66">期初 0</text><text x="${width-pad}" y="${height-20}" text-anchor="end" font-size="17" fill="#786f66">${escapeHTML(days.at(-1).date)}</text></svg>`;
 }
 function renderResult(){
   const s=result.summary;

@@ -20,3 +20,5 @@ html[data-presentation=numbers] .audit-facts>div{animation:none}
 @media(max-width:760px){.day-chart-values{grid-template-columns:repeat(2,minmax(0,1fr))}.day-chart-values strong{font-size:1rem;overflow-wrap:anywhere}.day-chart-grid{grid-template-columns:1fr}.day-chart-grid article:first-child{grid-column:auto}#visual-analysis .panel-body{padding:18px}}
 @media print{.chart-actions,.chart-checks,.chart-controls,#metric-controls{display:none!important}.chart-scroll{overflow:visible}.chart-scroll svg,.chart-plot .chart-scroll svg{min-width:0;max-width:100%}.chart-plot,.day-chart-grid article{break-inside:avoid}.day-chart-grid{display:block}.chart-legend{font-size:10pt}}
 .day-chart-grid article{min-width:0}@media(max-width:760px){.day-chart-grid{grid-template-columns:minmax(0,1fr)}}
+
+#curve .pnl-legend svg,.animated-curve .pnl-legend svg{width:32px;height:12px;min-height:0;display:inline-block}.daily-pnl-bar:focus rect{stroke-width:3}.pnl-legend{margin:12px 0}
