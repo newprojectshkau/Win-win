@@ -1,3 +1,4 @@
+import {initCharts} from './charts.js?v=20261030-charts';
 import {initPresentation} from './presentation.js?v=20261030-ledger';
 import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261030-ledger';
 import {DEFAULT_CONFIG,validateDataset,fingerprint,stockName} from './engine.js?v=20261030-ledger';
@@ -45,7 +46,7 @@ function renderResult(){
   el('daily-table').innerHTML=table(['日期','成交總額（買＋賣）','實際成交股票','費前損益','手續費','滑點','淨盈虧','累計淨盈虧','成交筆數','通過篩選','資料不足／阻擋時段'],result.days.map(d=>row([`<button class="button ghost small" data-date="${escapeHTML(d.date)}">${escapeHTML(d.date)}</button>`,usd(d.turnover),d.tradedStocks,usd(d.grossBeforeCosts),usd(d.fees),usd(d.slippage),usd(d.net),usd(d.cumulative),d.orders,`${d.eligible} / ${result.data.symbols.length}`,`${d.unassessed||0} / ${d.blockedSlots||0}`])));
   el('symbols').innerHTML=table(['股票／全名','成交總額','淨盈虧','手續費','成交筆數','有成交時段'],result.symbols.map(s=>row([stockLabel(s.symbol),usd(s.turnover),usd(s.net),usd(s.fees),s.fills,s.tradedSessions])));
   el('detail-date').innerHTML=result.days.map(d=>`<option value="${d.date}">${d.date}</option>`).join('');
-  renderDetail();el('output').hidden=false;presentation.refresh();
+  renderDetail();el('output').hidden=false;presentation.refresh();charts.refresh();
 }
 function renderDetail(){
   const r=result.runs.find(r=>r.data.date===el('detail-date').value);if(!r)return;
@@ -57,20 +58,20 @@ function renderDetail(){
   const actions={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉／準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
   const transactions=(el('transaction-scope').value==='all'?result.runs:[r]).flatMap(run=>run.fills.map(f=>({date:run.data.date,...f})));
   el('fills').innerHTML=transactions.length?table(['交易日','紐約時間','股票／全名','時段','動作','方向','股數','參考價','成交價','成交金額','本筆佣金','已實現價差損益','本筆淨損益貢獻'],transactions.map(f=>row([escapeHTML(f.date),ny.format(new Date(f.time)),stockLabel(f.symbol),f.slot==='AM'?'早市':'午市',actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.amount),usd(f.fee),usd(f.realizedGross),usd(f.netContribution)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
-  presentation.refreshDetail();
+  presentation.refreshDetail();charts.selectDate(r.data.date);
 }
 function download(name,value,type='application/json'){
   const url=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 async function execute(event){
   event?.preventDefault();if(!data||busy)return;
-  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library').forEach(e=>e.disabled=true);
+  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version').forEach(e=>e.disabled=true);
   try{
     const config=currentConfig();
     const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
     next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
   }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
-  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library').forEach(e=>e.disabled=false);}
+  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version').forEach(e=>e.disabled=false);}
 }
 el('config').addEventListener('submit',execute);
 el('config').addEventListener('input',()=>{if(result)el('dirty').hidden=false;});
@@ -122,4 +123,5 @@ async function initialize(){
  }catch(e){error('未能載入已保存資料：'+e.message+'。請重新匯入私人 JSON。');el('source').textContent='等待匯入真實歷史資料。';}
 }
 const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,money:usd,format,escapeHTML,onSelectDate:date=>{el('detail-date').value=date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}});
+const charts=initCharts({getResult:()=>result,escapeHTML,format,money:usd,onSelectDate:(date,scroll)=>{el('detail-date').value=date;renderDetail();if(scroll)el('details').scrollIntoView({behavior:'smooth'});}});
 initialize();

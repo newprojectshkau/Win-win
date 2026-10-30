@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p _site
-          cp sites/g3-platform/index.html sites/g3-platform/review.html sites/g3-platform/dataset-store.js sites/g3-platform/styles.css sites/g3-platform/app.js sites/g3-platform/engine.js sites/g3-platform/assumptions.js sites/g3-platform/performance.js sites/g3-platform/simulator.html sites/g3-platform/simulator.css sites/g3-platform/simulator.js sites/g3-platform/private-download.html sites/g3-platform/private-download.js sites/g3-platform/market-expanded-30days.enc sites/g3-platform/market-review.enc sites/g3-platform/market-aapl-history.enc sites/g3-platform/presentation.js sites/g3-platform/quality-audit.js _site/
+          cp sites/g3-platform/index.html sites/g3-platform/review.html sites/g3-platform/dataset-store.js sites/g3-platform/styles.css sites/g3-platform/app.js sites/g3-platform/engine.js sites/g3-platform/assumptions.js sites/g3-platform/performance.js sites/g3-platform/simulator.html sites/g3-platform/simulator.css sites/g3-platform/simulator.js sites/g3-platform/private-download.html sites/g3-platform/private-download.js sites/g3-platform/market-expanded-30days.enc sites/g3-platform/market-review.enc sites/g3-platform/market-aapl-history.enc sites/g3-platform/charts.js sites/g3-platform/presentation.js sites/g3-platform/quality-audit.js _site/
           python3 - <<'PY'
           import json, os
           from pathlib import Path

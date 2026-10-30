@@ -12,7 +12,7 @@ html=(site/'simulator.html').read_text()
 for name in ['styles.css','simulator.css']:
  html=re.sub(r'<link rel="stylesheet" href="\./'+re.escape(name)+r'[^"\n]*">',lambda _: '<style>'+(site/name).read_text()+'</style>',html)
 modules=[]
-for name in ['engine.js','performance.js','dataset-store.js','quality-audit.js','presentation.js','simulator.js']:
+for name in ['engine.js','performance.js','dataset-store.js','quality-audit.js','charts.js','presentation.js','simulator.js']:
  source=(site/name).read_text()
  source=re.sub(r'^import .*?;\s*','',source,flags=re.M)
  source=re.sub(r'^export ', '',source,flags=re.M)
