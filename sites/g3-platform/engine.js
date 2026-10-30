@@ -1,4 +1,7 @@
-export const ENGINE_VERSION = "0.2.0-review";
+export const ENGINE_VERSION = "0.2.1-review";
+// Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
+export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
+export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
 export const DEFAULT_CONFIG = Object.freeze({
   execution: "signal_close",
   lookback: 20,
@@ -197,6 +200,7 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
     cash = 0,
     fees = 0,
     maxExposure = 0;
+  let entryPrice = 0, realizedNet = 0;
   const fills = [],
     transitions = [],
     holdEvents = [];
@@ -206,6 +210,12 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
       Math.round(reference * (1 + (side * config.slippageBps) / 10000) * UNIT) /
       UNIT;
     const fee = config.commission;
+    const closedQuantity = position && Math.sign(position) !== side ? Math.min(qty, Math.abs(position)) : 0;
+    const realizedGross = closedQuantity ? closedQuantity * (px - entryPrice) * Math.sign(position) : 0;
+    const netContribution = realizedGross - fee;
+    realizedNet += netContribution;
+    if (!position || Math.sign(position) === side) entryPrice = (Math.abs(position)*entryPrice + qty*px)/(Math.abs(position)+qty);
+    else if(qty > Math.abs(position)) entryPrice = px;
     cash -= side * qty * px + fee;
     fees += fee;
     position += side * qty;
@@ -217,6 +227,12 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
       action,
       side: side === 1 ? "buy" : "sell",
       quantity: qty,
+      name: stockName(symbol),
+      amount: qty * px,
+      closedQuantity,
+      realizedGross,
+      netContribution,
+      cumulativeRealizedNet: realizedNet,
       reference: bar.close,
       price: px,
       fee,
@@ -461,6 +477,7 @@ export function replayValidated(dataset, config) {
     };
     return {
       symbol: instrument.symbol,
+      missingDailyDays: history.filter(s=>!s.daily || !(s.previousClose>0)).length,
       knownCaps,
       capBasis: knownCaps === history.length ? "exact_average" : "nonnegative_lower_bound",
       dataIncomplete: !dailyComplete || (knownCaps < history.length && cap <= config.capMin),

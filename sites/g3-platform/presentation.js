@@ -1,4 +1,5 @@
-import {DATA_AUDIT} from './quality-audit.js';
+import {stockName} from './engine.js?v=20261030-ledger';
+import {DATA_AUDIT} from './quality-audit.js?v=20261030-ledger';
 export function initPresentation({getResult,getDataset,money,format,escapeHTML:esc,onSelectDate}){
  let mode='numbers',paused=matchMedia('(prefers-reduced-motion: reduce)').matches,timer=null,step=0;
  const $=id=>document.getElementById(id);
@@ -37,7 +38,7 @@ export function initPresentation({getResult,getDataset,money,format,escapeHTML:e
   $('audit-match').textContent=r.dataHash===DATA_AUDIT.dataHash?'目前資料指紋與核對版本一致':'此資料版本不在本次外部核對範圍';
   const s=r.summary;
   $('motion-performance').innerHTML=`<h3>成本如何影響結果</h3><p>同一美元尺度；費用及滑點以下扣項顯示。淨盈虧＝費前損益－兩項成本。</p>${signedBars([{label:'費前損益',value:s.grossBeforeCosts},{label:'手續費（扣項）',value:-s.fees},{label:'滑點（扣項）',value:-s.slippage},{label:'淨盈虧',value:s.net}])}<div class="process-flow"><div><strong>${s.activeDays} / ${s.days}</strong><span>有成交交易日</span></div><div><strong>${s.winningDays} / ${s.activeDays}</strong><span>盈利日／有成交日</span></div><div><strong>${money(s.maxCloseDrawdown)}</strong><span>收市最大回撤</span></div></div><h3>累計收市淨盈虧</h3><div class="animated-curve">${$('curve').innerHTML}</div>`;
-  $('motion-daily').innerHTML='<p>每天一列，長度按淨盈虧；沒有成交以 0 保留。點選日期查看原因。</p>'+signedBars(r.days.map(d=>({label:d.date,value:d.net,date:d.date})),{clickable:true});
+  $('motion-daily').innerHTML='<h3>每日淨盈虧</h3><p>每天一列，長度按淨盈虧；沒有成交以 0 保留。點選日期查看原因。</p>'+signedBars(r.days.map(d=>({label:d.date,value:d.net,date:d.date})),{clickable:true})+'<h3>每日成交總額（買＋賣，US$）</h3>'+signedBars(r.days.map(d=>({label:d.date,value:d.turnover,date:d.date})),{clickable:true});
   $('motion-symbol-section').innerHTML='<p>同一美元尺度，顏色和方向均區分正負值。</p>'+signedBars(r.symbols.map(x=>({label:x.symbol,value:x.net})));
   $('review-performance').textContent=`本次：費前 ${money(s.grossBeforeCosts)}，總成本 ${money(s.fees+s.slippage)}，淨額 ${money(s.net)}。這是成本後結果，不是本金回報率。`;
   $('review-daily').textContent=`本次 ${s.days} 日中，${s.activeDays} 日有成交，${s.winningDays} 日成本後盈利。`;
@@ -53,7 +54,7 @@ export function initPresentation({getResult,getDataset,money,format,escapeHTML:e
    if(!f){$('fill-card').textContent='此日沒有成交；請檢視上方篩選及交易開關。';return;}
    const time=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(f.time));
    const action={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
-   $('fill-card').innerHTML=`<div class="fill-motion-card"><span>${step+1} / ${run.fills.length} 筆 · 紐約 ${time}</span><h3>${esc(f.symbol)} · ${action[f.action]||esc(f.action)}</h3><div class="process-flow"><div><strong>${f.side==='buy'?'買入':'賣出'} ${f.quantity} 股</strong><span>模擬成交 ${money(f.price)}</span></div><b>→</b><div><strong>持倉 ${f.position} 股</strong><span>此筆費用 ${money(f.fee)}</span></div></div></div>`;
+   $('fill-card').innerHTML=`<div class="fill-motion-card"><span>${step+1} / ${run.fills.length} 筆 · 紐約 ${time}</span><h3>${esc(f.symbol)} · ${esc(stockName(f.symbol))} · ${action[f.action]||esc(f.action)}</h3><div class="process-flow"><div><strong>${f.side==='buy'?'買入':'賣出'} ${f.quantity} 股</strong><span>模擬成交 ${money(f.price)}；成交金額 ${money(f.amount)}</span></div><b>→</b><div><strong>持倉 ${f.position} 股</strong><span>此筆佣金 ${money(f.fee)}；淨損益貢獻 ${money(f.netContribution)}</span></div></div></div>`;
   };
   $('fill-step').oninput=()=>{stop();step=Number($('fill-step').value);show();};
   $('fill-play').onclick=()=>{

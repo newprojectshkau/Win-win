@@ -1,5 +1,5 @@
-import {savePrivateDataset} from './dataset-store.js';
-import {validateDataset} from './engine.js';
+import {savePrivateDataset} from './dataset-store.js?v=20261030-ledger';
+import {validateDataset} from './engine.js?v=20261030-ledger';
 const status=document.getElementById('status'),download=document.getElementById('download'),useData=document.getElementById('use-data');
 window.addEventListener('hashchange',()=>location.reload());
 const encodedKey=location.hash.slice(1);

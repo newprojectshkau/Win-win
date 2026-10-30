@@ -1,10 +1,11 @@
-import {initPresentation} from './presentation.js';
-import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js';
-import {DEFAULT_CONFIG,validateDataset,fingerprint} from './engine.js';
-import {runWindow} from './performance.js';
+import {initPresentation} from './presentation.js?v=20261030-ledger';
+import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261030-ledger';
+import {DEFAULT_CONFIG,validateDataset,fingerprint,stockName} from './engine.js?v=20261030-ledger';
+import {runWindow} from './performance.js?v=20261030-ledger';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const stockLabel=s=>`${escapeHTML(s)}<small class="stock-full-name">${escapeHTML(stockName(s))}</small>`;
 const usd=n=>`${n<0?'−':''}US$ ${format(Math.abs(n))}`;
 let data=null,result=null,busy=false;
 const table=(headers,rows)=>`<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
@@ -36,13 +37,13 @@ function curve(days){
 }
 function renderResult(){
   const s=result.summary;
-  const stats=[['淨盈虧',usd(s.net),'已扣手續費及滑點'],['費前損益',usd(s.grossBeforeCosts),'按參考價計算，未扣費用及滑點'],['模擬成本',usd(s.fees+s.slippage),`手續費 ${usd(s.fees)} · 滑點 ${usd(s.slippage)}`],['收市最大回撤',usd(s.maxCloseDrawdown),'只量度收市點；不是日內最大回撤'],['有成交的交易日',`${s.activeDays} / ${s.days}`,`${s.orders} 筆成交 · 淨持倉殘留 ${s.residual}`],['盈利日比例',s.winningDayRate===null?'沒有成交':format(s.winningDayRate*100,1)+'%',`${s.winningDays} 個盈利日／${s.activeDays} 個有成交日`]];
+  const stats=[['總成交額',usd(s.turnover),'所有買入及賣出金額之和；不等於投入本金'],['實際成交股票',`${s.tradedStocks} 隻`,'期間去重；每時段最多 10 隻候選'],['淨盈虧',usd(s.net),'已扣手續費及滑點'],['費前損益',usd(s.grossBeforeCosts),'按參考價計算，未扣費用及滑點'],['模擬成本',usd(s.fees+s.slippage),`手續費 ${usd(s.fees)} · 滑點 ${usd(s.slippage)}`],['收市最大回撤',usd(s.maxCloseDrawdown),'只量度收市點；不是日內最大回撤'],['有成交的交易日',`${s.activeDays} / ${s.days}`,`${s.orders} 筆成交 · 淨持倉殘留 ${s.residual}`],['盈利日比例',s.winningDayRate===null?'沒有成交':format(s.winningDayRate*100,1)+'%',`${s.winningDays} 個盈利日／${s.activeDays} 個有成交日`]];
   el('stats').innerHTML=stats.map(([label,value,detail])=>`<div class="sim-stat"><span>${label}</span><strong>${value}</strong><small>${detail}</small></div>`).join('');
   el('run-label').textContent=`${result.startDate} → ${result.endDate} · 真實行情／暫定成交假設 · ${result.data.symbols.join('、')} · 每股名義金額 ${usd(result.config.target)} · 手續費 ${usd(result.config.commission)}/筆 · 滑點 ${result.config.slippageBps} 基點 · 資料指紋 ${result.dataHash?.slice(0,12)||'未提供'}`;
   el('run-coverage').textContent=`資料不足的股票／日合計 ${s.unassessedStockDays||0}；因缺分鐘而整段停止 ${s.blockedSlots||0} 次。這些並非策略主動不交易；盈虧不代表完整 IB 股票池。成交模式：${result.config.execution==='next_open'?'訊號後下一分鐘開市價':'同訊號分鐘收市價（舊版比較）'}；時段尾仍按最後分鐘收市價強制平倉。`;
   el('curve').innerHTML=curve(result.days);
-  el('daily-table').innerHTML=table(['日期','費前損益','手續費','滑點','淨盈虧','累計淨盈虧','成交筆數','通過篩選','資料不足／阻擋時段'],result.days.map(d=>row([`<button class="button ghost small" data-date="${escapeHTML(d.date)}">${escapeHTML(d.date)}</button>`,usd(d.grossBeforeCosts),usd(d.fees),usd(d.slippage),usd(d.net),usd(d.cumulative),d.orders,`${d.eligible} / ${result.data.symbols.length}`,`${d.unassessed||0} / ${d.blockedSlots||0}`])));
-  el('symbols').innerHTML=table(['股票','淨盈虧','手續費','成交筆數','有成交時段'],result.symbols.map(s=>row([escapeHTML(s.symbol),usd(s.net),usd(s.fees),s.fills,s.tradedSessions])));
+  el('daily-table').innerHTML=table(['日期','成交總額（買＋賣）','實際成交股票','費前損益','手續費','滑點','淨盈虧','累計淨盈虧','成交筆數','通過篩選','資料不足／阻擋時段'],result.days.map(d=>row([`<button class="button ghost small" data-date="${escapeHTML(d.date)}">${escapeHTML(d.date)}</button>`,usd(d.turnover),d.tradedStocks,usd(d.grossBeforeCosts),usd(d.fees),usd(d.slippage),usd(d.net),usd(d.cumulative),d.orders,`${d.eligible} / ${result.data.symbols.length}`,`${d.unassessed||0} / ${d.blockedSlots||0}`])));
+  el('symbols').innerHTML=table(['股票／全名','成交總額','淨盈虧','手續費','成交筆數','有成交時段'],result.symbols.map(s=>row([stockLabel(s.symbol),usd(s.turnover),usd(s.net),usd(s.fees),s.fills,s.tradedSessions])));
   el('detail-date').innerHTML=result.days.map(d=>`<option value="${d.date}">${d.date}</option>`).join('');
   renderDetail();el('output').hidden=false;presentation.refresh();
 }
@@ -50,11 +51,12 @@ function renderDetail(){
   const r=result.runs.find(r=>r.data.date===el('detail-date').value);if(!r)return;
   el('gates').textContent=`早市：${r.slots.AM.gate.reason}。午市：${r.slots.PM.gate.reason}。前日準備：${r.data.previousDate}。`;
   const labels={cap:'市值',volume:'成交量',range:'波幅',price:'股價'};
-  el('screening').innerHTML=table(['股票','20 日市值／下限','20 日平均成交量','20 日平均波幅','篩選結果'],r.screening.map(s=>row([escapeHTML(s.symbol),`${usd(s.cap)}${s.capBasis==='nonnegative_lower_bound'?`（下限；${s.knownCaps}/20 日）`:'（平均）'}`,format(s.volume,0),format(s.range*100)+'%',s.dataIncomplete?'資料不足，不能判定':s.pass?'通過':Object.entries(s.checks).filter(([,v])=>!v).map(([k])=>labels[k]).join('、')+'未通過'])));
+  el('screening').innerHTML=table(['股票','20 日市值／下限','20 日平均成交量','20 日平均波幅','篩選結果'],r.screening.map(s=>row([stockLabel(s.symbol),`${usd(s.cap)}${s.capBasis==='nonnegative_lower_bound'?`（下限；${s.knownCaps}/20 日）`:'（平均）'}`,format(s.volume,0),format(s.range*100)+'%',s.dataIncomplete?`資料不足：${s.missingDailyDays?`缺 ${s.missingDailyDays} 日日線／前收市；`:''}${s.knownCaps<20&&s.cap<=result.config.capMin?`市值僅 ${s.knownCaps}/20 日，下限不足以證明門檻`:''}`:s.pass?'通過':Object.entries(s.checks).filter(([,v])=>!v).map(([k])=>labels[k]).join('、')+'未通過'])));
   el('decision').innerHTML=table(['時段','前日 B / R','當日觀察 B / R','前日選股及配注'],Object.entries(r.slots).map(([key,s])=>row([key==='AM'?'早市':'午市',`${s.previous.B} / ${s.previous.R}`,`${s.current.B} / ${s.current.R}`,s.selected.map(v=>`${escapeHTML(v.symbol)}：${v.quantity} 股`).join('；')||'沒有候選'])));
   const ny=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false});
   const actions={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉／準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
-  el('fills').innerHTML=r.fills.length?table(['紐約時間','股票','時段','動作','方向','股數','參考價','成交價','費用'],r.fills.map(f=>row([ny.format(new Date(f.time)),escapeHTML(f.symbol),f.slot==='AM'?'早市':'午市',actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.fee)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
+  const transactions=(el('transaction-scope').value==='all'?result.runs:[r]).flatMap(run=>run.fills.map(f=>({date:run.data.date,...f})));
+  el('fills').innerHTML=transactions.length?table(['交易日','紐約時間','股票／全名','時段','動作','方向','股數','參考價','成交價','成交金額','本筆佣金','已實現價差損益','本筆淨損益貢獻'],transactions.map(f=>row([escapeHTML(f.date),ny.format(new Date(f.time)),stockLabel(f.symbol),f.slot==='AM'?'早市':'午市',actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.amount),usd(f.fee),usd(f.realizedGross),usd(f.netContribution)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
   presentation.refreshDetail();
 }
 function download(name,value,type='application/json'){
@@ -79,9 +81,17 @@ el('file').onchange=async event=>{
 };
 
 el('detail-date').onchange=renderDetail;
+el('transaction-scope').onchange=renderDetail;
 el('daily-table').onclick=event=>{const button=event.target.closest('[data-date]');if(button){el('detail-date').value=button.dataset.date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}};
 el('export-json').onclick=()=>download(`winwin-performance-${result.startDate}-${result.endDate}.json`,result);
-el('export-csv').onclick=()=>{const keys=['date','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','unassessed','blockedSlots','AM','PM'];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
+el('export-csv').onclick=()=>{const keys=['date','turnover','tradedStocks','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','unassessed','blockedSlots','AM','PM'];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
+el('export-fills').onclick=()=>{
+ const keys=['date','time','symbol','name','slot','action','side','quantity','reference','price','amount','fee','closedQuantity','realizedGross','netContribution','position'];
+ const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const records=result.runs.flatMap(r=>r.fills.map(f=>({date:r.data.date,...f})));
+ download('winwin-all-transactions.csv','\ufeff'+[keys.join(','),...records.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n'),'text/csv;charset=utf-8');
+};
+el('full-range').onclick=()=>{if(!data||busy)return;el('period-mode').value='range';el('start').value=el('start').min;el('end').value=el('end').max;syncDates();if(result)el('dirty').hidden=false;};
 el('print').onclick=()=>window.print();
 function syncDates(){
   const single=el('period-mode').value==='single';

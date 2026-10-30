@@ -13,3 +13,5 @@ html[data-presentation=numbers] .audit-facts>div{animation:none}
 #dataset-library,#dataset-choice{display:block;width:100%;max-width:100%;padding:14px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit}
 
 .presentation-toolbar button[aria-pressed="true"],.presentation-toolbar button[aria-pressed="true"]:hover,.presentation-toolbar button[aria-pressed="true"]:focus-visible{background:#b95b10;color:#fff;border-color:#b95b10}
+
+.stock-full-name{display:block;max-width:240px;min-width:150px;white-space:normal;color:var(--muted);font-size:.8em;line-height:1.5;margin-top:5px}
