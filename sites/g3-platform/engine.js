@@ -1,5 +1,6 @@
-export const ENGINE_VERSION = "0.1.0-review";
+export const ENGINE_VERSION = "0.2.0-review";
 export const DEFAULT_CONFIG = Object.freeze({
+  execution: "signal_close",
   lookback: 20,
   capMin: 2000000000,
   volumeMin: 10000000,
@@ -78,6 +79,7 @@ export function validateConfig(c) {
     typeof c.gateEnabled !== "boolean"
   )
     throw Error("模式或規則選項無效");
+  if (!["signal_close", "next_open"].includes(c.execution ?? "signal_close")) throw Error("成交模式無效");
   return c;
 }
 export function countEvents(
@@ -199,8 +201,9 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
     transitions = [],
     holdEvents = [];
   function fill(side, qty, bar, action) {
+    const reference = bar.close;
     const px =
-      Math.round(bar.close * (1 + (side * config.slippageBps) / 10000) * UNIT) /
+      Math.round(reference * (1 + (side * config.slippageBps) / 10000) * UNIT) /
       UNIT;
     const fee = config.commission;
     cash -= side * qty * px + fee;
@@ -225,7 +228,11 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
     return f;
   }
   for (const e of counted.events) {
-    const bar = { close: e.price, availableAt: e.time };
+    // The signal is known only at the completed minute's availableAt.
+    // Execute at the following minute open; never use that minute's close/high/low.
+    const next = config.execution === "next_open" ? bars.find(b => b.time === e.time || Date.parse(b.time) === Date.parse(e.time)) : null;
+    if (config.execution === "next_open" && !next) throw Error("缺下一分鐘開市價，不能模擬成交");
+    const bar = { close: next ? next.open : e.price, availableAt: e.time };
     if (position === 0) {
       fill(
         e.direction,
@@ -304,7 +311,7 @@ function nyTime(t) {
 export function validateDataset(data) {
   if (
     !data ||
-    data.schemaVersion !== 1 ||
+    ![1, 2].includes(data.schemaVersion) ||
     !["synthetic", "imported"].includes(data.kind) ||
     typeof data.id !== "string" ||
     !data.id.trim() ||
@@ -313,7 +320,7 @@ export function validateDataset(data) {
     data.instruments.length > 100
   )
     throw Error(
-      "資料格式無效：需要 schemaVersion＝1、kind、id 及 1–100 隻 instruments",
+      "資料格式無效：需要 schemaVersion＝1 或 2、kind、id 及 1–100 隻 instruments",
     );
   const ids = new Set();
   let template = null;
@@ -333,16 +340,38 @@ export function validateDataset(data) {
     let last = "";
     const dates = [];
     for (const session of instrument.sessions) {
+      if (data.schemaVersion === 2 && session.packedBars) {
+        const packed = session.packedBars;
+        if (!Array.isArray(packed) || packed.length !== 390 || !Number.isFinite(session.startMs)) throw Error("壓縮分鐘格式無效");
+        session.bars = packed.map((r, i) => {
+          if (!Array.isArray(r) || r.length !== 5) throw Error("壓縮價量格式無效");
+          return {time:new Date(session.startMs+i*60000).toISOString(),availableAt:new Date(session.startMs+(i+1)*60000).toISOString(),open:r[0],high:r[1],low:r[2],close:r[3],volume:r[4]};
+        });
+        delete session.packedBars;
+      }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(session.date) || session.date <= last)
         throw Error("日期須唯一並由舊至新排列");
       last = session.date;
       dates.push(session.date);
-      if (
+      if (data.schemaVersion === 2) {
+        if (session.marketCap !== null && (!Number.isFinite(session.marketCap) || session.marketCap <= 0)) throw Error("市值無效");
+        const d = session.daily;
+        if (d !== null && (!d || ![d.close,d.high,d.low,d.volume].every(Number.isFinite) || d.low<=0 || d.high<d.low || d.close<d.low || d.close>d.high || d.volume<0)) throw Error("官方日線格式無效");
+        if (session.previousClose !== null && (!Number.isFinite(session.previousClose) || session.previousClose<=0)) throw Error("前收市價無效");
+        if (session.marketCap !== null) {
+          const t=Date.parse(session.marketCapAvailableAt);
+          if (!/(?:Z|[+-]\d{2}:\d{2})$/.test(session.marketCapAvailableAt) || !Number.isFinite(t)) throw Error("市值可用時間無效");
+          const at=nyTime(t);
+          if(at.date>session.date || (at.date===session.date && at.time>"16:00")) throw Error("市值可用時間不可遲於該日收市");
+        }
+        if (session.bars === null) continue; // Explicit missing session; never synthesize bars.
+      }
+      if (data.schemaVersion === 1 && (
         !Number.isFinite(session.marketCap) ||
         session.marketCap <= 0 ||
         !Number.isFinite(session.previousClose) ||
         session.previousClose <= 0
-      )
+      ))
         throw Error(`${instrument.symbol} ${session.date} 缺市值或前收市價`);
       if (!Array.isArray(session.bars) || session.bars.length !== 390)
         throw Error(
@@ -360,11 +389,11 @@ export function validateDataset(data) {
         end.time !== "16:00"
       )
         throw Error("分鐘線須覆蓋紐約正常交易日 09:30–16:00");
-      if (
+      if (session.marketCap !== null && (
         !/(?:Z|[+-]\d{2}:\d{2})$/.test(session.marketCapAvailableAt) ||
         !Number.isFinite(Date.parse(session.marketCapAvailableAt)) ||
         Date.parse(session.marketCapAvailableAt) > first + 390 * 60000
-      )
+      ))
         throw Error("市值可用時間不可遲於該日收市");
       for (let i = 0; i < 390; i++) {
         const b = session.bars[i];
@@ -403,6 +432,11 @@ export function validateDataset(data) {
 export function runReplay(dataset, config) {
   validateConfig(config);
   validateDataset(dataset);
+  return replayValidated(dataset, config);
+}
+// Internal rolling-window entry: caller must validate the full source first.
+// Window slicing preserves all validated sessions and cannot add future bars.
+export function replayValidated(dataset, config) {
   const currentDate = dataset.instruments[0].sessions.at(-1).date;
   const screening = dataset.instruments.map((instrument) => {
     const previous = instrument.sessions.slice(0, -1);
@@ -410,15 +444,15 @@ export function runReplay(dataset, config) {
       throw Error(`回看資料不足：需要 ${config.lookback} 個已完成時段`);
     const history = previous.slice(-config.lookback),
       avg = (k) => history.reduce((sum, s) => sum + k(s), 0) / history.length;
-    const cap = avg((s) => s.marketCap),
-      volume = avg((s) => s.bars.reduce((a, b) => a + b.volume, 0)),
-      range = avg(
-        (s) =>
-          (Math.max(...s.bars.map((b) => b.high)) -
-            Math.min(...s.bars.map((b) => b.low))) /
-          s.previousClose,
-      ),
-      price = avg((s) => s.bars.at(-1).close);
+    const modern = dataset.schemaVersion === 2;
+    const dailyComplete = !modern || history.every(s => s.daily && s.previousClose > 0);
+    const knownCaps = history.filter(s => Number.isFinite(s.marketCap) && s.marketCap > 0).length;
+    // Nonnegative market caps: the known sum / full lookback is a lower bound,
+    // never an imputation or an exact average when observations are missing.
+    const cap = avg(s => s.marketCap ?? 0),
+      volume = dailyComplete ? avg(s => modern ? s.daily.volume : s.bars.reduce((a,b)=>a+b.volume,0)) : null,
+      range = dailyComplete ? avg(s => modern ? (s.daily.high-s.daily.low)/s.previousClose : (Math.max(...s.bars.map(b=>b.high))-Math.min(...s.bars.map(b=>b.low)))/s.previousClose) : null,
+      price = dailyComplete ? avg(s => modern ? s.daily.close : s.bars.at(-1).close) : null;
     const checks = {
       cap: cap > config.capMin,
       volume: volume > config.volumeMin,
@@ -427,12 +461,16 @@ export function runReplay(dataset, config) {
     };
     return {
       symbol: instrument.symbol,
+      knownCaps,
+      capBasis: knownCaps === history.length ? "exact_average" : "nonnegative_lower_bound",
+      dataIncomplete: !dailyComplete || (knownCaps < history.length && cap <= config.capMin),
+      dailyBasis: modern ? "official_daily" : "regular_minutes",
       cap,
       volume,
       range,
       price,
       checks,
-      pass: Object.values(checks).every(Boolean),
+      pass: dailyComplete && Object.values(checks).every(Boolean),
     };
   });
   const eligible = new Set(
@@ -440,15 +478,16 @@ export function runReplay(dataset, config) {
   );
   const slots = {};
   for (const [slot, spec] of Object.entries(SLOT)) {
+    const missingPrevious = dataset.instruments.filter(i => eligible.has(i.symbol) && !i.sessions.at(-2).bars).map(i=>i.symbol);
     const ranked = dataset.instruments
-      .filter((i) => eligible.has(i.symbol))
+      .filter((i) => eligible.has(i.symbol) && i.sessions.at(-2).bars)
       .map((i) => {
         const previous = i.sessions.at(-2);
         const c = countEvents(previous.bars.slice(spec.start, spec.end), {
           threshold: config.threshold,
           mode: config.mode,
         });
-        const ref = previous.bars.at(-1).close,
+        const ref = dataset.schemaVersion===2 ? previous.daily.close : previous.bars.at(-1).close,
           q = nearestQuantity(ref, config.target, config.quantityTie);
         return {
           symbol: i.symbol,
@@ -475,6 +514,7 @@ export function runReplay(dataset, config) {
       previous.R += row.R;
       const i = dataset.instruments.find((i) => i.symbol === row.symbol);
       const session = i.sessions.at(-1);
+      if (!session.bars) continue;
       const c = countEvents(session.bars.slice(spec.start, spec.observeEnd), {
         threshold: config.threshold,
         mode: config.mode,
@@ -482,7 +522,9 @@ export function runReplay(dataset, config) {
       current.B += c.B;
       current.R += c.R;
     }
-    const gate = selected.length
+    const missingCurrent = selected.filter(row => !dataset.instruments.find(i=>i.symbol===row.symbol).sessions.at(-1).bars).map(row=>row.symbol);
+    const blocked = [...missingPrevious, ...missingCurrent];
+    const gate = blocked.length ? {pass:false,status:"data_blocked",reason:`缺完整分鐘，整段停止（不重組名單）：${blocked.join("、")}`} : selected.length
       ? decideGate(previous, current, config.gateEnabled, config.equalPolicy)
       : { pass: false, status: "no_candidates", reason: "篩選後沒有候選股票" };
     for (const row of selected) {
@@ -499,7 +541,7 @@ export function runReplay(dataset, config) {
           : {
               symbol: row.symbol,
               slot,
-              status: "skipped_by_strategy",
+              status: gate.status === "data_blocked" ? "skipped_missing_data" : "skipped_by_strategy",
               quantity: row.quantity,
               fills: [],
               transitions: [],
@@ -548,6 +590,8 @@ export function runReplay(dataset, config) {
     summary: {
       pool: screening.length,
       eligible: eligible.size,
+      unassessed: screening.filter(s=>s.dataIncomplete).length,
+      blockedSlots: Object.values(slots).filter(s=>s.gate.status === "data_blocked").length,
       orders: fills.length,
       net: results.reduce((s, r) => s + r.net, 0),
       fees: results.reduce((s, r) => s + r.fees, 0),

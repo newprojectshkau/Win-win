@@ -1,6 +1,17 @@
 # Repository status
 
-Updated: 29 October 2026 (Australia/Melbourne).
+Updated: 30 October 2026 (Australia/Melbourne).
+
+## Current simulator update — supersedes earlier prototype notes
+
+- 真實資料擴展為 50 個存檔代號，每日重篩、早午市各最多 10 股；已自動完成 2026-09-17 至 10-28 的 30 個可用交易日。
+- 官方日線作篩選，預設下一分鐘 open 加成本成交。部分市值以非負下限證明門檻，不能判定者列出並排除；不是完整歷史 IB 股票池。
+- 預設成本後 −US$1,293.72，964 筆成交；7／60 時段因缺分鐘被阻擋。710 個股票日不能判定。不能當成完整市場回測或實盤就緒。
+- 引擎 0.2.0-review；26 項 Node 測試及 6 項 Python 測試。瀏覽器已驗證私人解鎖、50 股／30 日自動重播、結果與 Node 一致、單日測試、動態圖像、手機寬度及六個審閱頁。
+- [完整結果、假設及限制](G3-expanded-30day-review-zh-HK.md)。私人解鎖連結只經對話提供；原始行情、結果明文及存取密鑰不入 repo。
+- 面板：https://newprojectshkau.github.io/Win-win/simulator.html 。首次使用須經私人資料連結載入；沒有接駁實盤。
+
+以下保留早期里程碑紀錄；合成資料已從公開介面移除，只保留離線測試 fixture。
 
 ## Completed documentation
 

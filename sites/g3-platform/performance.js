@@ -1,4 +1,4 @@
-import {runReplay, validateDataset, validateConfig, ENGINE_VERSION} from './engine.js';
+import {replayValidated, validateDataset, validateConfig, ENGINE_VERSION} from './engine.js';
 
 export function summarizeRuns(runs) {
   let cumulative=0, peak=0, maxDrawdown=0;
@@ -11,11 +11,11 @@ export function summarizeRuns(runs) {
       const v=symbols.get(row.symbol)||{symbol:row.symbol,net:0,fees:0,fills:0,tradedSessions:0};
       v.net+=row.net;v.fees+=row.fees;v.fills+=row.fills.length;v.tradedSessions+=Number(row.fills.length>0);symbols.set(row.symbol,v);
     }
-    return {date:run.data.date,net:run.summary.net,fees:run.summary.fees,slippage,grossBeforeCosts:run.summary.net+run.summary.fees+slippage,cumulative,drawdown,orders:run.summary.orders,eligible:run.summary.eligible,AM:run.slots.AM.gate.status,PM:run.slots.PM.gate.status};
+    return {date:run.data.date,net:run.summary.net,fees:run.summary.fees,slippage,grossBeforeCosts:run.summary.net+run.summary.fees+slippage,cumulative,drawdown,orders:run.summary.orders,eligible:run.summary.eligible,unassessed:run.summary.unassessed||0,blockedSlots:run.summary.blockedSlots||0,AM:run.slots.AM.gate.status,PM:run.slots.PM.gate.status};
   });
   const sum=k=>days.reduce((s,d)=>s+d[k],0);
   const activeDays=days.filter(d=>d.orders>0).length;
-  return {days,symbols:[...symbols.values()],summary:{net:cumulative,fees:sum('fees'),slippage:sum('slippage'),grossBeforeCosts:sum('grossBeforeCosts'),orders:sum('orders'),days:days.length,activeDays,winningDays:days.filter(d=>d.orders>0&&d.net>0).length,winningDayRate:activeDays?days.filter(d=>d.orders>0&&d.net>0).length/activeDays:null,maxCloseDrawdown:maxDrawdown,residual:runs.reduce((s,r)=>s+r.summary.residual,0)}};
+  return {days,symbols:[...symbols.values()],summary:{net:cumulative,fees:sum('fees'),slippage:sum('slippage'),grossBeforeCosts:sum('grossBeforeCosts'),orders:sum('orders'),blockedSlots:sum('blockedSlots'),unassessedStockDays:sum('unassessed'),days:days.length,activeDays,winningDays:days.filter(d=>d.orders>0&&d.net>0).length,winningDayRate:activeDays?days.filter(d=>d.orders>0&&d.net>0).length/activeDays:null,maxCloseDrawdown:maxDrawdown,residual:runs.reduce((s,r)=>s+r.summary.residual,0)}};
 }
 
 export async function runWindow(dataset, config, {startDate,endDate,onProgress=()=>{}}={}) {
@@ -28,7 +28,7 @@ export async function runWindow(dataset, config, {startDate,endDate,onProgress=(
   for(let i=start;i<=end;i++){
     // Each run receives only its own past window and current session, never future sessions.
     const window={...dataset,instruments:dataset.instruments.map(s=>({...s,sessions:s.sessions.slice(i-config.lookback,i+1)}))};
-    runs.push(runReplay(window,config));
+    runs.push(replayValidated(window,config));
     onProgress(runs.length,end-start+1);
     await new Promise(resolve=>setTimeout(resolve,0));
   }

@@ -98,3 +98,8 @@ Massive 私人資料下載／重播工具見 [scripts/marketdata](../../scripts/
 
 
 2026-10-30：所有公開操作頁只使用真實資料。`review.html` 與期間模擬器共用 IndexedDB；舊合成結果不再顯示，留言保留。測試生成器移至 `tests/fixture-data.js`，不包含在 Pages artifact。私人載入頁提供三股兩星期及 AAPL 長期兩個組合，瀏覽器資料庫可切換已載入的組合。詳見 `docs/DATA-INVENTORY-zh-HK.md`；全年原始資料存在不等於所有日期可回測。
+
+
+## Expanded 30-day review (2026-10-30)
+
+Engine 0.2.0-review supports schema-v2 packed real bars, official daily screening, partial-cap lower-bound evidence, explicit missing-data slot blocking, and next-minute-open execution. The encrypted 50-symbol bundle defaults to 30 trading days (2026-09-17–2026-10-28). It is a conditional archive-subset replay, not a complete historical IB backtest. See [results and limitations](../../docs/G3-expanded-30day-review-zh-HK.md). Private data unlock links stay outside the repository.

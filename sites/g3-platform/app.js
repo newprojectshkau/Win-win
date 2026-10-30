@@ -93,6 +93,9 @@ let state = {
   compareA: "",
   compareB: "",
 };
+if(stored.assumptionRevision!=="expanded-v2")for(const id of ["A04","A14","A15","A16"]){
+ if(state.reviews[id])state.reviews[id]={...state.reviews[id],status:"unreviewed"};
+}
 let dataset = null, datasetHash = "";
 let build = {
   revision: "development",
@@ -105,6 +108,7 @@ function save() {
     localStorage.setItem(
       STORAGE,
       JSON.stringify({
+        assumptionRevision: "expanded-v2",
         draft: state.draft,
         runs: state.runs.slice(0, 4),
         reviews: state.reviews,
@@ -155,7 +159,7 @@ function dataBar() {
   return `<div class="data-bar"><div class="data-title"><span class="badge neutral">真實歷史資料 · 未獨立驗證</span><strong>${esc(dataset.id)}</strong><span>${dataset.instruments.length} 隻股票 · ${dataset.instruments[0].sessions.length} 個時段</span></div><span>${r ? "目前結果：" + esc(r.data.date) : "尚未執行"}　<span class="badge data-tag">沒有實盤下單</span></span></div>`;
 }
 function warnings() {
-  return `${state.persistWarning ? '<div class="alert-local">本地儲存不可用，請匯出審閱包備份。</div>' : ""}${state.error ? `<div class="notice error" role="alert">運行已中止：${esc(state.error)}。先前結果保留，並非這次成功結果。</div>` : ""}${configDirty() ? '<div class="pending-run">參數草稿已修改。下方仍顯示上一次的鎖定版本；請執行重播更新結果。</div>' : ""}${run() && run().dataHash !== datasetHash ? '<div class="pending-run">已切換資料集；下方仍是上一資料集的結果，請重新執行。</div>' : ""}`;
+  return `${dataset?.schemaVersion===2?'<div class="notice">擴展研究池：官方日線篩選；部分市值以非負下限判斷，不能判定者排除。不是完整歷史 IB 股票池。A04／A14／A15／A16 已更新，舊留言保留並須重新審閱。</div>':""}${state.persistWarning ? '<div class="alert-local">本地儲存不可用，請匯出審閱包備份。</div>' : ""}${state.error ? `<div class="notice error" role="alert">運行已中止：${esc(state.error)}。先前結果保留，並非這次成功結果。</div>` : ""}${configDirty() ? '<div class="pending-run">參數草稿已修改。下方仍顯示上一次的鎖定版本；請執行重播更新結果。</div>' : ""}${run() && run().dataHash !== datasetHash ? '<div class="pending-run">已切換資料集；下方仍是上一資料集的結果，請重新執行。</div>' : ""}`;
 }
 function stat(label, value, hint, ico = "overview") {
   return `<div class="stat"><div class="label">${label}<span class="stat-icon">${icon(ico)}</span></div><div class="number">${value}</div><div class="hint">${hint}</div></div>`;
@@ -184,6 +188,7 @@ const statusLabel = (s) =>
     traded: "已完成模擬交易",
     flat_no_event: "沒有首事件 · 空倉",
     skipped_by_strategy: "整段開關跳過",
+    skipped_missing_data: "資料不足 · 整段停止",
   })[s] ?? s;
 const slotTabs = () =>
   `<div class="tabs" role="group" aria-label="時段"><button data-slot="AM" class="${state.slot === "AM" ? "active" : ""}">早市</button><button data-slot="PM" class="${state.slot === "PM" ? "active" : ""}">午市</button></div>`;
@@ -223,6 +228,7 @@ function overview() {
   );
 }
 const FIELD_LABELS = {
+  execution: "訊號成交方式",
   lookback: "回看時段數",
   capMin: "平均市值門檻",
   volumeMin: "平均成交股數門檻",
@@ -290,7 +296,7 @@ function settings() {
         ],
         hint: "A13：無論此選項，零分母仍顯示未定義。",
       },
-    )}${field("h", { disabled: true, hint: "固定 h＝1；h＝2／3 完整規則未定，未開放。" })}${field("commission", { suffix: "美元／筆", min: 0, max: 100, hint: "A18：每個 fill 計一次；反手是兩筆。" })}${field("slippageBps", { suffix: "基點／單邊", min: 0, max: 1000, hint: "5 基點＝0.05%；買價上調、賣價下調，不重複扣費。" })}</div></div></section><div class="notice success">固定紐約時間：早市觀察 09:30–10:00、監察至 12:30；午市觀察 12:30–13:00、監察至 16:00。此版不支援半日市或自訂時段。</div><div class="form-actions"><p class="settings-note">改動先存成草稿；只有重新執行才產生新結果。舊運行設定不會跟隨草稿改動。</p><button class="button secondary" type="button" data-action="reset-config">還原 v3 審閱預設</button><button class="button primary" type="submit">儲存設定草稿</button></div></form><section class="panel row-gap"><div class="panel-head"><h2>資料集</h2><span class="badge neutral">真實歷史資料</span></div><div class="panel-body"><p class="subtitle">JSON 格式，最大 40 MB。所有資料在瀏覽器處理，不會上傳。匯入先驗證，失敗不會替換現有資料集。</p><div class="actions row-gap"><button class="button secondary" type="button" data-action="import-data">匯入資料 JSON</button><button class="button secondary" type="button" data-action="export-data">下載目前資料（含格式範本）</button></div><p class="subtitle row-gap">${esc(dataset.description)} 實際歷史資料須另行核實授權、日曆、股票池及公司行動；此版沒有即時行情。</p></div></section>`
+    )}${field("execution", {options:[["next_open","下一分鐘開市價＋成本"],["signal_close","同分鐘收市價（舊版比較）"]],hint:"時段尾仍按最後分鐘收市價平倉；不是成交保證。"})}${field("h", { disabled: true, hint: "固定 h＝1；h＝2／3 完整規則未定，未開放。" })}${field("commission", { suffix: "美元／筆", min: 0, max: 100, hint: "A18：每個 fill 計一次；反手是兩筆。" })}${field("slippageBps", { suffix: "基點／單邊", min: 0, max: 1000, hint: "5 基點＝0.05%；買價上調、賣價下調，不重複扣費。" })}</div></div></section><div class="notice success">固定紐約時間：早市觀察 09:30–10:00、監察至 12:30；午市觀察 12:30–13:00、監察至 16:00。此版不支援半日市或自訂時段。</div><div class="form-actions"><p class="settings-note">改動先存成草稿；只有重新執行才產生新結果。舊運行設定不會跟隨草稿改動。</p><button class="button secondary" type="button" data-action="reset-config">還原 v3 審閱預設</button><button class="button primary" type="submit">儲存設定草稿</button></div></form><section class="panel row-gap"><div class="panel-head"><h2>資料集</h2><span class="badge neutral">真實歷史資料</span></div><div class="panel-body"><p class="subtitle">JSON 格式，最大 250 MB。所有資料在瀏覽器處理，不會上傳。匯入先驗證，失敗不會替換現有資料集。</p><div class="actions row-gap"><button class="button secondary" type="button" data-action="import-data">匯入資料 JSON</button><button class="button secondary" type="button" data-action="export-data">下載目前資料（含格式範本）</button></div><p class="subtitle row-gap">${esc(dataset.description)} 實際歷史資料須另行核實授權、日曆、股票池及公司行動；此版沒有即時行情。</p></div></section>`
   );
 }
 function results() {
@@ -305,11 +311,11 @@ function results() {
     ) +
     dataBar() +
     warnings() +
-    `<section class="panel"><div class="panel-head"><div><h2>階段 ①｜股票池四項篩選</h2><p class="detail">${r.config.lookback} 個前日完整時段；所有數值按本次鎖定設定計算。</p></div><span class="badge success">${r.summary.eligible} / ${r.summary.pool} 通過</span></div><div class="table-wrap"><table><thead><tr><th>股票</th><th class="right">平均市值（美元）</th><th class="right">平均日成交股數</th><th class="right">平均波幅</th><th class="right">平均收市價</th><th>結果／不通過條件</th></tr></thead><tbody>${r.screening
+    `<section class="panel"><div class="panel-head"><div><h2>階段 ①｜股票池四項篩選</h2><p class="detail">${r.config.lookback} 個前日完整時段；所有數值按本次鎖定設定計算。</p></div><span class="badge success">${r.summary.eligible} / ${r.summary.pool} 通過</span></div><div class="table-wrap"><table><thead><tr><th>股票</th><th class="right">平均市值／下限（美元）</th><th class="right">平均日成交股數</th><th class="right">平均波幅</th><th class="right">平均收市價</th><th>結果／不通過條件</th></tr></thead><tbody>${r.screening
       .map(
         (row) =>
-          `<tr><td class="symbol">${esc(row.symbol)}</td><td class="right">${num(row.cap)}</td><td class="right">${num(row.volume)}</td><td class="right">${pct(row.range)}</td><td class="right">${num(row.price, 2)}</td><td><span class="badge ${row.pass ? "success" : "amber"}">${
-            row.pass
+          `<tr><td class="symbol">${esc(row.symbol)}</td><td class="right">${num(row.cap)}${row.capBasis==="nonnegative_lower_bound"?`（下限；${row.knownCaps}/${r.config.lookback} 日）`:""}</td><td class="right">${num(row.volume)}</td><td class="right">${pct(row.range)}</td><td class="right">${num(row.price, 2)}</td><td><span class="badge ${row.pass ? "success" : "amber"}">${
+            row.dataIncomplete ? "資料不足，不能判定" : row.pass
               ? "通過"
               : Object.entries(row.checks)
                   .filter(([, v]) => !v)
@@ -401,7 +407,7 @@ function replay() {
       `<button class="button secondary" data-action="export-ledger">下載成交 CSV</button>`,
     ) +
     warnings() +
-    `<div class="filter-row">${slotTabs()}<label for="symbol-select" class="screen-reader">選擇股票</label><select id="symbol-select" class="select-control" style="max-width:220px">${symbols.map((s) => `<option value="${s.symbol}" ${s.symbol === state.symbol ? "selected" : ""}>${s.symbol} · ${statusLabel(s.status)}</option>`).join("")}</select><span class="badge neutral">${esc(r.data.date)} · h＝1</span></div>${!result ? '<div class="panel empty">本時段沒有候選股票</div>' : `<section class="panel"><div class="panel-head"><div><h2>${esc(result.symbol)} · ${SLOT[state.slot].label}價格及決策</h2><p class="detail">${result.status === "skipped_by_strategy" ? esc(result.reason) : "初始價 " + money(result.initial) + " · 固定 " + result.quantity + " 股；同向事件只持有，不加注。"}</p></div><span class="badge ${result.status === "traded" ? "success" : "neutral"}">${statusLabel(result.status)}</span></div><div class="metric-strip"><div><small>模擬成交</small><strong>${result.fills.length} 筆</strong></div><div><small>反手</small><strong>${result.reversals} 次</strong></div><div><small>佣金</small><strong>${money(result.fees)}</strong></div><div><small>模擬淨額 · 非盈利驗證</small><strong>${money(result.net)}</strong></div><div><small>時段尾持倉</small><strong>${result.position} 股</strong></div></div><div class="panel-body">${priceChart(result)}</div></section><section class="panel row-gap"><div class="panel-head"><h2>逐筆成交紀錄</h2><span class="count-label">參考價與理想化成交價分開列明</span></div><div class="table-wrap"><table><thead><tr><th>紐約時間</th><th>香港日期／時間</th><th>動作</th><th class="right">股數</th><th class="right">參考價</th><th class="right">模擬成交價</th><th class="right">佣金</th><th class="right">成交後持倉</th></tr></thead><tbody>${result.fills.map((f) => `<tr><td>${time(f.time)}</td><td>${time(f.time, "Asia/Hong_Kong", true)}</td><td>${ACTION_LABELS[f.action]}</td><td class="right">${f.quantity}</td><td class="right">${num(f.reference, 4)}</td><td class="right">${num(f.price, 4)}</td><td class="right">${money(f.fee)}</td><td class="right">${f.position}</td></tr>`).join("") || `<tr><td colspan="8">${result.status === "flat_no_event" ? "沒有首個達標事件；整段維持空倉。" : "整段開關未通過；沒有產生訂單。"}</td></tr>`}</tbody></table></div></section>${result.holdEvents?.length ? `<div class="notice success row-gap">另有 ${result.holdEvents.length} 個同向持有事件：已記錄於匯出審閱包，沒有加注或額外收費。</div>` : ""}`}<div class="notice row-gap">此版用已知 close 加減滑價作即時理想化成交。沒有模擬券商延遲、部分成交、借貨或購買力；不能聲稱上述價格真實可成交。</div>`
+    `<div class="filter-row">${slotTabs()}<label for="symbol-select" class="screen-reader">選擇股票</label><select id="symbol-select" class="select-control" style="max-width:220px">${symbols.map((s) => `<option value="${s.symbol}" ${s.symbol === state.symbol ? "selected" : ""}>${s.symbol} · ${statusLabel(s.status)}</option>`).join("")}</select><span class="badge neutral">${esc(r.data.date)} · h＝1</span></div>${!result ? '<div class="panel empty">本時段沒有候選股票</div>' : `<section class="panel"><div class="panel-head"><div><h2>${esc(result.symbol)} · ${SLOT[state.slot].label}價格及決策</h2><p class="detail">${result.status.startsWith("skipped_") ? esc(result.reason) : "初始價 " + money(result.initial) + " · 固定 " + result.quantity + " 股；同向事件只持有，不加注。"}</p></div><span class="badge ${result.status === "traded" ? "success" : "neutral"}">${statusLabel(result.status)}</span></div><div class="metric-strip"><div><small>模擬成交</small><strong>${result.fills.length} 筆</strong></div><div><small>反手</small><strong>${result.reversals} 次</strong></div><div><small>佣金</small><strong>${money(result.fees)}</strong></div><div><small>模擬淨額 · 非盈利驗證</small><strong>${money(result.net)}</strong></div><div><small>時段尾持倉</small><strong>${result.position} 股</strong></div></div><div class="panel-body">${priceChart(result)}</div></section><section class="panel row-gap"><div class="panel-head"><h2>逐筆成交紀錄</h2><span class="count-label">參考價與理想化成交價分開列明</span></div><div class="table-wrap"><table><thead><tr><th>紐約時間</th><th>香港日期／時間</th><th>動作</th><th class="right">股數</th><th class="right">參考價</th><th class="right">模擬成交價</th><th class="right">佣金</th><th class="right">成交後持倉</th></tr></thead><tbody>${result.fills.map((f) => `<tr><td>${time(f.time)}</td><td>${time(f.time, "Asia/Hong_Kong", true)}</td><td>${ACTION_LABELS[f.action]}</td><td class="right">${f.quantity}</td><td class="right">${num(f.reference, 4)}</td><td class="right">${num(f.price, 4)}</td><td class="right">${money(f.fee)}</td><td class="right">${f.position}</td></tr>`).join("") || `<tr><td colspan="8">${result.status === "flat_no_event" ? "沒有首個達標事件；整段維持空倉。" : "整段開關未通過；沒有產生訂單。"}</td></tr>`}</tbody></table></div></section>${result.holdEvents?.length ? `<div class="notice success row-gap">另有 ${result.holdEvents.length} 個同向持有事件：已記錄於匯出審閱包，沒有加注或額外收費。</div>` : ""}`}<div class="notice row-gap">此版用已知 close 加減滑價作即時理想化成交。沒有模擬券商延遲、部分成交、借貨或購買力；不能聲稱上述價格真實可成交。</div>`
   );
 }
 function assumptions() {
@@ -730,7 +736,7 @@ $("#dataset-input").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    if (file.size > 40 * 1024 * 1024) throw Error("檔案超過 40 MB 上限");
+    if (file.size > 250 * 1024 * 1024) throw Error("檔案超過 250 MB 上限");
     const data = JSON.parse(await file.text());
     const { validateDataset } = await import("./engine.js");
     validateDataset(data);
@@ -792,7 +798,7 @@ async function start() {
     if (response.ok) build = await response.json();
   } catch {}
   state.page = location.hash.slice(1) || "overview";
-  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js");validateDataset(saved);dataset=saved;} }catch(e){state.error="未能載入本機真實資料："+e.message;}
+  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js");validateDataset(saved);dataset=saved;if(saved.schemaVersion===2)state.draft.execution="next_open";} }catch(e){state.error="未能載入本機真實資料："+e.message;}
   render();
   if(!dataset)return;
   try {

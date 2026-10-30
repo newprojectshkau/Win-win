@@ -11,3 +11,5 @@ html[data-presentation=motion] .motion-view{display:block}html[data-presentation
 @media print{.presentation-toolbar,.motion-view{display:none!important}.number-view{display:block!important}.team-review-note{break-inside:avoid;font-size:9pt}.audit-facts{grid-template-columns:repeat(3,1fr)}*{animation:none!important;stroke-dashoffset:0!important}}
 html[data-presentation=numbers] .audit-facts>div{animation:none}
 #dataset-library,#dataset-choice{display:block;width:100%;max-width:100%;padding:14px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit}
+
+.presentation-toolbar button[aria-pressed="true"],.presentation-toolbar button[aria-pressed="true"]:hover,.presentation-toolbar button[aria-pressed="true"]:focus-visible{background:#b95b10;color:#fff;border-color:#b95b10}
