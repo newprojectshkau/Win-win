@@ -89,3 +89,18 @@ python3 scripts/marketdata/package_private_review.py --dataset /workspace/privat
 績效計算：每交易日獨立向前滾動 20 日篩選；每段平倉後累加美元損益；費前損益＝淨盈虧＋手續費＋滑點差額；盈利日比例以有成交日為分母，零成交為未定義；回撤從期初 0 至每個收市點計算。不年化、不宣稱資金回報率或日內最大回撤。
 
 驗證限制：本環境管理政策阻擋瀏覽器直接導覽 `file://`。單檔版經 localhost 驗證載入後無其他網絡請求並可執行；用戶可下載到個人瀏覽器開啟，若個人裝置也限制本機檔案，改在公開模擬頁匯入同包 JSON。
+
+
+## 90-trading-day research bundle
+
+Build the last 90 archived trading dates plus 20 warmup dates and a preceding close date. This remains a fixed 50-symbol archive universe, not a verified historical IB universe. Raw files and scopes stay outside this repository.
+
+```sh
+python3 scripts/marketdata/prepare_expanded_scope.py --trading-days 90 --end 2026-10-28 --fetch-cap-samples
+python3 scripts/marketdata/build_expanded_dataset.py --trading-days 90
+node scripts/marketdata/run_window_replay.mjs /workspace/private/market-data/expanded-90days.dataset.json /workspace/private/market-data/expanded-90days.results.json 2026-06-23 2026-10-28
+```
+
+Omit `--fetch-cap-samples` for an offline scope calculation. Acquisition uses the existing `MASSIVE_API_KEY` binding, verified cache, five requests/minute and finite request/byte budgets. It prioritizes dated samples for archived stocks with known large market caps that otherwise cannot prove the screening threshold. It does **not** obtain a complete daily market-cap history. Known caps / full lookback only establish a nonnegative lower bound; insufficient bounds remain unassessed and excluded. Check `panel-90days/fetch-complete.json` or `fetch-error.json` and the bundle quality report before publication. Never copy a current cap backwards into history.
+
+The 90-day bundle sets `defaultTradeDays: 90`, so the simulator selects the full available test range after import. The old 30-day bundle remains a separate saved dataset; changing the date picker alone cannot expand that file. Public delivery contains encrypted data only; access links and plaintext results remain private.

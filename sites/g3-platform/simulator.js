@@ -17,7 +17,9 @@ function installDataset(next){
   if(next.kind!=='imported')throw Error('此頁只接受真實歷史資料。');
   if(next.instruments[0].sessions.length<=DEFAULT_CONFIG.lookback)throw Error('資料需有至少 20 個前置交易日及 1 個測試日。');
   data=next;el("execution").value=next.recommendedConfig?.execution||"signal_close";result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
-  const dates=next.instruments[0].sessions.map(s=>s.date),first=Math.max(DEFAULT_CONFIG.lookback,dates.length-(next.schemaVersion===2?30:10));
+  const dates=next.instruments[0].sessions.map(s=>s.date);
+  const preferredDays=Number.isInteger(next.defaultTradeDays)&&next.defaultTradeDays>0?next.defaultTradeDays:(next.schemaVersion===2?30:10);
+  const first=Math.max(DEFAULT_CONFIG.lookback,dates.length-preferredDays);
   for(const key of ['start','end']){el(key).min=dates[DEFAULT_CONFIG.lookback];el(key).max=dates.at(-1);}
   el('start').value=dates[first];el('end').value=dates.at(-1);el('run').disabled=false;
   el('available-dates').innerHTML=dates.slice(DEFAULT_CONFIG.lookback).map(d=>`<option value="${d}">${d}</option>`).join('');
@@ -114,7 +116,7 @@ async function rememberDataset(next){
 }
 async function refreshLibrary(){
  const items=await listPrivateDatasets();
- el('dataset-library').innerHTML=items.map(item=>`<option value="${escapeHTML(item.id)}">${escapeHTML(item.symbols.join('、'))}｜${escapeHTML(item.first||'資料不足')} → ${escapeHTML(item.last)}</option>`).join('');
+ el('dataset-library').innerHTML=items.map(item=>`<option value="${escapeHTML(item.id)}">${Math.max(0,item.sessions-20)} 個交易日｜${escapeHTML(item.first||'資料不足')} → ${escapeHTML(item.last)}｜${item.symbols.length} 個代號（${escapeHTML(item.symbols.slice(0,3).join('、'))}${item.symbols.length>3?'…':''}）</option>`).join('');
  if(data)el('dataset-library').value=data.id;
 }
 el('dataset-library').onchange=async event=>{

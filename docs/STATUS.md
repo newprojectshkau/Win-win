@@ -1,6 +1,14 @@
 # Repository status
 
-Updated: 30 October 2026 (Australia/Melbourne).
+Updated: 31 October 2026 (Australia/Melbourne).
+
+## 90 trading-day simulator update (31 October 2026)
+
+- 新私人資料包：50 個存檔代號，2026-06-23 至 2026-10-28 共 90 個交易日，另含 20 日前置資料。載入新包即預設跑全 90 日。
+- 舊 30 日包保持獨立；日期欄不會替舊包補下載資料，須用新版私人入口載入 90 日包。
+- 預設淨損益 −US$5,564.08，3,692 筆成交，雙邊成交額 US$3,719,717.03；52 日有成交。
+- 13／180 個時段受資料政策阻擋；2,129 個股票日無法判定。固定研究池及不完整歷史市值仍是限制，並非完整市場或實盤模型。
+- [90 日範圍、結果及限制](G3-90day-review-zh-HK.md)。
 
 ## Daily P&L overlay (31 October 2026)
 

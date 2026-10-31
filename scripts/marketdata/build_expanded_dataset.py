@@ -13,12 +13,12 @@ from zoneinfo import ZoneInfo
 
 NY = ZoneInfo('America/New_York')
 
-def build(root):
+def build(root, trading_days=30):
     root = Path(root).resolve()
     repo = Path(__file__).resolve().parents[2]
     if root == repo or repo in root.parents:
         raise ValueError('Licensed data must remain outside repository')
-    scope = json.loads((root/'panel-30days/scope.json').read_text())
+    scope = json.loads((root/f'panel-{trading_days}days/scope.json').read_text())
     dates = scope['dates']; selected = dates[1:]; symbols = scope['archiveUniverse']
     daily, caps, minutes = {}, {}, {s:{} for s in symbols}
     checks = 0
@@ -69,10 +69,10 @@ def build(root):
             sessions.append(session)
         instruments.append({'symbol':symbol,'sessions':sessions})
     quality={'checkedFiles':checks,'missingMinuteSessions':missing,'knownCapSessions':observed_caps,'totalSessions':len(symbols)*len(selected),'archiveUniverse':symbols,'marketNonCapUnionCount':scope['marketNonCapUnionCount'],'unarchivedNonCapUnionCount':len(scope['unarchivedNonCapUnion']),'dataThrough':selected[-1], 'capMethod':'Known historical caps summed / 20 is a nonnegative lower bound; missing values are not imputed. Insufficient bounds are unassessed and excluded; this can alter rankings. Date availability at session close is an unverified assumption.'}
-    dataset={'schemaVersion':2,'kind':'imported','id':'massive-expanded-30days-'+selected[-1], 'description':'50 個已存檔代號研究池，並非歷史 IB 全市場；每日重選。官方日線篩選；市值不足部分只用可證明的非負下限，無法判定者不參與；缺分鐘不補值。最近可用 30 日，不包括未取得的 10 月 29 日。','providerStatement':'Private Massive adjusted historical OHLCV. Not executable quotes. Fixed archive universe has selection/survivorship bias. Market cap date availability is assumed, not verified publication time.', 'provenance':quality,'recommendedConfig':{'execution':'next_open'},'instruments':instruments}
-    out=root/'expanded-30days.dataset.json';out.write_text(json.dumps(dataset,separators=(',',':')));out.chmod(0o600)
-    (root/'expanded-30days.quality.json').write_text(json.dumps(quality,indent=2))
+    dataset={'schemaVersion':2,'kind':'imported','id':f'massive-expanded-{trading_days}days-'+selected[-1], 'defaultTradeDays':trading_days, 'description':f'50 個已存檔代號研究池，並非歷史 IB 全市場；每日重選。官方日線篩選；市值不足部分只用可證明的非負下限，無法判定者不參與；缺分鐘不補值。最近可用 {trading_days} 個交易日，截止 {selected[-1]}；各日合資格股票數會受市值及分鐘覆蓋影響。','providerStatement':'Private Massive adjusted historical OHLCV. Not executable quotes. Fixed archive universe has selection/survivorship bias. Market cap date availability is assumed, not verified publication time.', 'provenance':quality,'recommendedConfig':{'execution':'next_open'},'instruments':instruments}
+    out=root/f'expanded-{trading_days}days.dataset.json';out.write_text(json.dumps(dataset,separators=(',',':')));out.chmod(0o600)
+    (root/f'expanded-{trading_days}days.quality.json').write_text(json.dumps(quality,indent=2))
     print(json.dumps({'output':str(out),'bytes':out.stat().st_size,'start':scope['tradeDates'][0],'end':scope['tradeDates'][-1],'symbols':len(symbols),'knownCaps':observed_caps,'missingMinutes':len(missing)}))
 if __name__=='__main__':
     import argparse
-    p=argparse.ArgumentParser();p.add_argument('--root',default='/workspace/private/market-data');build(p.parse_args().root)
+    p=argparse.ArgumentParser();p.add_argument('--root',default='/workspace/private/market-data');p.add_argument('--trading-days',type=int,choices=[30,90],default=30);args=p.parse_args();build(args.root,args.trading_days)
