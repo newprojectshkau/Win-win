@@ -12,15 +12,17 @@ html=(site/'simulator.html').read_text()
 for name in ['styles.css','simulator.css']:
  html=re.sub(r'<link rel="stylesheet" href="\./'+re.escape(name)+r'[^"\n]*">',lambda _: '<style>'+(site/name).read_text()+'</style>',html)
 modules=[]
-for name in ['engine.js','performance.js','dataset-store.js','quality-audit.js','charts.js','presentation.js','simulator.js']:
+for name in ['fees.js','engine.js','performance.js','dataset-store.js','quality-audit.js','charts.js','presentation.js','simulator.js','translations.js','i18n.js']:
  source=(site/name).read_text()
  source=re.sub(r'^import .*?;\s*','',source,flags=re.M)
  source=re.sub(r'^export ', '',source,flags=re.M)
  # Local module concatenation: isolate page helpers from engine helpers.
- if name=='simulator.js':source='{\n'+source+'\n}'
+ if name in ['simulator.js','i18n.js']:source='{\n'+source+'\n}'
  modules.append(source)
 script='<script id="private-dataset" type="application/json">'+json.dumps(data,separators=(',',':')).replace('<','\\u003c')+'</script><script type="module">'+'\n'.join(modules)+'</script>'
+html=re.sub(r'<script type="module" src="[^"\n]*i18n[^"\n]*"></script>','',html)
 html=re.sub(r'<script type="module" src="[^"\n]+"></script>',lambda _:script,html)
 html=html.replace('href="./review.html"','href="https://newprojectshkau.github.io/Win-win/"')
+html=html.replace('href="./ibkr-fees.html"','href="https://newprojectshkau.github.io/Win-win/ibkr-fees.html"')
 out.parent.mkdir(parents=True,exist_ok=True);out.write_text(html);out.chmod(0o600)
 print(json.dumps({'privateReview':str(out),'bytes':out.stat().st_size}))

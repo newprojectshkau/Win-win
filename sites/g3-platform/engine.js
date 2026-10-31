@@ -1,4 +1,5 @@
-export const ENGINE_VERSION = "0.2.1-review";
+import {validateFees,applyFeeSchedule} from './fees.js?v=20261031-ibkr';
+export const ENGINE_VERSION = "0.3.0-review";
 // Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
 export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
 export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
@@ -34,6 +35,7 @@ const units = (p) => {
   return v;
 };
 export function validateConfig(c) {
+  validateFees(c);
   for (const k of [
     "lookback",
     "capMin",
@@ -452,7 +454,7 @@ export function runReplay(dataset, config) {
 }
 // Internal rolling-window entry: caller must validate the full source first.
 // Window slicing preserves all validated sessions and cannot add future bars.
-export function replayValidated(dataset, config) {
+export function replayValidated(dataset, config, feeState = {}) {
   const currentDate = dataset.instruments[0].sessions.at(-1).date;
   const screening = dataset.instruments.map((instrument) => {
     const previous = instrument.sessions.slice(0, -1);
@@ -590,6 +592,7 @@ export function replayValidated(dataset, config) {
           a.symbol.localeCompare(b.symbol) ||
           Number(a.id.split("-").at(-1)) - Number(b.id.split("-").at(-1)),
       );
+  applyFeeSchedule(results,fills,config,feeState,currentDate);
   return {
     engineVersion: ENGINE_VERSION,
     data: {

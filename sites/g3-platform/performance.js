@@ -1,4 +1,4 @@
-import {replayValidated, validateDataset, validateConfig, ENGINE_VERSION, stockName} from './engine.js?v=20261030-ledger';
+import {replayValidated, validateDataset, validateConfig, ENGINE_VERSION, stockName} from './engine.js?v=20261031-ibkr';
 
 export function summarizeRuns(runs) {
   let cumulative=0, peak=0, maxDrawdown=0;
@@ -24,11 +24,11 @@ export async function runWindow(dataset, config, {startDate,endDate,onProgress=(
   if(!dates.includes(startDate)||!dates.includes(endDate)||startDate>endDate)throw Error('開始及結束日期須是資料內的交易日，並按先後排列。');
   const start=dates.indexOf(startDate),end=dates.indexOf(endDate);
   if(start<config.lookback)throw Error(`開始日之前需要 ${config.lookback} 個完整交易日；不能縮短回看期補足。`);
-  const runs=[];
+  const runs=[],feeState={};
   for(let i=start;i<=end;i++){
     // Each run receives only its own past window and current session, never future sessions.
     const window={...dataset,instruments:dataset.instruments.map(s=>({...s,sessions:s.sessions.slice(i-config.lookback,i+1)}))};
-    runs.push(replayValidated(window,config));
+    runs.push(replayValidated(window,config,feeState));
     onProgress(runs.length,end-start+1);
     await new Promise(resolve=>setTimeout(resolve,0));
   }

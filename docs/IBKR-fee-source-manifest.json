@@ -1,0 +1,41 @@
+{
+  "reviewed": "2026-10-31",
+  "scheduleVersion": "ibkr-us-20261031-v1",
+  "sources": [
+    {
+      "name": "IBKR US commissions",
+      "url": "https://www.interactivebrokers.com/en/pricing/commissions-stocks.php",
+      "retrievedTextSHA256": "7c2b86b70b3f8c74528bfe4d029897154be97bbc76a7b9fc76024a8e392c1604"
+    },
+    {
+      "name": "IBKR Hong Kong: US stocks",
+      "url": "https://www.interactivebrokers.com.hk/en/pricing/commissions-stocks.php",
+      "retrievedTextSHA256": "183e6f20218a690945158b24a3016e5470407e04b8fd0e3f232dd8a888299f33"
+    },
+    {
+      "name": "SEC 2026 Section 31 advisory",
+      "url": "https://www.sec.gov/rules-regulations/fee-rate-advisories/2026-2",
+      "retrievedTextSHA256": "4162d47124cdd470b4faac900c424c1644d56286c4e56d3f59a9480ab18fd113"
+    },
+    {
+      "name": "FINRA Jan\u2013Sep 2026 rule",
+      "url": "https://www.finra.org/rules-guidance/rulebooks/corporate-organization/section-1-member-regulatory-fees?version=2009531",
+      "retrievedTextSHA256": "3429dbd7298ed2742a042d5e485b63d217c95df640132e19bc561a6b30a52da8"
+    },
+    {
+      "name": "FINRA Oct\u2013Dec 2026 rule",
+      "url": "https://www.finra.org/rules-guidance/rulebooks/corporate-organization/section-1-member-regulatory-fees?version=2009541",
+      "retrievedTextSHA256": "84fdfacee1595a4988888fdfa832badca761724818964c07538a34f7eed8fbba"
+    },
+    {
+      "name": "IBKR NASDAQ / Island venue schedule",
+      "url": "https://www.interactivebrokers.com/en/accounts/fees/INETstkfee.php?nhf=T",
+      "retrievedTextSHA256": "d63d8a842b67206c57615600b184323d4f6e9345f01f4a426260bf497ab423ec"
+    },
+    {
+      "name": "IBKR tiered examples (outdated regulatory numbers)",
+      "url": "https://www.interactivebrokers.com/en/accounts/fees/stocksPricing2.php?nhf=T",
+      "retrievedTextSHA256": "763d42828be6d50af3939cc8e86319bdf757288937ef11f2f04eb66e01d7e317"
+    }
+  ]
+}

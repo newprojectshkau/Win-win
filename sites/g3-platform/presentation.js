@@ -1,5 +1,5 @@
-import {stockName} from './engine.js?v=20261030-ledger';
-import {DATA_AUDIT} from './quality-audit.js?v=20261030-ledger';
+import {stockName} from './engine.js?v=20261031-ibkr';
+import {DATA_AUDIT} from './quality-audit.js?v=20261031-ibkr';
 export function initPresentation({getResult,getDataset,money,format,escapeHTML:esc,onSelectDate}){
  let mode='numbers',paused=matchMedia('(prefers-reduced-motion: reduce)').matches,timer=null,step=0;
  const $=id=>document.getElementById(id);
@@ -54,7 +54,7 @@ export function initPresentation({getResult,getDataset,money,format,escapeHTML:e
    if(!f){$('fill-card').textContent='此日沒有成交；請檢視上方篩選及交易開關。';return;}
    const time=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(f.time));
    const action={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
-   $('fill-card').innerHTML=`<div class="fill-motion-card"><span>${step+1} / ${run.fills.length} 筆 · 紐約 ${time}</span><h3>${esc(f.symbol)} · ${esc(stockName(f.symbol))} · ${action[f.action]||esc(f.action)}</h3><div class="process-flow"><div><strong>${f.side==='buy'?'買入':'賣出'} ${f.quantity} 股</strong><span>模擬成交 ${money(f.price)}；成交金額 ${money(f.amount)}</span></div><b>→</b><div><strong>持倉 ${f.position} 股</strong><span>此筆佣金 ${money(f.fee)}；淨損益貢獻 ${money(f.netContribution)}</span></div></div></div>`;
+   $('fill-card').innerHTML=`<div class="fill-motion-card"><span>${step+1} / ${run.fills.length} 筆 · 紐約 ${time}</span><h3>${esc(f.symbol)} · ${esc(stockName(f.symbol))} · ${action[f.action]||esc(f.action)}</h3><div class="process-flow"><div><strong>${f.side==='buy'?'買入':'賣出'} ${f.quantity} 股</strong><span>模擬成交 ${money(f.price)}；成交金額 ${money(f.amount)}</span></div><b>→</b><div><strong>持倉 ${f.position} 股</strong><span>此筆交易費用 ${money(f.fee)}；淨損益貢獻 ${money(f.netContribution)}</span></div></div></div>`;
   };
   $('fill-step').oninput=()=>{stop();step=Number($('fill-step').value);show();};
   $('fill-play').onclick=()=>{

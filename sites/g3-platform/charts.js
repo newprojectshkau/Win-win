@@ -1,10 +1,11 @@
+import {feeModelLabel} from './fees.js?v=20261031-ibkr';
 // Native SVG charts for the existing simulator. Values come only from completed runs.
 export const CHART_METRICS = {
  cumulative:{label:'累計淨盈虧',unit:'US$',color:'#b95b10'},
  net:{label:'淨盈虧',unit:'US$',color:'#b95b10'},
  turnover:{label:'成交總額（買＋賣）',unit:'US$',color:'#246b9c'},
  orders:{label:'成交筆數',unit:'筆',color:'#76509c'},
- costs:{label:'佣金＋滑點',unit:'US$',color:'#7b563c'},
+ costs:{label:'交易費用＋滑點',unit:'US$',color:'#7b563c'},
  tradedStocks:{label:'成交股票數',unit:'隻',color:'#526273'},
 };
 export const metricValue=(day,key)=>key==='costs'?day.fees+day.slippage:day[key];
@@ -19,7 +20,7 @@ export function initCharts({getResult,onSelectDate,escapeHTML:esc,format,money})
  const $=id=>document.getElementById(id);let current=null,saved=[],serial=0;
  const f=(v,unit)=>unit==='US$'?money(v):`${format(v,unit==='相對幅度'?1:0)} ${unit}`;
  const snapshot=r=>({label:'目前結果',days:structuredClone(r.days),config:structuredClone(r.config),dataHash:r.dataHash,configHash:r.configHash,startDate:r.startDate,endDate:r.endDate});
- const configLabel=c=>`配注 ${money(c.target)}／股 · 門檻 ${format(c.threshold*100)}% · 佣金 ${money(c.commission)} · 滑點 ${c.slippageBps} bp · 候選 ${c.candidates} · ${c.mode==='fixed'?'固定磚幅':'百分比磚幅'} · ${c.execution==='next_open'?'下一分鐘開市':'同分鐘收市'} · RR 開關${c.gateEnabled?'開':'關'}`;
+ const configLabel=c=>`配注 ${money(c.target)}／股 · 門檻 ${format(c.threshold*100)}% · ${feeModelLabel(c)} · 自訂 ${money(c.commission)} · 交易所費/股 ${c.exchangePerShare??0} · 首月股數 ${c.initialMonthlyShares??0} · 滑點 ${c.slippageBps} bp · 候選 ${c.candidates} · ${c.mode==='fixed'?'固定磚幅':'百分比磚幅'} · ${c.execution==='next_open'?'下一分鐘開市':'同分鐘收市'} · RR 開關${c.gateEnabled?'開':'關'}`;
  function bars(rows,unit){
   const min=Math.min(0,...rows.map(r=>r.value)),max=Math.max(0,...rows.map(r=>r.value)),span=max-min||1;
   const x=v=>175+(v-min)/span*360,zero=x(0);
@@ -29,7 +30,7 @@ export function initCharts({getResult,onSelectDate,escapeHTML:esc,format,money})
   const r=getResult();if(!r)return;const run=r.runs.find(x=>x.data.date===$('chart-date').value);if(!run)return;
   const d=r.days.find(x=>x.date===run.data.date);
   $('day-chart-values').innerHTML=[['淨盈虧',money(d.net)],['成交總額',money(d.turnover)],['成交筆數',`${d.orders} 筆`],['成交股票',`${d.tradedStocks} 隻`]].map(([k,v])=>`<div><span>${k}</span><strong>${v}</strong></div>`).join('');
-  $('day-profit-chart').innerHTML=bars([{label:'費前損益',value:d.grossBeforeCosts},{label:'佣金扣項',value:-d.fees,color:'#7b563c'},{label:'滑點扣項',value:-d.slippage,color:'#76509c'},{label:'淨盈虧',value:d.net}],'US$');
+  $('day-profit-chart').innerHTML=bars([{label:'費前損益',value:d.grossBeforeCosts},{label:'費用扣項',value:-d.fees,color:'#7b563c'},{label:'滑點扣項',value:-d.slippage,color:'#76509c'},{label:'淨盈虧',value:d.net}],'US$');
   const slots=Object.entries(run.slots).map(([k,s])=>({label:k==='AM'?'早市':'午市',fills:s.symbols.flatMap(x=>x.fills)}));
   $('day-turnover-chart').innerHTML=bars(slots.map(s=>({label:s.label,value:s.fills.reduce((a,f)=>a+f.quantity*f.price,0),color:'#246b9c'})),'US$');
   $('day-orders-chart').innerHTML=bars(slots.map(s=>({label:s.label,value:s.fills.length,color:'#76509c'})),'筆');

@@ -22,3 +22,5 @@ html[data-presentation=numbers] .audit-facts>div{animation:none}
 .day-chart-grid article{min-width:0}@media(max-width:760px){.day-chart-grid{grid-template-columns:minmax(0,1fr)}}
 
 #curve .pnl-legend svg,.animated-curve .pnl-legend svg{width:32px;height:12px;min-height:0;display:inline-block}.daily-pnl-bar:focus rect{stroke-width:3}.pnl-legend{margin:12px 0}
+#fee-breakdown{overflow-x:auto}.sim-fields label{min-width:0}.language-switch{max-width:100%}
+.sim-main .badge{max-width:100%;white-space:normal;overflow-wrap:anywhere}

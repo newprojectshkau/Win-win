@@ -1,6 +1,15 @@
 # Repository status
 
-Updated: 31 October 2026 (Australia/Melbourne).
+Updated: 1 November 2026 (Australia/Melbourne).
+
+## Bilingual panel and IBKR fees (1 November 2026)
+
+- Simulator, review workspace and private loader now offer persistent 繁體中文 / English controls, including dynamic charts and review notes. Language changes do not modify datasets, parameters or results.
+- Period simulator defaults to IBKR Pro Fixed; optional marginal monthly Tiered estimates and legacy custom costs. Separate broker, SEC, TAF, CAT, clearing, venue, pass-through and rounding breakdowns appear in results and fill CSV.
+- Verified 2026 SEC effective date and FINRA Q4 TAF holiday against regulator sources. Venue routing, rounding and historical non-regulatory schedules remain disclosed estimates.
+- Identical 90-day trades: Fixed net −US$5,628.92; Tiered estimate −US$3,353.48; legacy custom −US$5,564.08. No live orders.
+- Validation: 35 Node tests and 6 Python tests; browser Fixed/Tiered 90-day results match Node; language round-trip, all six review routes, motion graphics, mobile, print and custom costs pass. Bundled private HTML also passes via loopback.
+- [Research and comparison](IBKR-fee-research.md); [published bilingual reference](https://newprojectshkau.github.io/Win-win/ibkr-fees.html).
 
 ## 90 trading-day simulator update (31 October 2026)
 

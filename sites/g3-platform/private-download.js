@@ -1,5 +1,5 @@
-import {savePrivateDataset} from './dataset-store.js?v=20261030-ledger';
-import {validateDataset} from './engine.js?v=20261030-ledger';
+import {savePrivateDataset} from './dataset-store.js?v=20261031-ibkr';
+import {validateDataset} from './engine.js?v=20261031-ibkr';
 const status=document.getElementById('status'),download=document.getElementById('download'),useData=document.getElementById('use-data');
 window.addEventListener('hashchange',()=>location.reload());
 const encodedKey=location.hash.slice(1);
@@ -33,7 +33,7 @@ async function load(){
   };
   useData.onclick=async()=>{
    useData.disabled=true;
-   try{await savePrivateDataset(dataset);location.assign('./simulator.html?v=20261031-90days');}
+   try{await savePrivateDataset(dataset);location.assign('./simulator.html?v=20261031-ibkr');}
    catch{status.textContent='瀏覽器不允許本機保存。請按「下載 JSON 到電腦」，再到模擬器手動匯入。';useData.disabled=false;}
   };
  }catch(error){if(requestId!==generation)return;status.textContent=error.name==='OperationError'?'無法解鎖資料，請重新使用對話中的完整連結。':error.message;}
