@@ -8,7 +8,7 @@ function replay(third=true){
   return {time:new Date(Date.UTC(2026,9,20,13,30+i)).toISOString(),availableAt:new Date(Date.UTC(2026,9,20,13,31+i)).toISOString(),open:close,high:close,low:close,close,volume:10000};
  });
  if(!third)bars[179].close=97;
- return simulateSymbol({symbol:'AAPL',bars,slot:'AM',quantity:2,config:{...DEFAULT_CONFIG,slippageBps:0,commission:1}});
+ return simulateSymbol({symbol:'AAPL',bars,slot:'AM',quantity:2,config:{...DEFAULT_CONFIG,execution:"signal_close",target:200,threshold:0.004,slippageBps:0,commission:1}});
 }
 test('long and short reversals: turnover and realized contributions reconcile by hand',()=>{
  const r=replay();

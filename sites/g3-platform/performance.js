@@ -1,4 +1,4 @@
-import {replayValidated, validateDataset, validateConfig, ENGINE_VERSION, stockName} from './engine.js?v=20261031-ibkr';
+import {replayValidated, validateDataset, validateConfig, ENGINE_VERSION, stockName} from './engine.js?v=20261108-upgrade';
 
 export function summarizeRuns(runs) {
   let cumulative=0, peak=0, maxDrawdown=0;

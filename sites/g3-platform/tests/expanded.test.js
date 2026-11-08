@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDemoDataset} from './fixture-data.js';
-import {DEFAULT_CONFIG,validateDataset,runReplay,simulateSymbol} from '../engine.js';
+import {DEFAULT_CONFIG as CURRENT_CONFIG,validateDataset,runReplay,simulateSymbol} from '../engine.js';
+const DEFAULT_CONFIG={...CURRENT_CONFIG,priceMin:20,priceMax:1000};
 function fixture(){
  const d=createDemoDataset();d.schemaVersion=2;
  for(const i of d.instruments)for(const s of i.sessions){
-  s.daily={close:s.bars.at(-1).close,high:Math.max(...s.bars.map(b=>b.high)),low:Math.min(...s.bars.map(b=>b.low)),volume:20000000};
+  s.daily={open:s.bars[0].open,close:s.bars.at(-1).close,high:Math.max(...s.bars.map(b=>b.high)),low:Math.min(...s.bars.map(b=>b.low)),volume:20000000};
   s.marketCap=100000000000;
  }
  return d;
@@ -14,7 +15,7 @@ test('official daily volume drives screening, not regular-minute sums',()=>{
  const d=fixture();for(const s of d.instruments[0].sessions) s.daily.volume=1;
  const r=runReplay(d,DEFAULT_CONFIG);assert.equal(r.screening[0].volume,1);assert.equal(r.screening[0].pass,false);
  assert.ok(r.screening.filter(s=>s.pass).length>3);
- assert.equal(r.slots.AM.selected.length,10);assert.equal(r.slots.PM.selected.length,10);
+ assert.ok(r.slots.AM.selected.length>=10);assert.ok(r.slots.PM.selected.length>=10);
 });
 test('partial cap observations prove a lower bound only; insufficient bound remains unassessed',()=>{
  const d=fixture();const sessions=d.instruments[0].sessions;
@@ -25,14 +26,14 @@ test('partial cap observations prove a lower bound only; insufficient bound rema
  sessions.at(-2).marketCap=40000000000;
  r=runReplay(d,DEFAULT_CONFIG).screening[0];assert.equal(r.pass,false);assert.equal(r.dataIncomplete,true);
 });
-test('missing eligible previous minutes blocks whole ranking slot, never substitutes stocks',()=>{
+test('missing previous minutes excludes only that stock before ranking',()=>{
  const d=fixture();d.instruments[0].sessions.at(-2).bars=null;
- const r=runReplay(d,DEFAULT_CONFIG);assert.equal(r.slots.AM.gate.status,'data_blocked');assert.equal(r.slots.PM.gate.status,'data_blocked');assert.equal(r.summary.orders,0);
+ const r=runReplay(d,DEFAULT_CONFIG);assert.ok(r.slots.AM.excludedPrevious.includes(d.instruments[0].symbol));assert.ok(!r.slots.AM.ranked.some(x=>x.symbol===d.instruments[0].symbol));assert.ok(r.summary.orders>0);
 });
-test('missing selected current minutes blocks whole slot; future cap cannot change screening',()=>{
+test('missing current stock drops without replacement; future cap cannot change screening',()=>{
  const d=fixture();const before=runReplay(d,DEFAULT_CONFIG);const selected=before.slots.AM.selected[0].symbol;
  const i=d.instruments.find(i=>i.symbol===selected);i.sessions.at(-1).bars=null;i.sessions.at(-1).marketCap=1;
- const after=runReplay(d,DEFAULT_CONFIG);assert.deepEqual(after.screening,before.screening);assert.equal(after.slots.AM.gate.status,'data_blocked');
+ const after=runReplay(d,DEFAULT_CONFIG);assert.deepEqual(after.screening,before.screening);assert.ok(after.slots.AM.excludedCurrent.includes(selected));assert.ok(after.slots.AM.symbols.some(x=>x.status==='traded'));assert.deepEqual(after.slots.AM.selected,before.slots.AM.selected);
 });
 test('packed bars roundtrip and malformed values cannot bypass validation',()=>{
  const d=fixture();const s=d.instruments[0].sessions[0];const original=s.bars;

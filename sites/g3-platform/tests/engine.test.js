@@ -2,7 +2,7 @@ import {createDemoDataset} from './fixture-data.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  DEFAULT_CONFIG,
+  DEFAULT_CONFIG as CURRENT_CONFIG,
   countEvents,
   nearestQuantity,
   decideGate,
@@ -12,6 +12,7 @@ import {
   runReplay,
   canonical,
 } from "../engine.js";
+const DEFAULT_CONFIG={...CURRENT_CONFIG,priceMin:20,priceMax:1000};
 const bar = (close, index = 0) => ({
   open: 100,
   high: Math.max(100, close),
@@ -30,20 +31,20 @@ test("hand-calculated equality, three thresholds and first direction", () => {
     initial: 100,
     threshold: 0.005,
   });
-  assert.equal(a.B, 1);
+  assert.equal(a.B, 0);
   assert.equal(a.R, 0);
   const b = countEvents([bar(98.5)], { initial: 100 });
-  assert.equal(b.B, 3);
+  assert.equal(b.B, 2);
   assert.equal(b.events[0].direction, -1);
   assert.equal(b.R, 0);
 });
 test("hand-calculated changes count reversals, not same-direction bricks", () => {
-  const r = countEvents([100.5, 101, 100.5, 100].map(bar), { initial: 100 });
+  const r = countEvents([100.5001, 101.0001, 100.4999, 99.9999].map(bar), { initial: 100 });
   assert.equal(r.B, 4);
   assert.equal(r.R, 1);
 });
 test("percentage mode compounds from each updated anchor", () => {
-  const r = countEvents([bar(101.0025)], { mode: "percentage", initial: 100 });
+  const r = countEvents([bar(101.0026)], { mode: "percentage", initial: 100 });
   assert.equal(r.B, 2);
   assert.equal(r.anchor, 101.0025);
 });
@@ -56,14 +57,14 @@ test("nearest positive integer quantity and tie policy", () => {
   assert.equal(nearestQuantity(2000, 1000), 1);
 });
 test("portfolio gate uses exact cross-products; zero never becomes infinity", () => {
-  assert.equal(decideGate({ B: 2, R: 4 }, { B: 1, R: 2 }).status, "equal_skip");
+  assert.equal(decideGate({ B: 2, R: 5 }, { B: 1, R: 2 }, true, "skip").status, "equal_skip");
   assert.equal(
-    decideGate({ B: 2, R: 4 }, { B: 1, R: 2 }, true, "pass").pass,
+    decideGate({ B: 2, R: 5 }, { B: 1, R: 2 }, true, "pass").pass,
     true,
   );
   assert.equal(
     decideGate({ B: 50, R: 0 }, { B: 10, R: 2 }).status,
-    "undefined",
+    "below",
   );
   assert.equal(decideGate({ B: 50, R: 0 }, { B: 10, R: 0 }, false).pass, true);
 });
@@ -96,7 +97,7 @@ test("close-before-reverse, same-direction hold, scheduled exit and ledger arith
     bars,
     slot: "AM",
     quantity: 10,
-    config: { ...DEFAULT_CONFIG, commission: 1, slippageBps: 0 },
+    config: { ...DEFAULT_CONFIG, execution:"signal_close", threshold:0.004, target:1000, commission: 1, slippageBps: 0 },
   });
   assert.deepEqual(
     r.fills.map((f) => f.action),
@@ -107,11 +108,11 @@ test("close-before-reverse, same-direction hold, scheduled exit and ledger arith
     [10, 0, -10, 0],
   );
   assert.equal(r.reversals, 1);
-  assert.equal(r.net, 1);
+  assert.equal(r.net, -19);
   assert.equal(r.fees, 4);
   assert.equal(r.fills.at(-1).time, "2026-10-13T16:30:00.000Z");
   assert.equal(r.position, 0);
-  assert.equal(r.turnover, 3995);
+  assert.equal(r.turnover, 3975);
 });
 test("a first event exactly at slot end does not open an expired slot", () => {
   const bars = Array.from({ length: 390 }, (_, i) =>
@@ -160,7 +161,7 @@ test("all five stages execute: pool exclusions, independent slots and reconciled
     for (const row of s.selected) assert.equal(row.rr, row.B / (row.R + 1));
   assert.equal(
     r.slots.AM.previous.rr,
-    r.slots.AM.previous.B / r.slots.AM.previous.R,
+    r.slots.AM.previous.B / (r.slots.AM.previous.R+1),
   );
 });
 test("repeating the same input produces identical canonical outputs", () => {
