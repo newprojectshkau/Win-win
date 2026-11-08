@@ -1644,3 +1644,10 @@ td.symbol {
 }
 
 .language-switch{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin:8px 0}.language-switch button{font:inherit;font-size:.85rem;cursor:pointer;border:1px solid #cfbba9;background:#fff;color:#663d23;border-radius:999px;padding:8px 12px}.language-switch button[aria-pressed=true]{background:#b95b10;color:#fff;border-color:#b95b10}html[lang=en] .studio-header{flex-wrap:wrap}#fills small{display:block;min-width:160px;color:#786f66} @media print{.language-switch{display:none}}
+/* Review-only feature; retain existing studio typography and orange buttons. */
+.sync-panel { margin: 1.5rem 0; }
+.sync-panel .panel-body { display: grid; gap: 1rem; }
+.sync-panel input,.sync-panel select { width:100%; min-width:0; padding:.75rem; font:inherit; border:1px solid #d8d1ca; border-radius:.5rem; }
+.sync-login { display:grid; grid-template-columns:1fr 1fr auto; align-items:end; gap:1rem; }
+.sync-panel .actions { flex-wrap:wrap; }
+@media(max-width:700px) { .sync-login { grid-template-columns:1fr; } }
