@@ -1,4 +1,4 @@
-import {TRANSLATIONS} from './translations.js?v=20261031-ibkr';
+import {TRANSLATIONS} from './translations.js?v=20261108-upgrade';
 let language='zh-HK';
 try{language=localStorage.getItem('winwin-language')==='en'?'en':'zh-HK';}catch{}
 const memory=new WeakMap(),reverse=new Map(),attrs=new WeakMap();

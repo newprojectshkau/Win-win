@@ -1,9 +1,9 @@
-import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261031-ibkr';
-import {initCharts} from './charts.js?v=20261031-ibkr';
-import {initPresentation} from './presentation.js?v=20261031-ibkr';
-import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261031-ibkr';
-import {DEFAULT_CONFIG,validateDataset,fingerprint,stockName} from './engine.js?v=20261031-ibkr';
-import {runWindow} from './performance.js?v=20261031-ibkr';
+import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261108-upgrade';
+import {initCharts} from './charts.js?v=20261108-upgrade';
+import {initPresentation} from './presentation.js?v=20261108-upgrade';
+import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261108-upgrade';
+import {DEFAULT_CONFIG,validateDataset,fingerprint,stockName} from './engine.js?v=20261108-upgrade';
+import {runWindow} from './performance.js?v=20261108-upgrade';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';

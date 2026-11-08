@@ -1,23 +1,23 @@
-import {validateFees,applyFeeSchedule} from './fees.js?v=20261031-ibkr';
-export const ENGINE_VERSION = "0.3.0-review";
+import {validateFees,applyFeeSchedule} from './fees.js?v=20261108-upgrade';
+export const ENGINE_VERSION = "0.4.0-review";
 // Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
 export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
 export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
 export const DEFAULT_CONFIG = Object.freeze({
-  execution: "signal_close",
+  execution: "next_open",
   lookback: 20,
   capMin: 2000000000,
   volumeMin: 10000000,
   rangeMin: 0.015,
-  priceMin: 20,
-  priceMax: 1000,
+  priceMin: 200,
+  priceMax: 10000,
   candidates: 10,
   threshold: 0.005,
   mode: "fixed",
   k: 1,
-  target: 1000,
+  target: 10000,
   gateEnabled: true,
-  equalPolicy: "skip",
+  equalPolicy: "pass",
   quantityTie: "lower",
   commission: 1,
   slippageBps: 5,
@@ -105,12 +105,12 @@ export function countEvents(
       steps = 0;
     if (mode === "fixed") {
       const brick = Math.max(1, Math.round(referenceUnits * threshold));
-      steps = Math.floor(Math.abs(delta) / brick);
+      steps = Math.max(0, Math.floor((Math.abs(delta) - 1) / brick));
       if (steps > 20000) throw Error("單分鐘事件過多，請核對資料及門檻");
       anchor += d * steps * brick;
     } else {
       while (
-        Math.abs(p - anchor) >= Math.max(1, Math.round(anchor * threshold))
+        Math.abs(p - anchor) > Math.max(1, Math.round(anchor * threshold))
       ) {
         const direction = p > anchor ? 1 : -1;
         if (direction !== d) break;
@@ -150,12 +150,12 @@ export function nearestQuantity(price, target, tie = "lower") {
     b = Math.abs(hi * p - t);
   return a === b ? (tie === "higher" ? hi : lo) : a < b ? lo : hi;
 }
-export const ratio = (B, R) => (R === 0 ? null : B / R);
+export const ratio = (B, R) => B / (R + 1);
 export function decideGate(
   previous,
   current,
   enabled = true,
-  equalPolicy = "skip",
+  equalPolicy = "pass",
 ) {
   if (!enabled)
     return {
@@ -163,13 +163,7 @@ export function decideGate(
       status: "disabled",
       reason: "交易開關已停用；仍須等各股首事件",
     };
-  if (!previous.R || !current.R)
-    return {
-      pass: false,
-      status: "undefined",
-      reason: "組合 RR 分母為零，依 A14 跳過整段",
-    };
-  const diff = current.B * previous.R - previous.B * current.R;
+  const diff = current.B * (previous.R + 1) - previous.B * (current.R + 1);
   if (diff > 0)
     return {
       pass: true,
@@ -180,7 +174,7 @@ export function decideGate(
     return {
       pass: true,
       status: "equal_pass",
-      reason: "RR 相等，依暫定等號通過選項啟用",
+      reason: "RR 相等，依已確認等號政策通過",
     };
   return {
     pass: false,
@@ -254,7 +248,7 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
     if (position === 0) {
       fill(
         e.direction,
-        quantity,
+        nearestQuantity(bar.close * (1 + e.direction * config.slippageBps / 10000), config.target, config.quantityTie),
         bar,
         e.direction === 1 ? "open_long" : "open_short",
       );
@@ -267,7 +261,7 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
       fill(-Math.sign(previous), Math.abs(previous), bar, "close_reverse");
       fill(
         e.direction,
-        quantity,
+        nearestQuantity(bar.close * (1 + e.direction * config.slippageBps / 10000), config.target, config.quantityTie),
         bar,
         e.direction === 1 ? "reverse_long" : "reverse_short",
       );
@@ -374,7 +368,7 @@ export function validateDataset(data) {
       if (data.schemaVersion === 2) {
         if (session.marketCap !== null && (!Number.isFinite(session.marketCap) || session.marketCap <= 0)) throw Error("市值無效");
         const d = session.daily;
-        if (d !== null && (!d || ![d.close,d.high,d.low,d.volume].every(Number.isFinite) || d.low<=0 || d.high<d.low || d.close<d.low || d.close>d.high || d.volume<0)) throw Error("官方日線格式無效");
+        if (d !== null && (!d || (d.open !== undefined && (!Number.isFinite(d.open) || d.open<=0 || d.open<d.low || d.open>d.high)) || ![d.close,d.high,d.low,d.volume].every(Number.isFinite) || d.low<=0 || d.high<d.low || d.close<d.low || d.close>d.high || d.volume<0)) throw Error("官方日線格式無效");
         if (session.previousClose !== null && (!Number.isFinite(session.previousClose) || session.previousClose<=0)) throw Error("前收市價無效");
         if (session.marketCap !== null) {
           const t=Date.parse(session.marketCapAvailableAt);
@@ -391,6 +385,7 @@ export function validateDataset(data) {
         session.previousClose <= 0
       ))
         throw Error(`${instrument.symbol} ${session.date} 缺市值或前收市價`);
+      if (session.bars === null) continue;
       if (!Array.isArray(session.bars) || session.bars.length !== 390)
         throw Error(
           `${instrument.symbol} ${session.date} 缺完整 390 分鐘；不支援半日市／補值`,
@@ -463,13 +458,14 @@ export function replayValidated(dataset, config, feeState = {}) {
     const history = previous.slice(-config.lookback),
       avg = (k) => history.reduce((sum, s) => sum + k(s), 0) / history.length;
     const modern = dataset.schemaVersion === 2;
-    const dailyComplete = !modern || history.every(s => s.daily && s.previousClose > 0);
+    const opening = s => s.daily?.open ?? s.bars?.[0]?.open;
+    const dailyComplete = history.every(s => (modern ? s.daily : s.bars?.length === 390) && opening(s) > 0);
     const knownCaps = history.filter(s => Number.isFinite(s.marketCap) && s.marketCap > 0).length;
     // Nonnegative market caps: the known sum / full lookback is a lower bound,
     // never an imputation or an exact average when observations are missing.
     const cap = avg(s => s.marketCap ?? 0),
       volume = dailyComplete ? avg(s => modern ? s.daily.volume : s.bars.reduce((a,b)=>a+b.volume,0)) : null,
-      range = dailyComplete ? avg(s => modern ? (s.daily.high-s.daily.low)/s.previousClose : (Math.max(...s.bars.map(b=>b.high))-Math.min(...s.bars.map(b=>b.low)))/s.previousClose) : null,
+      range = dailyComplete ? avg(s => modern ? (s.daily.high-s.daily.low)/opening(s) : (Math.max(...s.bars.map(b=>b.high))-Math.min(...s.bars.map(b=>b.low)))/opening(s)) : null,
       price = dailyComplete ? avg(s => modern ? s.daily.close : s.bars.at(-1).close) : null;
     const checks = {
       cap: cap > config.capMin,
@@ -479,7 +475,7 @@ export function replayValidated(dataset, config, feeState = {}) {
     };
     return {
       symbol: instrument.symbol,
-      missingDailyDays: history.filter(s=>!s.daily || !(s.previousClose>0)).length,
+      missingDailyDays: history.filter(s=>!(modern ? s.daily : s.bars) || !(opening(s)>0)).length,
       knownCaps,
       capBasis: knownCaps === history.length ? "exact_average" : "nonnegative_lower_bound",
       dataIncomplete: !dailyComplete || (knownCaps < history.length && cap <= config.capMin),
@@ -524,16 +520,18 @@ export function replayValidated(dataset, config, feeState = {}) {
           b.B * (a.R + config.k) - a.B * (b.R + config.k) ||
           a.symbol.localeCompare(b.symbol, "en"),
       );
-    const selected = ranked.slice(0, config.candidates),
+    const cutoff = ranked[Math.min(config.candidates, ranked.length)-1];
+    const selected = cutoff ? ranked.filter(row => row.B * (cutoff.R + config.k) >= cutoff.B * (row.R + config.k)) : [],
       previous = { B: 0, R: 0 },
       current = { B: 0, R: 0 };
     const symbolResults = [];
     for (const row of selected) {
-      previous.B += row.B;
-      previous.R += row.R;
+
       const i = dataset.instruments.find((i) => i.symbol === row.symbol);
       const session = i.sessions.at(-1);
       if (!session.bars) continue;
+      previous.B += row.B;
+      previous.R += row.R;
       const c = countEvents(session.bars.slice(spec.start, spec.observeEnd), {
         threshold: config.threshold,
         mode: config.mode,
@@ -542,14 +540,14 @@ export function replayValidated(dataset, config, feeState = {}) {
       current.R += c.R;
     }
     const missingCurrent = selected.filter(row => !dataset.instruments.find(i=>i.symbol===row.symbol).sessions.at(-1).bars).map(row=>row.symbol);
-    const blocked = [...missingPrevious, ...missingCurrent];
-    const gate = blocked.length ? {pass:false,status:"data_blocked",reason:`缺完整分鐘，整段停止（不重組名單）：${blocked.join("、")}`} : selected.length
+    const active = selected.filter(row => !missingCurrent.includes(row.symbol));
+    const gate = active.length
       ? decideGate(previous, current, config.gateEnabled, config.equalPolicy)
-      : { pass: false, status: "no_candidates", reason: "篩選後沒有候選股票" };
+      : {pass:false,status:selected.length ? "data_blocked" : "no_candidates",reason:selected.length ? "所有已選股票缺資料，跳過時段" : "篩選後沒有候選股票"};
     for (const row of selected) {
       const i = dataset.instruments.find((i) => i.symbol === row.symbol);
       symbolResults.push(
-        gate.pass
+        gate.pass && !missingCurrent.includes(row.symbol)
           ? simulateSymbol({
               symbol: row.symbol,
               bars: i.sessions.at(-1).bars,
@@ -560,7 +558,7 @@ export function replayValidated(dataset, config, feeState = {}) {
           : {
               symbol: row.symbol,
               slot,
-              status: gate.status === "data_blocked" ? "skipped_missing_data" : "skipped_by_strategy",
+              status: missingCurrent.includes(row.symbol) ? "skipped_missing_data" : "skipped_by_strategy",
               quantity: row.quantity,
               fills: [],
               transitions: [],
@@ -577,6 +575,9 @@ export function replayValidated(dataset, config, feeState = {}) {
     slots[slot] = {
       ranked,
       selected,
+      excludedPrevious: missingPrevious,
+      excludedCurrent: missingCurrent,
+      comparisonSymbols: active.map(row => row.symbol),
       previous: { ...previous, rr: ratio(previous.B, previous.R) },
       current: { ...current, rr: ratio(current.B, current.R) },
       gate,

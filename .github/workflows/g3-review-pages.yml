@@ -5,6 +5,7 @@ on:
     paths:
       - "sites/g3-platform/**"
       - "scripts/marketdata/**"
+      - "services/review-api/**"
       - ".github/workflows/g3-review-pages.yml"
   workflow_dispatch:
 permissions:
@@ -24,6 +25,8 @@ jobs:
           node-version: "22"
       - name: Verify strategy fixtures and replay invariants
         run: npm test --prefix sites/g3-platform
+      - name: Verify authenticated persistent review API
+        run: python3 -m unittest discover -s services/review-api -p 'test_*.py' -v
       - name: Verify private data adapter with offline fixtures
         run: python3 -m unittest discover -s scripts/marketdata -p 'test_*.py' -v
       - name: Prepare review-only static site
@@ -31,13 +34,14 @@ jobs:
         run: |
           mkdir -p _site
           cp sites/g3-platform/index.html sites/g3-platform/review.html sites/g3-platform/dataset-store.js sites/g3-platform/styles.css sites/g3-platform/app.js sites/g3-platform/engine.js sites/g3-platform/fees.js sites/g3-platform/i18n.js sites/g3-platform/translations.js sites/g3-platform/ibkr-fees.html sites/g3-platform/assumptions.js sites/g3-platform/performance.js sites/g3-platform/simulator.html sites/g3-platform/simulator.css sites/g3-platform/simulator.js sites/g3-platform/private-download.html sites/g3-platform/private-download.js sites/g3-platform/market-expanded-90days.enc sites/g3-platform/market-expanded-30days.enc sites/g3-platform/market-review.enc sites/g3-platform/market-aapl-history.enc sites/g3-platform/charts.js sites/g3-platform/presentation.js sites/g3-platform/quality-audit.js _site/
+          cp sites/g3-platform/review-sync*.js _site/
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           Path('_site/build.json').write_text(json.dumps({
               'revision': os.environ['GITHUB_SHA'],
               'ref': os.environ['GITHUB_REF_NAME'],
-              'engineVersion': '0.3.0-review'
+              'engineVersion': '0.4.0-review'
           }))
           Path('_site/.nojekyll').touch()
           PY
