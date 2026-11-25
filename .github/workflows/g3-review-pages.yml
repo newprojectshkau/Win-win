@@ -41,7 +41,7 @@ jobs:
           Path('_site/build.json').write_text(json.dumps({
               'revision': os.environ['GITHUB_SHA'],
               'ref': os.environ['GITHUB_REF_NAME'],
-              'engineVersion': '0.4.1-review'
+              'engineVersion': '0.4.2-review'
           }))
           Path('_site/.nojekyll').touch()
           PY

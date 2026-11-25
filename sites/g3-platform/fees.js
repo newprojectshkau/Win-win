@@ -45,6 +45,6 @@ export function applyFeeSchedule(results,fills,c,state,date){
  for(const r of results){
   let cash=0,net=0;
   for(const f of r.fills){cash+=(f.side==='sell'?1:-1)*f.amount-f.fee;net+=f.netContribution;f.cash=cash;f.cumulativeRealizedNet=net;}
-  r.net=cash;r.fees=r.fills.reduce((s,f)=>s+f.fee,0);
+  r.net=r.position ? net : cash;r.fees=r.fills.reduce((s,f)=>s+f.fee,0);
  }
 }
