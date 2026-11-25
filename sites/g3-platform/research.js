@@ -1,5 +1,5 @@
-import {runWindow} from './performance.js?v=20261125-comments';
-import {validateConfig,fingerprint,ENGINE_VERSION} from './engine.js?v=20261125-comments';
+import {runWindow} from './performance.js?v=20261125-assumptions';
+import {validateConfig,fingerprint,ENGINE_VERSION} from './engine.js?v=20261125-assumptions';
 export function parseSlippageRates(text) {
   if(typeof text!=='string')throw Error('Invalid slippage scenarios');
   const parts=text.split(',').map(v=>v.trim());

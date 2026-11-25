@@ -1,4 +1,4 @@
-import {feeModelLabel} from './fees.js?v=20261125-comments';
+import {feeModelLabel} from './fees.js?v=20261125-assumptions';
 // Native SVG charts for the existing simulator. Values come only from completed runs.
 export const CHART_METRICS = {
  cumulative:{label:'累計淨盈虧',unit:'US$',color:'#b95b10'},
