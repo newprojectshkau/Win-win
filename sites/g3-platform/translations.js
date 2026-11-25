@@ -1,4 +1,9 @@
 export const TRANSLATIONS = {
+  "可先選擇週期。載入資料後會核對相容性。": "Select an interval now. Compatibility is checked when data is loaded.",
+  "資料原始週期：": "Source interval: ",
+  " 秒。可選週期須係原始週期嘅整數倍。": " seconds. The chosen interval must be a whole multiple of the source interval.",
+  "原先選擇唔適用，已切換到自動（": "The prior choice is incompatible. Switched to Auto (",
+  " 秒）。": " seconds).",
   "每段用前日同一完整時段排名。當日先觀察，通過 RR 開關先開始交易，到該段結束清倉。": "Rank each window using the full matching window on the previous day. Observe first, trade after the RR gate passes, and close at the end of that window.",
   "午市觀察開始須等於或遲於早市結束。": "Afternoon observation must start at or after the end of the morning window.",
   "到「Renko 排名」設定 Bar 週期": "Set the bar interval in Renko ranking",
