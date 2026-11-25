@@ -21,7 +21,7 @@ v3 is the current strategy definition. Earlier PDFs and the website may reflect 
 
 已建立[六頁操作平台](sites/g3-platform/README.md)：工作台、參數設定、五階段結果、逐股重播、假設與留言及版本比較。參數會實際傳入重播核心；示例採合成資料，不是市場回測。此版不接券商或實盤。
 
-[假設分頁](https://newprojectshkau.github.io/Win-win/review.html#assumptions) 已與 01c、逐字稿及審閱 JSON 核對。登記冊預設顯示 A12、A14、A15、A20 四項待確認問題。「全部」亦列已接納的假設。個人留言可隨設定和運行結果匯出。
+[假設分頁](https://newprojectshkau.github.io/Win-win/review.html#assumptions) 已與 01c、逐字稿及審閱 JSON 核對。登記冊預設顯示 A12 的持倉股數調整細則。「全部」亦列已接納的假設。個人留言可隨設定和運行結果匯出。
 
 在 repo 根目錄可執行：
 
