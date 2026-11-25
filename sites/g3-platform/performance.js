@@ -18,8 +18,13 @@ export function summarizeRuns(runs) {
   return {days,symbols:[...symbols.values()],summary:{entryAttempts:sum('entryAttempts'),rejectedEntries:sum('rejectedEntries'),entryFillRate:sum('entryAttempts')?(sum('entryAttempts')-sum('rejectedEntries'))/sum('entryAttempts'):null,turnover:sum("turnover"),tradedStocks:new Set(runs.flatMap(r=>r.fills.map(f=>f.symbol))).size,net:cumulative,fees:sum('fees'),slippage:sum('slippage'),grossBeforeCosts:sum('grossBeforeCosts'),orders:sum('orders'),blockedSlots:sum('blockedSlots'),abortedStockSlots:sum('abortedStockSlots'),incompleteSlots:sum('incompleteSlots'),unassessedStockDays:sum('unassessed'),days:days.length,activeDays,winningDays:days.filter(d=>d.orders>0&&d.net>0).length,winningDayRate:activeDays?days.filter(d=>d.orders>0&&d.net>0).length/activeDays:null,maxCloseDrawdown:maxDrawdown,residual:runs.reduce((s,r)=>s+r.summary.residual,0)}};
 }
 
-export async function runWindow(dataset, config, {startDate,endDate,onProgress=()=>{}}={}) {
-  validateDataset(dataset);validateConfig(config);
+export async function runWindow(dataset, config, options) {
+  return runValidatedWindow(validateDataset(dataset), config, options);
+}
+
+// Callers comparing several scenarios validate the shared source once.
+export async function runValidatedWindow(dataset, config, {startDate,endDate,onProgress=()=>{}}={}) {
+  validateConfig(config);
   const dates=dataset.instruments[0].sessions.map(s=>s.date);
   if(!dates.includes(startDate)||!dates.includes(endDate)||startDate>endDate)throw Error('開始及結束日期須是資料內的交易日，並按先後排列。');
   const start=dates.indexOf(startDate),end=dates.indexOf(endDate);
