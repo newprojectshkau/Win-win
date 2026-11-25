@@ -1,10 +1,10 @@
-import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-adjustable-split';
+import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-add-windows';
 import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261125-assumptions';
-import {initCharts} from './charts.js?v=g3-adjustable-split';
+import {initCharts} from './charts.js?v=g3-add-windows';
 import {initPresentation} from './presentation.js?v=g3-screening-inputs';
 import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=g3-screening-inputs';
-import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName,getTradingSlots,slotLabel,describeTradingWindows} from './engine.js?v=g3-adjustable-split';
-import {runWindow} from './performance.js?v=g3-adjustable-split';
+import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName,getTradingSlots,slotLabel,describeTradingWindows} from './engine.js?v=g3-add-windows';
+import {runWindow} from './performance.js?v=g3-add-windows';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
@@ -84,14 +84,16 @@ function syncDateRange({reset=false}={}){
   el('coverage').textContent=`可測試日期：${first} 至 ${last}（${dates.length} 個交易日）；每次回看 ${lookback} 個已完成交易日。${adjusted?'已將所選日期移到可測範圍。':''}`;
 }
 
-const windowPrefixes={CUSTOM:'window',AM:'am',PM:'pm'};
-const windowInput=(key,field)=>el(`${windowPrefixes[key]}-${field}`);
-const activeWindowKeys=()=>el('window-mode').value==='custom'?['CUSTOM']:['AM','PM'];
+const extraWindows=()=>[...el('additional-windows').children];
+const splitWindowKeys=()=>['AM','PM',...extraWindows().map(fieldset=>fieldset.dataset.extraWindow)];
+const allWindowKeys=()=>['CUSTOM',...splitWindowKeys()];
+const windowInput=(key,field)=>el(`${key==='CUSTOM'?'window':key.toLowerCase()}-${field}`);
+const activeWindowKeys=()=>el('window-mode').value==='custom'?['CUSTOM']:splitWindowKeys();
 const readWindow=key=>({start:windowInput(key,'start').value,tradeStart:windowInput(key,'trade').value,end:windowInput(key,'end').value});
 function windowConfig(){
   return el('window-mode').value==='custom'
     ? {tradingWindow:readWindow('CUSTOM')}
-    : {splitWindows:{AM:readWindow('AM'),PM:readWindow('PM')}};
+    : {splitWindows:Object.fromEntries(splitWindowKeys().map(key=>[key,readWindow(key)]))};
 }
 function currentConfig(){return {...DEFAULT_CONFIG,...windowConfig(),lookback:el('lookback').valueAsNumber,capMin:el('cap-min').valueAsNumber*100000000,rangeMin:el('range-min').valueAsNumber/100,priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
@@ -171,7 +173,7 @@ function showSetupStage(stage,{focus=true}={}) {
 function validateSetup(scope=setupForm) {
   const start=el('start'),end=el('end'),min=el('price-min'),max=el('price-max');
   const active=activeWindowKeys();
-  for(const key of Object.keys(windowPrefixes)){
+  for(const key of allWindowKeys()){
     windowInput(key,'start').setCustomValidity('');
     windowInput(key,'end').setCustomValidity('');
   }
@@ -197,13 +199,13 @@ function syncWindowFields(){
   const active=activeWindowKeys();
   el('custom-window-fields').hidden=!active.includes('CUSTOM');
   el('split-window-fields').hidden=active.includes('CUSTOM');
-  for(const key of Object.keys(windowPrefixes)){
+  for(const key of allWindowKeys()){
     for(const boundary of ['start','trade','end'])windowInput(key,boundary).disabled=!active.includes(key);
   }
 }
 
 function syncSetupSummary(){
-  const windows=activeWindowKeys().map(key=>[key,readWindow(key)]);
+  const windows=activeWindowKeys().map(key=>[key,readWindow(key)]).sort(([,a],[,b])=>(a.start||"99:99").localeCompare(b.start||"99:99"));
   const timeRange=(from,to)=>from&&to?escapeHTML(from+'–'+to):'—';
   el('gate-windows').innerHTML=windows.map(([key,window])=>
     `<div><dt>${slotLabel(key)}</dt><dd><small>前日排名時段</small> ${timeRange(window.start,window.end)}</dd><dd><small>當日觀察時段</small> ${timeRange(window.start,window.tradeStart)}</dd></div>`,
@@ -234,7 +236,7 @@ function syncFeeFields(){
 }
 
 function lockSetupInputs(){
-  const controls=document.querySelectorAll('#config input,#config select,#run,#full-range,#import,#save-chart-version,#run-research,#research-inputs input,#research-inputs select,#export-research');
+  const controls=document.querySelectorAll('#config input,#config select,#run,#full-range,#add-trading-window,[data-remove-window],#import,#save-chart-version,#run-research,#research-inputs input,#research-inputs select,#export-research');
   const enabled=[...controls].filter(control=>!control.disabled);
   enabled.forEach(control=>control.disabled=true);
   return ()=>enabled.forEach(control=>control.disabled=false);
@@ -246,6 +248,26 @@ function advanceSetup(){
 
 for(const button of setupSteps)button.onclick=()=>showSetupStage(Number(button.dataset.setupStep));
 el('setup-bar-link').onclick=()=>showSetupStage(2);
+let nextWindowNumber=1;
+el('add-trading-window').onclick=()=>{
+  if(busy)return;
+  const key=`EXTRA_${nextWindowNumber++}`;
+  const fieldset=el('extra-window-template').content.firstElementChild.cloneNode(true);
+  fieldset.dataset.extraWindow=key;
+  fieldset.querySelector('legend').textContent=slotLabel(key);
+  fieldset.querySelector('[data-remove-window]').setAttribute('aria-label',`移除${slotLabel(key)}`);
+  for(const input of fieldset.querySelectorAll('[data-boundary]'))input.id=`${key.toLowerCase()}-${input.dataset.boundary}`;
+  el('additional-windows').append(fieldset);
+  setupForm.dispatchEvent(new Event('input'));
+  windowInput(key,'start').focus();
+};
+el('additional-windows').onclick=event=>{
+  const button=event.target.closest('[data-remove-window]');
+  if(!button||busy)return;
+  button.closest('[data-extra-window]').remove();
+  setupForm.dispatchEvent(new Event('input'));
+  el('add-trading-window').focus();
+};
 el('window-mode').addEventListener('change',()=>{syncWindowFields();syncSetupSummary();});
 syncWindowFields();
 el('setup-next').onclick=advanceSetup;
@@ -275,7 +297,7 @@ el('detail-date').onchange=renderDetail;
 el('transaction-scope').onchange=renderDetail;
 el('daily-table').onclick=event=>{const button=event.target.closest('[data-date]');if(button){el('detail-date').value=button.dataset.date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}};
 el('export-json').onclick=()=>download(`winwin-performance-${result.startDate}-${result.endDate}.json`,result);
-el('export-csv').onclick=()=>{const keys=['date','turnover','tradedStocks','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','unassessed','blockedSlots','incompleteSlots','abortedStockSlots','residual',...(result.config.tradingWindow?['CUSTOM']:['AM','PM'])];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
+el('export-csv').onclick=()=>{const keys=['date','turnover','tradedStocks','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','unassessed','blockedSlots','incompleteSlots','abortedStockSlots','residual',...Object.keys(result.runs[0].slots)];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
 el('export-fills').onclick=()=>{
  const keys=['date','time','symbol','name','slot','action','side','quantity','reference','price','amount','fee','closedQuantity','realizedGross','netContribution','position',...FEE_COMPONENTS];
  const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';

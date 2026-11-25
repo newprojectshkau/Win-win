@@ -72,3 +72,5 @@ html[data-presentation=numbers] .audit-facts>div{animation:none}
   .setup-data button{justify-self:start}
   .setup-actions{justify-content:flex-end}
 }
+
+#additional-windows fieldset{border-top:1px solid var(--line);padding-top:.75rem;margin-bottom:.9rem}

@@ -192,3 +192,30 @@ test('editable AM and PM each rank, observe and exit within their own window',()
  const misaligned={...splitWindows,AM:{...splitWindows.AM,tradeStart:'10:11'}};
  assert.throws(()=>runReplay(d,{...cfg,splitWindows:misaligned}),/早市.*對齊/);
 });
+
+test('additional windows run in time order and cannot overlap either session',()=>{
+ const d=fixture();
+ d.instruments=d.instruments.slice(0,1);
+ const today=d.instruments[0].sessions.at(-1).bars;
+ const offset=90; // 11:00 New York
+ for(let i=offset;i<offset+6;i++){
+  const open=i<offset+4?100:108,close=i<offset+3?100:108;
+  Object.assign(today[i],{open,close,high:Math.max(open,close),low:Math.min(open,close)});
+ }
+ const splitWindows={
+  AM:{start:'09:30',tradeStart:'10:00',end:'11:00'},
+  PM:{start:'12:00',tradeStart:'12:30',end:'16:00'},
+  EXTRA_1:{start:'11:00',tradeStart:'11:02',end:'11:06'},
+  EXTRA_2:{start:'11:06',tradeStart:'11:08',end:'11:12'},
+ };
+ const config={...DEFAULT_CONFIG,gateEnabled:false,barSeconds:120,priceMin:1,rangeMin:0,volumeMin:0,splitWindows};
+ const result=runReplay(d,config);
+ assert.deepEqual(Object.keys(result.slots),['AM','EXTRA_1','EXTRA_2','PM']);
+ const extra=result.slots.EXTRA_1.symbols[0];
+ assert.equal(extra.initial,100);
+ assert.deepEqual(extra.fills.map(f=>[f.slot,f.action,f.time]),[
+  ['EXTRA_1','open_long',today[offset+4].time],['EXTRA_1','slot_exit',today[offset+5].availableAt],
+ ]);
+ const overlap={...splitWindows,EXTRA_2:{...splitWindows.EXTRA_2,start:'11:04'}};
+ assert.throws(()=>runReplay(d,{...config,splitWindows:overlap}),/額外時段 1同額外時段 2重疊/);
+});
