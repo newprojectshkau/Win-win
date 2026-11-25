@@ -19,32 +19,35 @@
         <div class="setup-workspace">
           <section class="setup-stage" id="setup-stage-1" aria-labelledby="setup-title-1">
             <h3 id="setup-title-1" tabindex="-1">股票篩選</h3>
-            <p class="setup-intro">先載入歷史資料並選擇測試期，再設定合資格股價範圍。</p>
+            <p class="setup-intro">先載入歷史資料，設定回看日數同測試期，再調整篩選門檻。</p>
             <div class="setup-data">
               <div><label for="dataset-library">已保存的歷史資料</label><select id="dataset-library"><option value="">請先載入資料</option></select></div>
               <button type="button" class="button secondary" id="import">匯入私人資料 JSON</button><input type="file" id="file" accept=".json,application/json" hidden>
-              <p id="coverage" class="subtitle">匯入後會顯示可測試的日期。</p><p id="storage-status" class="subtitle"></p>
+              <p id="coverage" class="subtitle" role="status">匯入後會顯示可測試的日期。</p><p id="storage-status" class="subtitle"></p>
             </div>
             <fieldset class="setup-group">
               <legend>測試日期</legend>
               <div class="sim-fields">
+                <label>回看交易日數<input id="lookback" type="number" min="1" max="250" step="1" value="20" list="lookback-presets" required><datalist id="lookback-presets"><option value="5"><option value="10"><option value="20"><option value="30"><option value="60"></datalist><small>可直接輸入日數。每個測試日都需要足夠嘅前置交易日。</small></label>
                 <label>測試方式<select id="period-mode"><option value="range">日期範圍</option><option value="single">單一交易日</option></select></label>
                 <label>開始交易日<input id="start" type="date" list="available-dates" required><datalist id="available-dates"></datalist></label>
                 <label id="end-wrap">結束交易日<input id="end" type="date" required></label>
               </div>
-              <button type="button" id="full-range" class="button ghost">使用全部可測日期</button>
+              <button type="button" id="full-range" class="button ghost" disabled>使用全部可測日期</button>
             </fieldset>
             <fieldset class="setup-group">
-              <legend>20 日平均股價（US$）</legend>
+              <legend>篩選門檻</legend>
               <div class="sim-fields">
                 <label>平均股價下限（US$）<input id="price-min" type="number" min="0.01" step="0.01" value="200" required></label>
                 <label>平均股價上限（US$）<input id="price-max" type="number" min="0.01" step="0.01" value="10000" required></label>
+                <label>平均市值門檻（億美元）<input id="cap-min" type="number" min="0" step="any" value="20" required></label>
+                <label>平均每日波幅門檻（%）<input id="range-min" type="number" min="0" max="100" step="any" value="1.5" required></label>
               </div>
-              <p class="subtitle">股價範圍含端點。20 日平均市值須大於 US$20 億、成交股數大於 1,000 萬、波幅大於 1.5%。每日波幅按開市價計算。</p>
+              <p class="subtitle">股價範圍含端點。平均市值及波幅須高過設定門檻，平均每日成交量須高過 1,000 萬股。每日波幅＝（最高價 − 最低價）÷ 當日開市價。</p>
             </fieldset>
             <details class="setup-disclosure">
               <summary>市值模式及資料覆蓋</summary>
-              <div class="sim-fields"><label>市值資料模式<select id="market-cap-policy"><option value="auto">依資料集聲明</option><option value="complete">IBKR 完整市值</option><option value="research_lower_bound">研究檔市值下限</option></select></label></div>
+              <div class="sim-fields"><label>市值資料模式<select id="market-cap-policy"><option value="auto">依資料集聲明</option><option value="complete">IBKR 完整市值</option><option value="research_lower_bound">研究檔市值下限</option></select></label><label>Bar 週期<select id="bar-seconds"><option value="0">自動</option><option value="30" disabled>30 秒</option><option value="60" disabled>1 分鐘</option><option value="120" disabled>2 分鐘</option></select><small>載入資料後會顯示支援嘅週期。自動模式會優先用相容嘅 30 秒。</small></label></div>
               <p id="universe-note" class="subtitle"></p>
             </details>
           </section>
@@ -52,7 +55,6 @@
             <h3 id="setup-title-2" tabindex="-1">Renko 排名</h3>
             <p class="setup-intro">按前日早市及午市各自計算 RR，選出當日候選名單。</p>
             <div class="sim-fields">
-              <label>Bar 週期<select id="bar-seconds"><option value="0">自動</option></select><small>資料支援時優先採用 30 秒。</small></label>
               <label>Renko 門檻（%）<input id="threshold" type="number" value="0.5" min="0.01" max="20" step="0.01" required><small>價格差額嚴格超過門檻才計事件。</small></label>
               <label>每時段候選數（同分可超出）<input id="candidates" type="number" min="1" max="100" step="1" value="10" required><small>排名邊界同分全納。</small></label>
               <label>磚幅模式<select id="mode"><option value="percentage_simple">百分比磚幅（固定窗口基準）</option><option value="percentage">百分比磚幅（逐事件複利）</option><option value="fixed">固定金額磚幅</option></select></label>
@@ -140,4 +142,4 @@
 <section id="details" class="panel"><div class="panel-head"><h2><span class="section-num">05</span>決策及成交追溯</h2><label>交易日 <select id="detail-date"></select></label></div><div class="panel-body"><div id="gates" class="notice"></div><div id="screening" class="table-wrap"></div><h3>前日名單及當日觀察</h3><div id="decision" class="table-wrap"></div><p class="subtitle">時間按紐約當地顯示；反手會先平倉，再另開一筆。成交價已包含所設滑點。成交總額＝所有買賣的股數 × 成交價之和（雙邊），不等於本金。已實現價差損益只在平倉確認；開倉為 0。本筆淨損益貢獻＝已實現價差損益 − 本筆交易費用，所以開倉會先記費用負數；全期加總等於淨盈虧，未包括未平倉浮盈虧。股票全名採已存檔 reference 作顯示，不作歷史身份證明。</p><label for="transaction-scope">成交明細範圍</label><select id="transaction-scope"><option value="day">目前所選交易日</option><option value="all">本次測試全部交易日</option></select><div id="fills" class="table-wrap"></div></div></section>
 </div>
 <section class="panel" id="scope-section"><div class="panel-head"><h2><span class="section-num">06</span>這次結果的使用範圍</h2></div><div class="panel-body"><ul class="sim-notes"><li>固定研究股票子集，並非完整歷史 IB 股票池；揀股範圍會影響結果。</li><li>分鐘收市確認訊號；擴展版按下一分鐘開市價加滑點成交，時段尾按最後分鐘收市價平倉，兩者仍屬假設；未模擬買賣差價、流動性、成交排隊、停牌及借券限制。</li><li>按日歷史市值來自供應商 reference 日期查詢；暫設當日收市可用，尚未獨立核實原始公布時間。</li><li>調整後 OHLCV；市值、拆股及公司行動仍需獨立核對。擴展資料格式可記錄缺 Bar；缺口按 A14／A15 只影響該股。研究檔可用市值下限，否則不能判定並排除；不補造資料。</li><li>費用及滑點是可修改假設。沒有保證金／賬戶資金限制；因此只展示美元損益，不年化、不把兩星期結果當成收益預測。</li><li>原有 22 項引擎假設仍適用；此頁不是完整 G3 驗收。資料及結果不會自動跨裝置保存，請匯出檔案備份。</li></ul></div></section>
-</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-five-stage"></script><script type="module" src="./i18n.js?v=g3-five-stage"></script></body></html>
+</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-screening-inputs"></script><script type="module" src="./i18n.js?v=g3-screening-inputs"></script></body></html>
