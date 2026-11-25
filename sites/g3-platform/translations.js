@@ -1,4 +1,9 @@
 export const TRANSLATIONS = {
+  "新增時段": "Add window",
+  "移除此時段": "Remove this window",
+  "額外時段 ": "Extra window ",
+  "移除額外時段 ": "Remove extra window ",
+  "早市同午市預設已覆蓋全日。新增時段前，可先縮短其中一段預留空檔。各時段可以相接，時間不可重疊。": "The default morning and afternoon windows cover the day. Shorten one of them to make room for another window. Windows may touch but cannot overlap.",
   "可先選擇週期。載入資料後會核對相容性。": "Select an interval now. Compatibility is checked when data is loaded.",
   "資料原始週期：": "Source interval: ",
   " 秒。可選週期須係原始週期嘅整數倍。": " seconds. The chosen interval must be a whole multiple of the source interval.",

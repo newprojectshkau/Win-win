@@ -1,4 +1,4 @@
-import {replayValidated, validateDataset, validateConfig, resolveBarSeconds, ENGINE_VERSION, stockName} from './engine.js?v=g3-adjustable-split';
+import {replayValidated, validateDataset, validateConfig, resolveBarSeconds, ENGINE_VERSION, stockName} from './engine.js?v=g3-add-windows';
 
 export function summarizeRuns(runs) {
   let cumulative=0, peak=0, maxDrawdown=0;

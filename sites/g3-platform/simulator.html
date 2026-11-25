@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-HK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>歷史績效模擬｜Win-win</title><link rel="stylesheet" href="./styles.css?v=20261125-comments"><link rel="stylesheet" href="./simulator.css?v=20261125-setup"></head>
+<html lang="zh-HK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>歷史績效模擬｜Win-win</title><link rel="stylesheet" href="./styles.css?v=20261125-comments"><link rel="stylesheet" href="./simulator.css?v=g3-add-windows"></head>
 <body><header class="studio-header"><a class="brand" href="./review.html"><span class="brand-icon">W</span><span>WIN-WIN<span class="brand-sub">策略研究工作室</span></span></a><div class="studio-title"><strong>歷史績效模擬器</strong><span>逐日重播 · 成本拆解 · 交易追溯</span></div><span class="badge neutral">研究審閱版 · 沒有實盤下單</span></header>
 <nav class="sim-nav" aria-label="頁面章節"><a href="./review.html">返回審閱平台</a><a href="#setup">資料及設定</a><a href="#execution-research">情景比較</a><a href="#performance">績效摘要</a><a href="#visual-analysis">每日及趨勢圖</a><a href="#daily">逐日結果</a><a href="#details">成交追溯</a></nav>
 <main class="sim-main"><div class="page-heading"><div><span class="eyebrow">HISTORICAL REPLAY</span><h1>選擇日期，重播真實行情。</h1><p>使用同一套五階段引擎，將每一天的前日準備、交易開關及成交結果串連起來。</p></div></div>
@@ -90,6 +90,20 @@
                     <label>時段結束<input type="time" id="pm-end" value="16:00" required disabled></label>
                   </div>
                 </fieldset>
+                <div id="additional-windows"></div>
+                <button id="add-trading-window" type="button" class="button secondary">新增時段</button>
+                <p class="subtitle">早市同午市預設已覆蓋全日。新增時段前，可先縮短其中一段預留空檔。各時段可以相接，時間不可重疊。</p>
+                <template id="extra-window-template">
+                  <fieldset class="setup-group" data-extra-window>
+                    <legend></legend>
+                    <div class="sim-fields">
+                      <label>觀察開始<input type="time" data-boundary="start" required></label>
+                      <label>交易開始<input type="time" data-boundary="trade" required></label>
+                      <label>時段結束<input type="time" data-boundary="end" required></label>
+                    </div>
+                    <button type="button" class="button ghost small" data-remove-window>移除此時段</button>
+                  </fieldset>
+                </template>
               </div>
               <p class="subtitle">每段用前日同一完整時段排名。當日先觀察，通過 RR 開關先開始交易，到該段結束清倉。</p>
             </fieldset>
