@@ -12,7 +12,7 @@ import {
   fingerprint,
   canonical,
 } from "./engine.js?v=20261125-assumptions";
-import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-confirmed";
+import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-replies";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
