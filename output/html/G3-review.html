@@ -1,0 +1,1096 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="G3 simulator implementation plan and three independent agent reviews, with a printer-friendly layout."><title>G3 Simulator — Plan and Reviews</title><style>
+:root{color-scheme:light;--ink:#192c3a;--muted:#526574;--accent:#086a73;--line:#d5e0e5;--paper:#fff;--bg:#edf2f5}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:3px}a:hover{text-decoration-thickness:2px}a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:3px solid #bb7300;outline-offset:4px}.skip{position:absolute;top:-100px;left:1rem;background:#fff;padding:1rem;z-index:5}.skip:focus{top:1rem}.shell{max-width:1160px;margin:auto;padding:36px 24px 64px}.masthead{padding:34px 40px;background:#123747;color:#fff;border-radius:12px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.8rem;font-weight:700;color:#a9dce0}.masthead h1{font-size:clamp(2rem,5vw,3rem);line-height:1.15;margin:12px 0}.masthead p{max-width:75ch;color:#e0eef2}.toolbar{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:20px}button{background:#fff;border:0;border-radius:6px;padding:12px 18px;color:#123747;font:inherit;font-weight:700;cursor:pointer}.print-hint{font-size:.88rem;color:#d0e4e9}.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:26px;margin-top:26px}.contents{align-self:start;position:sticky;top:24px;padding:20px;background:#fff;border:1px solid var(--line);border-radius:8px}.contents h2{font-size:1rem;margin:0 0 12px}.contents ol{padding-left:21px;margin:0}.contents li{margin:0 0 12px}.contents p{font-size:.82rem;color:var(--muted);margin-top:20px}.documents{min-width:0}article{background:var(--paper);padding:34px 38px;border:1px solid var(--line);border-radius:8px;margin-bottom:26px;overflow-wrap:anywhere}h2,h3,h4{line-height:1.3;color:#123747;break-after:avoid-page}article>h2:first-child{font-size:1.9rem;margin-top:0;border-bottom:3px solid #b1d7db;padding-bottom:18px}h3{font-size:1.3rem;margin:2rem 0 .8rem}h4{font-size:1.06rem;margin:1.7rem 0 .6rem}p{margin:.8rem 0}li{margin:.35rem 0}ul,ol{padding-left:1.5rem}code{font: .9em ui-monospace,SFMono-Regular,Consolas,monospace;background:#edf3f5;padding:.1em .25em;border-radius:3px;overflow-wrap:anywhere}pre{white-space:pre-wrap}table{border-collapse:collapse;width:100%;font-size:.9rem;line-height:1.5;margin:1rem 0}th,td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:10px 12px}th{background:#e5f0f2;color:#123747;font-weight:700}tbody tr:nth-child(even){background:#f7fafb}.table-scroll{overflow-x:auto}table{min-width:480px}.footer{color:var(--muted);font-size:.85rem;margin-top:20px}.nojs{background:#fff3d7;padding:10px;border-radius:6px} @media(max-width:850px){.layout{grid-template-columns:1fr}.contents{position:static}.contents ol{display:flex;gap:10px 28px;flex-wrap:wrap}.contents li{margin:0}.contents p{margin-bottom:0}}@media(max-width:560px){.shell{padding:12px}.masthead{padding:24px}.layout{gap:14px;margin-top:14px}article{padding:24px 20px}article>h2:first-child{font-size:1.55rem}body{font-size:15px}}
+@page{size:A4;margin:17mm 15mm 18mm} @media print{html{scroll-behavior:auto}body{background:#fff;color:#111;font:10.5pt/1.45 Arial,sans-serif}.shell{max-width:none;padding:0;margin:0}.masthead{color:#111;background:none;border:0;border-bottom:2px solid #555;padding:0 0 5mm;border-radius:0}.masthead h1{font-size:25pt;margin:2mm 0}.masthead p,.eyebrow{color:#333}.masthead p{margin:2mm 0}.toolbar,.skip,.nojs{display:none!important}.layout{display:block;margin-top:5mm}.contents{position:static;border:0;border-bottom:1px solid #bbb;border-radius:0;padding:0 0 4mm;margin-bottom:5mm}.contents ol{display:block}.contents li{margin:1mm 0}.contents p{display:none}article{border:0;border-radius:0;padding:0;margin:0;overflow-wrap:anywhere;break-before:page}article:first-child{break-before:auto}article>h2:first-child{font-size:19pt;padding-bottom:3mm;border-bottom:1px solid #777}h3{font-size:13pt;margin:6mm 0 2mm}h4{font-size:11pt;margin:5mm 0 2mm}p{orphans:3;widows:3}li{margin:1.2mm 0}a{color:#111;text-decoration:none}code{background:none;font-size:.88em;padding:0}.table-scroll{overflow:visible}table{min-width:0!important;width:100%;font-size:9pt;line-height:1.35;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid-page}th,td{padding:2mm;border-color:#999;overflow-wrap:anywhere}th{background:#eee!important;color:#111}tbody tr:nth-child(even){background:none}.footer{font-size:8pt;border-top:1px solid #aaa;padding-top:3mm;margin-top:5mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body><a class="skip" href="#documents">Skip to documents</a><div class="shell"><header class="masthead"><div class="eyebrow">Win-win · Research and development</div><h1>G3 Simulator</h1><p>Revised implementation plan and independent trading, engineering, and investor reviews.</p><p>Source documents: 14 October 2026 · Review edition: 18 October 2026</p><div class="toolbar"><button type="button" id="print-button">Print / Save as PDF</button><span class="print-hint">Or press Ctrl+P / ⌘P. A4 portrait recommended; disable browser headers and footers for a cleaner copy.</span></div><noscript><p class="nojs">Use your browser’s Print command to print or save as PDF. All content is available without JavaScript.</p></noscript></header><div class="layout"><nav class="contents" aria-label="Document contents"><h2>Contents</h2><ol><li><a href="#plan">Revised implementation plan</a></li><li><a href="#trading">Programmatic trading review</a></li><li><a href="#engineering">Software engineering review</a></li><li><a href="#investor">Investor usability review</a></li></ol><p>The plan incorporates the three reviews. The reviews retain their original assessment of the first draft. These are agent analyses, not professional endorsements; the simulator has not been implemented.</p></nav><main id="documents" class="documents"><article id="plan" aria-label="Revised implementation plan"><h2 id="plan-g3-simulator-implementation-plan">G3 simulator
+implementation plan</h2>
+<p>Date: 2026-10-14 (Asia/Hong_Kong)<br />
+Status: Revised after three independent agent reviews; proposed
+implementation plan; simulator not implemented</p>
+<h3 id="plan-purpose-and-authority">Purpose and authority</h3>
+<p>G3 is the roadmap milestone <strong>simulator correctness</strong>,
+distinct from strategy Stage 3 (position sizing and portfolio RR).
+Deliver a deterministic five-stage historical simulator whose results
+match agreed hand calculations, can be replayed, and never use
+information before it became available.</p>
+<p>The <a href="https://github.com/newprojectshkau/Win-win/blob/main/README.md">README</a> identifies the <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E6%8A%95%E8%B3%87%E6%A8%A1%E5%9E%8B%E8%A6%8F%E6%A0%BC_v3.md">v3 specification</a> and <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/parameters.json">current parameters</a> as authoritative.
+Use the <a href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E9%80%90%E5%AD%97%E7%A8%BF%E5%B7%AE%E7%95%B0%E6%A0%B8%E5%B0%8D.md">transcript
+reconciliation</a> for supporting evidence. The <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/sites/investment-roadmap-hk/dist/index.html">website
+roadmap</a> provides milestone context, but can reflect earlier
+versions. New engineering proposals below require explicit versioning;
+they are not already confirmed strategy rules.</p>
+<p>G3 verifies implementation correctness. Profitability and
+sample-out-of-sample validation belong to G4; live execution resilience
+and broker integration belong to later milestones. No live orders are
+part of this plan.</p>
+<h3 id="plan-current-repository-and-environment">Current repository and
+environment</h3>
+<p>The repository contains specifications, source transcripts/photos, a
+self-contained website, PDFs, and an assumed RR comparison script with
+saved data. There is no complete simulator or trading engine.
+<code>parameters.json</code> explicitly records
+<code>core_logic_complete=false</code> and unresolved rules.</p>
+<p>Python 3.12 is available in the cloud environment. The static website
+returned HTTP 200, and offline replay reproduced all 20 saved
+symbol/session RR results and event logs. This validates the existing
+assumed research model, not the v3 strategy. Do not run the comparison
+script's network-fetching <code>main()</code> as a simulator: it
+overwrites tracked results and uses a fixed date inside a rolling data
+window. PDF regeneration is optional; retained scripts use macOS
+fonts.</p>
+<h3 id="plan-prerequisites-and-rule-decisions-g1g2">Prerequisites and
+rule decisions (G1/G2)</h3>
+<p>Create a versioned decision register with each unresolved item,
+source evidence, proposed options, chosen answer, strategy-owner
+confirmation, and hand-calculated acceptance cases. Keep unresolved
+values visible and reject runs that depend on them rather than filling
+them silently.</p>
+<p>Required decisions include:</p>
+<ul>
+<li>Minute price field, timestamp meaning, and when a completed
+observation becomes usable.</li>
+<li>Renko reference prices, subsequent anchors, B counting, R scope,
+multiple threshold crossings within one minute, equality, window resets,
+and dollar versus percentage calculations.</li>
+<li>Stage 1 historical day convention, price sampling, fluctuation
+denominator, point-in-time universe and company-action treatment.</li>
+<li>Candidate ties, shortages, missing-data treatment, and session
+boundary/half-day behavior.</li>
+<li>Quantity reference price, nearest-integer ties, and when quantities
+may be refreshed.</li>
+<li>Zero-denominator and equal-RR gate actions. Preserve
+<code>null</code> plus <code>zero_denominator</code> where the portfolio
+formula is undefined; do not add a smoothing constant.</li>
+<li>Simulated order timing, fill prices, execution limitations and
+costs. Distinguish strategy signals from fills.</li>
+</ul>
+<p>Start with the confirmed <code>h=1</code> behavior. Defer
+<code>h=2/3</code> until their counting, anchor and reset rules are
+defined. G2 must supply suitably licensed historical minute data,
+point-in-time screening inputs and calendars. Synthetic fixtures can
+support development before these arrive; they cannot establish
+historical data readiness or complete G2.</p>
+<h4
+id="plan-required-decisions-highlighted-by-specialist-review">Required
+decisions highlighted by specialist review</h4>
+<p>Approve a worked causal timeline before coding Stages 4–5: bar
+start/end, availability time, gate evaluation, initial-price
+observation, signal, order submission and eligible fill. A bar labelled
+10:00 may close at 10:01; its close cannot be used at 10:00. The
+observation threshold must not use a later Stage 5 initial price. Define
+event precedence at equal timestamps, including AM liquidation and PM
+observation at 12:30, and prevent an expired slot from reopening.</p>
+<p>Specify session-end execution separately. A next-bar-open model has
+no regular-session next bar after 16:00. Choose and disclose an
+idealized exit mark, a supported auction model, or another explicitly
+approved execution convention. Do not silently move the exit earlier or
+fill the next day. If data cannot support an executable exit, record the
+limitation and any residual inventory.</p>
+<p>One-minute OHLC does not identify intraminute high/low order. Adopt
+an approved sampled-price event model for the first release; never
+silently infer a high-first or low-first path. Specify separately how a
+multi-threshold jump contributes to B and how many execution actions
+that observation may generate.</p>
+<p>G2 handoff must include documented schemas for minute bars, daily
+screening values, universe membership and calendars: stable security
+identifiers, units, interval/availability timestamps, adjustment bases,
+duplicate/missing-data policy and dataset hashes. A readiness report
+must verify the selected trade dates, previous scoring session and
+complete approved screening lookback. Include delisted securities,
+publication delays, splits and symbol changes where relevant; a supplied
+frozen universe supports partial testing but not complete Stage 1
+acceptance.</p>
+<h3 id="plan-implementation-sequence">Implementation sequence</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Review table; scroll horizontally on narrow screens"><table>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Work</th>
+<th>Deliverable and exit condition</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1. Freeze executable rules</td>
+<td>Resolve the required decisions above and specify expected answers
+independently of code.</td>
+<td>Versioned rule register and strategy-owner-approved fixtures; no
+unresolved rule used in an accepted run.</td>
+</tr>
+<tr class="even">
+<td>2. Replay foundation</td>
+<td>Validate schemas, timestamps, completeness and company actions; feed
+observations through a chronological clock that reveals only available
+information.</td>
+<td>Data adapters, calendar and deterministic event stream; rejected
+inputs have explicit reasons.</td>
+</tr>
+<tr class="odd">
+<td>3. Stages 1–3</td>
+<td>Implement screening, independent AM/PM selection using
+<code>B/(R+1)</code>, integer quantities nearest target notional, and
+portfolio RR <code>ΣB/ΣR</code>.</td>
+<td>Auditable screening values, rankings, quantities and
+previous-session baselines matching fixtures.</td>
+</tr>
+<tr class="even">
+<td>4. Stages 4–5</td>
+<td>Implement whole-list session gating, per-symbol first-event entry,
+same-direction hold, close-before-reverse and session-end
+liquidation.</td>
+<td>Shared strategy state machine plus an explicitly configured
+simulation adapter; transitions match fixtures.</td>
+</tr>
+<tr class="odd">
+<td>5. Verification and review</td>
+<td>Run acceptance tests, multi-session historical replay, repeatability
+and future-data-leakage checks.</td>
+<td>Test results, traceable event/fill ledgers and G3 acceptance report
+reviewed by developer and quantitative reviewer.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="plan-proposed-software-organization">Proposed software
+organization</h3>
+<p>Use the existing checkout in cloud or a normal local clone; no
+separate worktree is required. A proposed Python package layout is
+<code>src/winwin/</code> with modules for configuration, data/calendar,
+Renko events, screening/selection, sizing, gates, strategy state,
+simulation execution, and audit output. Add independently authored
+fixtures and tests under <code>tests/</code>, and a command-line replay
+entry point. Dependency choices and a locked installation workflow
+should be decided during implementation, not inferred from the existing
+standard-library research script.</p>
+<p>The strategy core should accept data events and emit decisions
+without accessing broker APIs, network calls or UI state. A simulation
+adapter supplies fills and costs. This separation lets later execution
+work reuse the strategy rules without assuming simulated fills are
+attainable live.</p>
+<p>Treat the existing parameter document as a specification, not a ready
+runtime configuration. Build a validated executable configuration from
+approved decisions; reject unresolved required fields, invalid settings
+and unsupported modes. Freeze its effective contents at run start and
+record a canonical hash. Optional proposal values remain disabled unless
+explicitly selected in a separately labelled configuration.</p>
+<p>For the initial acceptance, bound support to <code>h=1</code>, the
+approved default AM/PM schedule, gate enable/disable, required numeric
+screening/selection/sizing controls and one approved Renko mode. The
+eventual dollar/percentage and custom-slot requirements remain in the
+backlog: each needs its own approved rules and fixtures before it
+becomes an enabled control. This staging proposal does not change the
+strategy specification.</p>
+<p>Separate data ingestion from offline replay. Resolve runtime paths
+from an explicit project/data root; the macOS absolute paths in current
+provenance metadata are descriptive only. Use the same packaged engine,
+supported Python version, locked dependencies and pinned
+calendar/timezone policy in cloud and local clones. Test from a working
+directory outside the checkout. Prefer a Git clone over a loose folder;
+if copied folders are supported, capture a source-content hash instead
+of assuming Git metadata exists. Measure resource usage on a small
+replay before broad-universe runs.</p>
+<p>Use explicit decimal precision and rounding for
+prices/thresholds/cash. Preserve RR numerators and denominators and
+compare defined ratios by integer cross-products, rather than rounded
+display values. Define canonical event ordering and output
+serialization. Each run bundle includes configuration/data hashes, code
+revision and dirty-state status, execution assumptions, completed/failed
+status and a completion marker. Interrupted runs cannot appear
+complete.</p>
+<p>Distinguish an idealized fill adapter for signal correctness from an
+execution-constrained adapter. The initial idealized adapter must state
+which borrow, buying-power, delay, rejection and partial-fill
+constraints it does not model. A constrained adapter tracks actual
+inventory and pending orders; reverse entry depends on confirmed
+closure, and stale/pending opening intents are handled at slot end. Its
+extra scope requires data and a separate estimate. Neither adapter
+silently adds optional strategy risk overlays.</p>
+<p>Store immutable input datasets outside source control unless
+intentionally small fixtures. Write each run to a separate ignored
+output directory, preserving the existing research files. Record code
+revision, parameter/rule version, dataset identifiers and hashes,
+timezone/calendar version, execution assumptions and run status. Do not
+store credentials in any manifest or log.</p>
+<h3 id="plan-confirmed-strategy-behavior-to-preserve">Confirmed strategy
+behavior to preserve</h3>
+<ul>
+<li>Stage 1 uses the four specified screening conditions; do not add
+optional filters as core rules.</li>
+<li>Stage 2 has independent previous-day AM 09:30–12:30 and PM
+12:30–16:00 candidate lists, with overlap allowed. Individual RR is
+<code>B/(R+1)</code>.</li>
+<li>Stage 3 chooses positive integer shares nearest the configurable
+target (default US$1,000). Portfolio RR is summed counts divided by
+summed reversals, with no <code>+1</code> or weighting.</li>
+<li>Stage 4 compares today's AM 09:30–10:00 or PM 12:30–13:00
+observation RR against the corresponding previous-day full-slot
+baseline. Gate decisions apply to the whole candidate list.</li>
+<li>Stage 5 records initial prices at 10:00/13:00 after gate passage,
+waits for each symbol's first event, holds on same-direction events
+without adding shares, and closes before reversing on an opposite event
+with <code>h=1</code>. Liquidate at 12:30/16:00 even without another
+Renko event.</li>
+<li>Strategy times use <code>America/New_York</code>; Hong Kong display
+times must account for daylight saving. Interval endpoints and special
+sessions still require explicit decisions.</li>
+<li>Optional risk overlays and research variants must be separate
+configurations with visible differences from the faithful core.</li>
+</ul>
+<h3 id="plan-required-acceptance-cases">Required acceptance cases</h3>
+<ol type="1">
+<li>No first event means no position; gate passage alone creates no
+trade.</li>
+<li>Same-direction events hold the existing quantity without adding
+shares.</li>
+<li>An opposite event with <code>h=1</code> requests closure before
+opening the opposite position; simulated fill ordering is
+observable.</li>
+<li>Session end triggers liquidation without requiring a new Renko
+event, under the agreed fill model.</li>
+<li>Price US<span
+class="math inline">335<em>a</em><em>n</em><em>d</em><em>t</em><em>a</em><em>r</em><em>g</em><em>e</em><em>t</em><em>U</em><em>S</em></span>1,000
+selects 3 shares worth US<span
+class="math inline">1, 005; <em>a</em><em>l</em><em>s</em><em>o</em><em>c</em><em>o</em><em>v</em><em>e</em><em>r</em><em>U</em><em>S</em></span>900
+and US$100 examples and an agreed equal-distance tie.</li>
+<li>Portfolio RR uses <code>ΣB/ΣR</code>, not the mean of individual
+RRs; zero denominator remains explicitly undefined.</li>
+<li>Greater/lower/equal RR and unavailable-input gate cases match the
+agreed policies, including the gate-disabled variant.</li>
+<li>AM and PM selection are independent; boundaries cause no unintended
+double counting and calendar edge cases follow the agreed rules.</li>
+<li>Hand-calculated minute paths cover first events, reversals, no
+movement, exact thresholds and multi-threshold jumps under each
+supported Renko mode.</li>
+<li>Changing observations strictly after time <em>t</em> cannot change
+decisions produced by <em>t</em>. Availability timestamps, previous-day
+selection and screening inputs are included in this check.</li>
+<li>Identical input data, code, rules and parameters reproduce identical
+canonical decision/fill outputs; volatile run timestamps are excluded
+from comparison.</li>
+<li>Each signal, order intent, fill and position transition is traceable
+to its inputs and active version; ledger quantities and cash
+reconcile.</li>
+<li>Equal ratios with different denominators remain equal;
+exact-threshold and nearest-quantity tie cases obey the approved
+numerical policy.</li>
+<li>Permuting input-file order preserves results; duplicate/out-of-order
+observations are handled according to the data contract. Same-timestamp
+exit/signal events cannot reopen expired sessions.</li>
+<li>Missing minutes, halts, insufficient warm-up, delayed market-cap
+publication and splits are surfaced rather than silently filled or
+ignored. No fill occurs before its order or at an unavailable
+price.</li>
+<li>Invalid or unsupported configurations are blocked. If constrained
+execution is supported, test rejected shorts, insufficient buying power,
+delayed/partial closure and cancellation of pending openings at session
+end; otherwise mark those capabilities unsupported.</li>
+</ol>
+<p>Tests must exercise intended cases and report passed, failed, skipped
+and unrun outcomes separately. Independently calculated fixtures are the
+correctness oracle; reproducing the old comparison script alone is
+insufficient.</p>
+<p>Provide a documented offline test command and small end-to-end replay
+command, with a CI correctness gate. Report synthetic rule correctness,
+historical-data readiness and execution realism separately. Command
+success does not replace reviewer sign-off, and blocked or skipped
+required cases prevent full acceptance.</p>
+<h3 id="plan-interface-proposal-for-review">Interface proposal for
+review</h3>
+<p>Begin with a reproducible CLI and a saved configuration file. Propose
+a lightweight local/cloud-accessible review interface once the core is
+stable: editable versioned parameters, input validation, run controls,
+five-stage results, a per-symbol timeline and a downloadable audit
+bundle. The interface must distinguish confirmed rules, unresolved
+items, experimental choices and execution assumptions. Saving parameters
+must update the actual engine configuration, not only the displayed
+values.</p>
+<p>The minimum review workflow is: choose a dataset and approved rule
+version, inspect/validate settings, start a replay, inspect stage
+outputs and reasons for no trade, then export evidence. Profitability
+displays, if provided for diagnosis, must clearly identify the fill and
+cost assumptions and must not imply G4 validation.</p>
+<p>The investor review recommends four browser views:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Review table; scroll horizontally on narrow screens"><table>
+<thead>
+<tr class="header">
+<th>View</th>
+<th>Required behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Prepare</td>
+<td>Select dataset, dates and rule version; show coverage, supported
+controls, units, defaults and blocking decisions.</td>
+</tr>
+<tr class="even">
+<td>Review settings</td>
+<td>Show frozen effective configuration and changes from the faithful
+preset; distinguish approved rules, experiments and fill
+assumptions.</td>
+</tr>
+<tr class="odd">
+<td>Inspect results</td>
+<td>Show five-stage tables and a symbol timeline separating
+observations, signals, orders, fills and positions; explain every skip
+or failure.</td>
+</tr>
+<tr class="even">
+<td>Compare/export</td>
+<td>Compare frozen settings and stage outputs; flag dataset/assumption
+changes; export a reviewable run bundle.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Use explicit statuses such as <code>skipped_by_strategy</code>,
+<code>flat_no_event</code>, <code>blocked_by_configuration</code>,
+<code>blocked_by_data</code>, <code>execution_rejected</code> and
+<code>run_failed</code>. Keep undefined RR distinct from zero. Display
+dated New York and Hong Kong times with daylight-saving-aware
+conversion. Show actual gross/net exposure, long/short quantities,
+turnover, reversals and assumed costs as diagnostics without changing
+core quantities or adding risk limits.</p>
+<p>Operator exercises must demonstrate that changing target notional
+changes engine quantities while preserving the earlier run; gate failure
+is distinguishable from gate passage with no first event;
+undefined/missing inputs are explained; unsupported h/mode choices are
+blocked; disabling the gate still waits for entry events; and exported
+evidence traces a complete reversal. Operator acceptance covers this
+interface separately from numerical core acceptance.</p>
+<h3 id="plan-schedule-and-acceptance-ownership">Schedule and acceptance
+ownership</h3>
+<p>Estimate four development weeks with one full-time developer,
+part-time quantitative review and a strategy owner available for
+decisions. This corresponds to roadmap weeks 3–6 (2026-11-02 through
+2026-11-29), conditional on prerequisites; it is not a delivery
+commitment.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Review table; scroll horizontally on narrow screens"><table>
+<thead>
+<tr class="header">
+<th>Development week</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Rule register, independently calculated fixtures, configuration/data
+contracts and replay clock.</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Renko events and Stages 1–3 with unit and integration acceptance
+tests.</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Stages 4–5, fill adapter, audit ledger and end-to-end fixtures.</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Historical replay, calendar/missing-data cases, causality and
+repeatability checks, review and fixes.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Infrastructure and synthetic-fixture work can overlap G2. Actual
+historical acceptance depends on usable data. Rule ambiguity, data
+procurement and execution modeling can extend the estimate. The
+developer verifies implementation; the quantitative reviewer
+independently checks expected outputs; the strategy owner confirms
+strategy choices. Record each acceptance decision and any remaining
+limitation in the G3 report.</p>
+<p>The four-week estimate covers the bounded CLI core, immutable
+configuration, reason codes, audit bundles, one data adapter and core
+correctness tests after rule/data readiness. Historical-data
+procurement, realistic broker execution constraints, additional
+undefined variants and a polished interface are excluded. Schedule and
+estimate the minimal browser review interface as a follow-on work item
+once output contracts are stable; the full investor/operator workflow is
+complete only after its separate usability acceptance. No fixed
+additional duration is promised before that interface scope is
+agreed.</p>
+<h3 id="plan-specialist-reviews">Specialist reviews</h3>
+<p>Three independent agents reviewed the initial draft through the
+requested professional perspectives. These are analytical agent reviews,
+not claims of licensed professional credentials or actual
+trader/investor endorsement. The reports are retained as reviews of the
+initial draft; the revisions above incorporate their
+recommendations.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Review table; scroll horizontally on narrow screens"><table>
+<thead>
+<tr class="header">
+<th>Review</th>
+<th>Verdict</th>
+<th>Changes incorporated</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#trading">Programmatic trading</a></td>
+<td>Infrastructure can proceed; faithful historical sign-off depends on
+causal timing, event rules and point-in-time data.</td>
+<td>Bar/fill timeline, 16:00 exit policy, sampling limits, data handoff,
+exact RR comparisons, execution scope and adversarial tests.</td>
+</tr>
+<tr class="even">
+<td><a href="#engineering">Software
+engineering</a></td>
+<td>Feasible in cloud or local clone; moderate complexity with rule/data
+uncertainty.</td>
+<td>Validated immutable config, deterministic ordering, portable paths,
+offline replay, reproducibility/CI contracts and bounded release
+scope.</td>
+</tr>
+<tr class="odd">
+<td><a href="#investor">Investor usability</a></td>
+<td>Conditional proceed; CLI alone is insufficient for comfortable
+investor operation.</td>
+<td>Four-view browser workflow, reason codes, effective settings,
+comparison/export, exposure diagnostics, dual timezones and separate
+usability acceptance.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Recommended next action: complete the G1 decision register and
+independently calculated fixtures, while preparing the G2 data contract
+and replay skeleton. Implementation and professional sign-off remain
+future work; these reviews do not establish G3 completion or
+profitability.</p>
+</article><article id="trading" aria-label="Programmatic trading review"><h2 id="trading-g3-review-programmatic-trading-feasibility">G3 review:
+programmatic trading feasibility</h2>
+<p>Date: 2026-10-14 (Asia/Hong_Kong)<br />
+Perspective: independent review through a programmatic-trading lens;
+this is an agent review, not a claim of professional credentials.<br />
+Reviewed: <a href="#plan">implementation plan</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/README.md">README</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E6%8A%95%E8%B3%87%E6%A8%A1%E5%9E%8B%E8%A6%8F%E6%A0%BC_v3.md">v3 specification</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/parameters.json">parameters</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E9%80%90%E5%AD%97%E7%A8%BF%E5%B7%AE%E7%95%B0%E6%A0%B8%E5%B0%8D.md">transcript reconciliation</a>, and
+<a href="https://github.com/newprojectshkau/Win-win/blob/main/output/rr-comparison-2026-10-13/compare.py">existing
+comparison script</a>.</p>
+<h3 id="trading-verdict">Verdict</h3>
+<p><strong>Proceed with the replay infrastructure and independent
+fixtures. Do not sign off a faithful historical trading simulation until
+the rule and execution decisions below are resolved.</strong> The
+five-stage decomposition, explicit unresolved-rule register, causality
+tests, separation of signals from fills, and deferral of
+<code>h&gt;1</code> are appropriate. Most algorithmic work is
+manageable. The difficult parts are authoritative event definitions,
+historical point-in-time inputs and attainable execution assumptions,
+rather than computing RR.</p>
+<p>Four development weeks is a plausible planning allowance for a
+narrowly scoped <code>h=1</code> simulator after the necessary decisions
+and usable data arrive. It does not cover obtaining a full historical
+IB-compatible universe, reconstructing historical short availability, or
+implementing a realistic broker execution system. Those should be named
+limitations or separately estimated prerequisites.</p>
+<h3 id="trading-findings-and-concrete-repairs">Findings and concrete
+repairs</h3>
+<h4
+id="trading-p0--specify-a-complete-causal-timeline-especially-at-1000-and-1600">P0
+— Specify a complete causal timeline, especially at 10:00 and 16:00</h4>
+<p><strong>Confirmed evidence:</strong> v3 sections 5–6 require an
+observation gate, a new Stage 5 initial price at 10:00/13:00, and
+liquidation at 12:30/16:00. <code>sampling.price_field</code>,
+<code>sampling.confirmation_time_rule</code>, interval boundaries and
+<code>execution.fill_simulation_rule</code> remain unresolved. The
+reconciliation explicitly prohibits using the later Stage 5 initial
+price to compute the earlier observation's dollar threshold.</p>
+<p><strong>Difficulty:</strong> a provider's bar labelled 09:59 may
+cover 09:59–10:00 and become usable at or after 10:00. A bar labelled
+10:00 may cover 10:00–10:01. Its closing price cannot be treated as
+known at 10:00. Similarly, detecting an event from the closing minute
+and filling it retrospectively at that minute's price creates optimistic
+execution. A next-bar-open model has no regular-session next bar after
+16:00. Merely saying “liquidate at the session end” does not solve
+this.</p>
+<p><strong>Repair:</strong> before implementing Stages 4–5, approve a
+worked timeline specifying bar start, bar end, availability, gate
+evaluation, initial-price observation, signal creation, order submission
+and eligible fill time. Add an explicit scheduled-exit policy: an
+idealized contemporaneous mark for signal correctness, a supported
+auction model, or a separately labelled execution convention. An earlier
+exit is a strategy variant, not an invisible fix. Avoid claiming a fill
+is executable when the dataset lacks the required information.</p>
+<p><strong>Acceptance additions:</strong> a 10:00-labelled bar cannot
+influence the 10:00 gate before its data are available; no entry fires
+from the same observation used solely to establish the new initial
+anchor; an event coinciding with liquidation cannot reopen the expired
+slot; the exit model never silently uses a next-day fill.</p>
+<h4
+id="trading-p0--one-minute-inputs-do-not-reveal-intraminute-event-order">P0
+— One-minute inputs do not reveal intraminute event order</h4>
+<p><strong>Confirmed evidence:</strong> v3 specifies one-minute
+sampling, but leaves B counting, subsequent anchors, R scope, multiple
+crossings, threshold equality and percentage compounding unresolved. The
+old comparison script uses minute closes, carries an anchor by completed
+dollar increments, and counts multiple crossings. Those are research
+assumptions, not the executable v3 definition.</p>
+<p><strong>Difficulty:</strong> OHLC bars do not disclose whether a high
+occurred before a low. Using them to generate both upward and downward
+Renko events requires an assumed intraminute path. Minute-close sampling
+is deterministic but intentionally misses movements between samples. A
+multi-threshold move also needs two distinct decisions: how many B
+events exist, and whether one observation can produce several execution
+actions.</p>
+<p><strong>Repair:</strong> approve one event-generation contract for
+the first release. State the sampled price, anchor updates, event count,
+reversal scope and permitted execution actions per observation. If
+close-only sampling is chosen, identify it as an agreed sampled-price
+model. Require finer data for any future intraminute path model rather
+than inventing a path silently. Use stable decimal/integer arithmetic
+and explicit rounding rules for thresholds.</p>
+<p><strong>Acceptance additions:</strong> gaps across three thresholds;
+first downward event; exact threshold and one increment below it;
+direction reversal after a gap; unchanged price; dollar and percentage
+modes; and a sample that would imply different events under high-first
+versus low-first interpretations. These should prove which
+interpretation is supported, not compare two implementations of the same
+assumption.</p>
+<h4
+id="trading-p0--resolve-screening-as-of-time-and-procure-point-in-time-inputs">P0
+— Resolve screening as-of time and procure point-in-time inputs</h4>
+<p><strong>Confirmed evidence:</strong> Stage 1 uses 20-day average
+market capitalization, volume, fluctuation and price, while Stages 2–3
+prepare previous-day rankings and quantities. The specification
+prohibits using later information to establish an earlier universe. The
+exact IB security scope, day convention and price/fluctuation
+definitions are unresolved. The comparison script explicitly uses
+end-of-test-day index weights for a descriptive selection and omits
+Stage 1 entirely.</p>
+<p><strong>Difficulty:</strong> current ticker lists and retrospectively
+revised market-cap series can introduce survivorship and look-ahead
+bias. Historical market cap may require contemporaneous shares
+outstanding as well as price; minute prices alone are insufficient. At
+least 20 eligible historical days plus the scoring day are needed, with
+the exact overlap dependent on the approved convention. Splits can
+corrupt thresholds, quantities and counts when daily and minute data
+have inconsistent adjustment bases.</p>
+<p><strong>Repair:</strong> define when Stage 1 is evaluated, which
+completed days enter it, and how late publications/revisions are
+handled. Require stable security identifiers, valid-date symbol
+mappings, historical universe snapshots, calendar data and documented
+adjustment bases. Separate event/effective time from
+information-availability time. Prefer internally consistent tradable
+price data and explicitly normalize history for company actions. A
+frozen supplied universe can support an honest partial replay but cannot
+count as full Stage 1/G3 historical acceptance.</p>
+<p><strong>Acceptance additions:</strong> newly listed and delisted
+securities, ticker changes, a split between scoring and trading days,
+insufficient warm-up, a market-cap update published after the
+preparation cutoff, and the distinction between a market holiday and a
+missing session. Missing minutes or halts must not be silently
+forward-filled into executable prices.</p>
+<h4
+id="trading-p1--distinguish-the-signal-simulator-from-executable-inventory">P1
+— Distinguish the signal simulator from executable inventory</h4>
+<p><strong>Confirmed evidence:</strong> v3 section 6 and
+<code>execution</code> require close-before-reverse, borrow and
+buying-power checks, and broker reconciliation. They do not provide a
+fill model or guarantee immediate execution. Additional portfolio risk
+limits remain disabled proposals.</p>
+<p><strong>Difficulty:</strong> an opposite signal is not evidence that
+the prior position has closed. A rejected short, partial close or
+unavailable quote can leave actual inventory different from the
+strategy's desired position. Ten US$1,000 allocations also do not
+establish that the account has adequate buying power. Short-sale
+restrictions and unavailable borrow can affect trade feasibility without
+changing the underlying signal rule.</p>
+<p><strong>Repair:</strong> define two explicit simulation capabilities:
+a signal-correctness adapter with idealized fills, and an
+execution-constrained adapter when the necessary inputs exist. Record
+assumptions and unsupported constraints in the run manifest. In the
+constrained adapter, track pending orders and actual filled quantities;
+opening a reversal must depend on confirmation of closure. Specify what
+happens to stale intents when another signal or a slot-end event
+arrives. Parameterize account resources and costs without silently
+adding the optional strategy risk overlays.</p>
+<p><strong>Acceptance additions:</strong> rejected short entry,
+insufficient buying power, partial close, delayed close with a newer
+signal, and slot-end cancellation of pending opening orders. If these
+are outside the first release, reject configurations claiming those
+capabilities and label the outputs as idealized execution rather than
+failing G3 against an unstated broker model.</p>
+<h4
+id="trading-p1--make-rr-comparisons-and-exceptional-states-exact-and-visible">P1
+— Make RR comparisons and exceptional states exact and visible</h4>
+<p><strong>Confirmed evidence:</strong> individual RR is
+<code>B/(R+1)</code>; portfolio RR is <code>sum(B)/sum(R)</code> with no
+smoothing. Zero portfolio denominator, equal gate values, missing data
+and ties remain unresolved. The whole candidate basket is gated.</p>
+<p><strong>Difficulty:</strong> floating-point comparisons can turn
+mathematically equal ratios into unequal ones. Zero reversals are
+plausible in a short observation window. Treating an unavailable
+candidate as a zero count, or dropping it and recomputing the basket,
+changes the gate. A full previous-day baseline versus a 30-minute
+current observation is intentional under the present interpretation, but
+their different horizons make invalid reset/count conventions especially
+damaging.</p>
+<p><strong>Repair:</strong> preserve numerator/denominator counts and
+compare finite ratios by integer cross-products. Distinguish
+<code>valid</code>, <code>zero_denominator</code>,
+<code>missing_data</code> and <code>unresolved_rule</code>; do not merge
+them into numeric zero. Resolve equal-RR and unavailable-basket policies
+with the strategy owner. Keep the confirmed baseline horizon; a
+same-30-minute comparison is a labelled research variant.</p>
+<p><strong>Acceptance additions:</strong> exact equal ratios with
+different denominators; all B and R zero; B positive with R zero; one
+missing candidate in the selected basket; duplicate symbols/security
+identifiers; and deterministic candidate tie handling.</p>
+<h4
+id="trading-p1--add-event-precedence-and-operational-replay-invariants">P1
+— Add event precedence and operational replay invariants</h4>
+<p><strong>Confirmed evidence:</strong> AM and PM lists are independent
+and may overlap; both use the 12:30 boundary. Half-days and interval
+endpoints are unresolved. The plan correctly requests calendar and
+boundary tests but does not yet give ordering rules.</p>
+<p><strong>Repair:</strong> define a deterministic priority for data
+availability, gate decisions, signal processing, fills and scheduled
+exits at equal timestamps. Define ownership of the 12:30 observation,
+clear expired slot state, and keep AM inventory separate from PM
+eligibility. The PM observation starting at 12:30 must not rely on an AM
+fill or anchor unless the approved rule explicitly requires that
+dependency. Include daylight-saving transitions, early closes, gaps and
+halts in the calendar policy.</p>
+<p><strong>Acceptance additions:</strong> the same symbol appears in
+both slots; a 12:30 AM event and PM observation coincide; a half-day
+ends during or before the PM observation; data records arrive out of
+order or are duplicated. Enforce no fill before its order, no double
+fill, close-before-reverse, and inventory/cash reconciliation. A session
+without an attainable exit must surface an unresolved position, not be
+reported as flat by fiat.</p>
+<h3 id="trading-recommended-scope-and-sign-off">Recommended scope and
+sign-off</h3>
+<p>Keep G3 focused on approved one-minute event semantics,
+<code>h=1</code>, the configured five-stage workflow, deterministic
+replay and independently checked outputs. Include only execution
+behavior that the selected adapter and inputs can support. Require
+separate evidence for synthetic rule correctness, historical data
+readiness and fill realism; success in one does not establish the
+others.</p>
+<p>Before sign-off, the strategy owner should approve the causal
+timeline and rule register, the quantitative reviewer should
+independently calculate adversarial fixtures, and the developer should
+produce the replay/audit evidence. Historical results should disclose
+input coverage, rejected/skipped sessions, execution assumptions and
+residual positions. Profitability remains G4, and live broker
+integration remains later work.</p>
+</article><article id="engineering" aria-label="Software engineering review"><h2 id="engineering-g3-engineering-review">G3 engineering review</h2>
+<p>Date: 2026-10-14 (Asia/Hong_Kong)<br />
+Perspective: Experienced software engineering review; an independent
+review perspective, not a claim of professional credentials.<br />
+Reviewed: <a href="#plan">G3 plan</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/README.md">README</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E6%8A%95%E8%B3%87%E6%A8%A1%E5%9E%8B%E8%A6%8F%E6%A0%BC_v3.md">v3 specification</a>, <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/model/parameters.json">parameters</a>, and <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/output/rr-comparison-2026-10-13/compare.py">research
+comparison script</a>. This is a static architecture and repository
+review, not simulator execution or performance validation.</p>
+<h3 id="engineering-verdict">Verdict</h3>
+<p>The simulator is feasible in this repository and in a normal local
+clone. The plan has the right core structure: an offline, deterministic
+strategy engine, separate simulation execution, independent expected
+answers and versioned evidence. Building a narrow <code>h=1</code>
+simulator is moderately challenging; the largest uncertainty is
+incomplete strategy and data contracts, rather than Python
+implementation.</p>
+<p>Approve the implementation direction subject to the repairs below.
+Four development weeks is plausible for a CLI, synthetic fixtures, one
+historical data adapter and bounded historical acceptance after
+prerequisites are resolved. It is not a reliable estimate for data
+procurement, all configurable strategy variants, broker integration or a
+polished interactive interface.</p>
+<h3 id="engineering-findings-and-required-repairs">Findings and required
+repairs</h3>
+<h4
+id="engineering-1-define-the-executable-configuration-contract-before-implementing-stages--high-priority">1.
+Define the executable configuration contract before implementing stages
+— high priority</h4>
+<p>The <a href="https://github.com/newprojectshkau/Win-win/blob/main/model/parameters.json">parameters file</a> mixes
+confirmed rules, provenance, unresolved <code>null</code> fields and
+explicitly disabled optional proposals. It is not yet an executable
+configuration schema. A generic loader could accidentally enable
+proposal values, accept incomplete rules, or interpret descriptive
+strings as algorithms.</p>
+<p>Repair: introduce a validated runtime configuration derived from the
+authoritative specification and approved decision register. Explicitly
+allow supported rule versions and modes; reject unresolved required
+fields, unknown options, invalid ranges and unsupported
+<code>h&gt;1</code> values. Validate custom slot ordering,
+observation-before-monitor timing and calendar compatibility. Preserve
+the existing source specification; write resolved runtime configurations
+as separate versioned artifacts. Freeze a copy for each run so editing a
+file during replay cannot alter decisions. Acceptance must include
+invalid configurations and prove optional proposals remain disabled.</p>
+<h4
+id="engineering-2-specify-event-order-and-order-lifecycle--high-priority">2.
+Specify event order and order lifecycle — high priority</h4>
+<p>The plan correctly requires close-before-reverse, availability
+timestamps and session-end liquidation. However, a chronological clock
+alone does not decide what happens when a minute completes, a gate
+opens, a symbol generates an event and a session ends at the same
+timestamp. AM liquidation and PM observation both involve 12:30.
+Different iteration orders can produce different positions even with
+identical data.</p>
+<p>Repair: define a deterministic ordering key, for example availability
+time plus an approved event-type priority, symbol identifier and
+sequence number. Keep bar interval time separate from observation
+availability time. Define whether boundary events are processed before
+liquidation and how the 10:00/13:00 anchor is obtained without reading a
+still-incomplete bar. Add boundary fixtures with multiple symbols and
+permuted input file order. Give order intents and fills explicit
+identifiers and states; a reversal opening must depend on the closure
+being filled under the configured adapter. A narrow immediate-fill
+adapter is acceptable initially if documented, but it must not silently
+claim coverage of delayed, partial or rejected fills.</p>
+<h4
+id="engineering-3-make-data-readiness-inspectable-and-replay-independent-of-fetching--high-priority">3.
+Make data readiness inspectable and replay independent of fetching —
+high priority</h4>
+<p>The <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/output/rr-comparison-2026-10-13/compare.py">existing
+script</a> couples fetching with calculation, assumes 390
+regular-session minutes, uses only ten fixed symbols and overwrites
+result files. Its saved single-day data cannot demonstrate Stage 1's
+20-day screen and previous-day-to-current-day workflow. The plan
+recognizes this, but needs a concrete interface between G2 and G3.</p>
+<p>Repair: define separate ingestion and replay commands, with replay
+working offline. Specify the minute-bar, daily-screening,
+universe-membership and calendar schemas, including timezone,
+availability time, adjustment basis, units, identifiers, duplicate
+policy and missing-data policy. Require a readiness report identifying
+the chosen trade dates, prior session and complete screening lookback,
+including point-in-time market-cap inputs. Use the small saved dataset
+only as a research regression fixture with its assumptions clearly
+labeled. Do not promise full historical acceptance until the readiness
+report passes.</p>
+<h4
+id="engineering-4-fix-portability-at-the-loader-boundary--medium-priority">4.
+Fix portability at the loader boundary — medium priority</h4>
+<p>The <a href="https://github.com/newprojectshkau/Win-win/blob/main/model/parameters.json">parameters file</a>
+contains provenance paths under
+<code>/Users/macmini001/Desktop/Win-win/</code>. These do not exist in
+cloud or most other local folders. The research script uses
+<code>zoneinfo</code>; installed Python alone does not ensure that every
+host has suitable timezone data. The <a
+href="https://github.com/newprojectshkau/Win-win/blob/main/README.md">README</a> also records macOS-only font paths in
+PDF tooling.</p>
+<p>Repair: treat absolute provenance paths as descriptive metadata,
+never as runtime input locations. Resolve actual inputs relative to an
+explicit project/data root, or through command-line paths. Keep PDF
+tooling outside mandatory simulator dependencies. Document a supported
+Python version, install into a project virtual environment, lock
+dependencies, and provide a repeatable calendar/timezone-data policy.
+Test from a fresh clone and from a working directory other than the
+repository root. Repository location must not affect canonical
+results.</p>
+<h4
+id="engineering-5-specify-numerical-and-audit-contracts--medium-priority">5.
+Specify numerical and audit contracts — medium priority</h4>
+<p>Threshold equality, closest-integer sizing and RR gate comparisons
+are sensitive to floating-point rounding. Recording a parameter version
+label is insufficient if the contents change while retaining that label.
+Mutable output files also make repeatability difficult to establish.</p>
+<p>Repair: choose one explicit decimal precision/rounding policy for
+prices, thresholds and cash. Compare count-based RR ratios exactly where
+practical, after handling zero denominators, rather than rounding
+displayed ratios before gate decisions. Include dataset hashes,
+canonical configuration hash, approved rule identifier, calendar version
+and code revision; record whether uncommitted implementation changes
+were present. Use unique run directories and a final completion marker
+so interrupted runs cannot appear successful. Define canonical ledger
+ordering and exclude wall-clock timestamps only from the comparison
+representation, not from provenance records.</p>
+<h4
+id="engineering-6-turn-acceptance-ownership-into-an-executable-release-gate--medium-priority">6.
+Turn acceptance ownership into an executable release gate — medium
+priority</h4>
+<p>The proposed acceptance cases are strong. They need a runnable
+contract that differentiates a synthetic correctness pass from a
+historical-data pass, and prevents the developer from silently changing
+expected outputs to match the implementation.</p>
+<p>Repair: independently review expected fixture values before writing
+stage code; link each fixture to a rule decision. Add negative-input
+tests, same-time event ordering, decimal equality, unavailable close
+prices and output ledger reconciliation. Provide one documented test
+command and a small offline end-to-end smoke command. Produce an
+acceptance matrix with passed, failed, skipped and blocked cases; record
+reviewer sign-off separately from command success. A basic CI check
+should run the offline suite on future changes. Avoid duplicating every
+implementation branch with tests that simply restate the code.</p>
+<h3 id="engineering-repository-versus-local-folder">Repository versus
+local folder</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Review table; scroll horizontally on narrow screens"><table>
+<thead>
+<tr class="header">
+<th>Location</th>
+<th>Practical assessment</th>
+<th>Required setup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Existing cloud checkout</td>
+<td>Suitable for development, review and bounded offline replay. Remote
+preview access can support a later interface.</td>
+<td>Virtual environment, reproducible install, configured external
+data/output storage and explicit artifact export before environment
+disposal. Measure memory/disk before broad-universe runs.</td>
+</tr>
+<tr class="even">
+<td>Normal local Git clone</td>
+<td>Equally suitable; stable local datasets and a browser interface can
+be convenient for repeated research.</td>
+<td>Same locked dependencies and CLI; portable path handling,
+timezone/calendar data and ignored run directories. Git revision
+supports audit provenance.</td>
+</tr>
+<tr class="odd">
+<td>Loose copied folder</td>
+<td>Can run after packaging, but weakens revision tracking and makes
+updates/reviews harder.</td>
+<td>Prefer a clone. If copies are supported, record a source/package
+content hash instead of assuming Git metadata exists.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A separate worktree is unnecessary. The repository is the versioned
+home for engine code, configuration schemas and small fixtures; large
+licensed datasets and generated run bundles should use separately
+configured locations. Local versus cloud should not require different
+trading logic.</p>
+<h3 id="engineering-suggested-delivery-boundary">Suggested delivery
+boundary</h3>
+<p>For the first G3 acceptance, implement the approved default AM/PM
+schedule, <code>h=1</code>, gate enable/disable, required
+screening/selection/sizing parameters, and one explicitly approved Renko
+mode. A second Renko mode or arbitrary slot layouts require their own
+decisions and fixtures; list them as supported or deferred rather than
+implying that a selectable control already works. This is an
+implementation staging proposal, not a change to the strategy's eventual
+configurable requirements.</p>
+<p>Keep the initial CLI and machine-readable outputs in the four-week
+core estimate. A thin run/results viewer can follow those contracts; a
+full editor with version management, asynchronous runs and detailed
+charts should receive a separate estimate. If both Renko modes, custom
+schedules and a polished interface must ship together, re-estimate after
+their rules and interaction scope are approved. Begin large historical
+runs only after a small multi-session replay passes and its
+memory/output footprint is measured.</p>
+<p>The architecture should proceed now with contracts and synthetic
+fixtures. Final G3 sign-off remains conditional on approved executable
+rules, usable point-in-time historical inputs and independently reviewed
+acceptance results.</p>
+</article><article id="investor" aria-label="Investor usability review"><h2 id="investor-g3-review-investor-usability-and-flexibility">G3
+review: investor usability and flexibility</h2>
+<p>Date: 2026-10-14 (Asia/Hong_Kong)<br />
+Perspective: investor/operator review; this is an analytical review, not
+a claim of professional credentials.<br />
+Reviewed proposal: <a href="#plan">G3 simulator
+plan</a></p>
+<h3 id="investor-verdict">Verdict</h3>
+<p>Proceed with G3, subject to a small, explicit operator interface and
+the unresolved-rule decisions already required by the plan. The proposed
+separation of strategy, replay, fills and audit records is suitable for
+reviewing this strategy. A CLI and JSON file are a useful engineering
+baseline, but are insufficient as the final comfortable workflow for an
+investor expected to change settings, understand a skipped session and
+compare runs.</p>
+<p>The engine can support a practical research workflow without live
+brokerage integration. G3 should prove that approved rules execute
+correctly and can be understood. It does not establish profitability,
+suitable account sizing, or readiness to place live orders.</p>
+<h3 id="investor-basis-for-the-review">Basis for the review</h3>
+<ul>
+<li>The <a href="https://github.com/newprojectshkau/Win-win/blob/main/README.md">README</a> identifies v3 and current
+parameters as authoritative and describes the repository as
+research/specifications, not an execution system.</li>
+<li><a href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E6%8A%95%E8%B3%87%E6%A8%A1%E5%9E%8B%E8%A6%8F%E6%A0%BC_v3.md">v3 sections 2–7</a> require
+editable stage settings, independent AM/PM lists, the configurable trade
+gate and distinct <code>k</code> and <code>h</code> controls. Section 7
+explicitly requires changes to reach the engine and every stage
+output.</li>
+<li><a href="https://github.com/newprojectshkau/Win-win/blob/main/model/parameters.json">parameters.json</a> lists
+intended editable fields, unresolved rules and disabled optional
+overlays. It also records that the interface is not implemented and core
+logic is incomplete.</li>
+<li><a href="https://github.com/newprojectshkau/Win-win/blob/main/model/%E6%8A%95%E8%B3%87%E6%A8%A1%E5%9E%8B%E8%A6%8F%E6%A0%BC_v3.md">v3 sections 5, 6 and 8</a>
+distinguish a gate passing from an entry, signals from attainable fills,
+and optional overlays from the faithful core.</li>
+</ul>
+<h3 id="investor-prioritized-findings">Prioritized findings</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Review table; scroll horizontally on narrow screens"><table>
+<thead>
+<tr class="header">
+<th>Priority</th>
+<th>Finding</th>
+<th>Concrete change proposed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Required before accepted runs</td>
+<td>Flexible controls can create settings whose meanings are undefined.
+<code>h=2/3</code>, alternative Renko modes and custom sessions are not
+all fully specified. An editable field is not evidence that its rule is
+executable.</td>
+<td>Validate configuration against the supported rule version; show
+unsupported choices with the missing decision, and block execution when
+a run depends on it. Keep h=1 available. A separate experimental version
+may run only after its rules are explicit; it must not receive
+faithful-core acceptance.</td>
+</tr>
+<tr class="even">
+<td>Required before operator sign-off</td>
+<td>A no-trade result is ambiguous: gate rejection, no first event,
+missing data and failed execution are materially different.</td>
+<td>Show session and symbol reason codes with plain-language
+explanations. Distinguish <code>skipped_by_strategy</code>,
+<code>flat_no_event</code>, <code>blocked_by_configuration</code>,
+<code>blocked_by_data</code>, <code>execution_rejected</code> and
+<code>run_failed</code>. Undefined RR stays undefined; do not display it
+as zero.</td>
+</tr>
+<tr class="odd">
+<td>Required before operator sign-off</td>
+<td>Settings can look correct while the engine uses old values; the
+specification explicitly warns about this.</td>
+<td>Display the effective configuration captured at run start, lock it
+for that run, and record its version/hash. Editing creates a new
+draft/version and a new run, never alters historical evidence.</td>
+</tr>
+<tr class="even">
+<td>Required before operator sign-off</td>
+<td>The existing roadmap website can reflect older rules. Repurposing
+its displays without reconciliation could mislead users about current
+times or formulas.</td>
+<td>A review interface must read stage outputs and effective
+configuration from the engine. Clearly label individual RR as
+<code>B/(R+1)</code> for the core and portfolio RR as
+<code>ΣB/ΣR</code>; label <code>h</code> as reverse-confirmation
+events.</td>
+</tr>
+<tr class="odd">
+<td>Required before operator sign-off</td>
+<td>Per-symbol notional is not an account risk budget. Ten entries at
+about US<span
+class="math inline">1, 000<em>c</em><em>a</em><em>n</em><em>i</em><em>m</em><em>p</em><em>l</em><em>y</em><em>a</em><em>b</em><em>o</em><em>u</em><em>t</em><em>U</em><em>S</em></span>10,000
+gross exposure, and repeated reversals increase turnover and costs.</td>
+<td>Report actual gross/net exposure, long/short quantities, turnover,
+reversal count and fill/cost assumptions as diagnostics. Do not add
+position caps, stops or shrink quantities to the faithful core. Separate
+any optional execution constraints and show affected orders.</td>
+</tr>
+<tr class="even">
+<td>Recommended for first review interface</td>
+<td>Session times are easy to misunderstand from Hong Kong; US daylight
+saving changes the conversion.</td>
+<td>Present exchange time and Asia/Hong_Kong time, with dates and
+offsets. For example, 09:30 New York is 21:30 Hong Kong in US daylight
+saving and 22:30 in standard time; PM sessions can end on the next Hong
+Kong date.</td>
+</tr>
+<tr class="odd">
+<td>Recommended for first review interface</td>
+<td>Comparing headline results alone makes it hard to see why an
+alternative changed behavior.</td>
+<td>Compare two frozen runs with a settings diff, common dataset
+identifiers and stage-level differences. Flag comparisons with changed
+datasets or execution assumptions. Keep parameter comparison explicit
+rather than automatically optimizing for returns.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="investor-minimum-practical-interface">Minimum practical
+interface</h3>
+<p>Use a lightweight browser review interface backed by the same
+CLI/replay engine. It should work in a local browser and through the
+cloud environment's supported preview connection. Keep saved
+configuration, run bundles and results portable between those
+environments. The interface framework can be chosen by the
+implementation team; no complex frontend is required for G3.</p>
+<ol type="1">
+<li><strong>Prepare run.</strong> Select immutable dataset, dates and
+approved rule version. Start with a faithful v3 preset. Show data
+coverage, missing prerequisites and supported settings before execution.
+Group controls by the five stages, show units, validate ranges and
+session relationships, and offer reset-to-version defaults. Explain that
+target notional may be slightly exceeded by nearest-integer sizing.</li>
+<li><strong>Review settings.</strong> Show the full effective
+configuration and changes from the preset. Keep confirmed rules,
+approved decisions, experimental variants and execution assumptions
+visibly distinct. Unsupported choices should identify the exact
+unresolved rule instead of falling back silently. A disabled gate still
+waits for the first entry event.</li>
+<li><strong>Run and inspect.</strong> Show progress and
+passed/failed/blocked status. Present a five-stage summary: screening
+counts and rejection values; independent AM/PM rankings; quantities and
+rounding differences; baseline/current portfolio counts and gate
+outcome; event/order/fill transitions and final positions. Opening a
+symbol reveals its timestamped price/event/position timeline, including
+data-availability times and separate signal/fill prices.</li>
+<li><strong>Compare and export.</strong> Choose two completed runs for a
+configuration and output diff. Download configuration, input
+identifiers/hashes, stage tables, ledgers, validation results and a
+readable summary. A saved run should remain reviewable without
+restarting the simulator.</li>
+</ol>
+<p>For the first G3 release, correctness/reason tables and export matter
+more than animated charts or a P&amp;L dashboard. If P&amp;L is shown
+for ledger reconciliation, label its fill/cost assumptions and keep it
+separate from a strategy-performance claim.</p>
+<h3 id="investor-operator-acceptance-exercises">Operator acceptance
+exercises</h3>
+<p>These supplement the numerical and causal acceptance cases in the
+implementation plan; they do not replace them.</p>
+<ul>
+<li>Change target notional, save a new version, run a sizing fixture and
+verify that both the effective settings and quantities changed. The
+previous run must remain unchanged.</li>
+<li>Inspect a session whose gate failed and a session whose gate passed
+but had no first events. The operator should be able to explain why
+neither traded without reading source code.</li>
+<li>Supply missing data and a zero-denominator case. The interface
+should display the precise input/rule issue, preserve null RR and
+distinguish rejection from a successful empty trading session.</li>
+<li>Compare gate-enabled and gate-disabled runs using the same dataset
+and execution settings. Show the gate difference and which entry
+decisions changed; disabling the gate must not create immediate
+positions.</li>
+<li>Attempt h=2 while its reset rule is unresolved. Execution should be
+blocked with a clear reason, rather than producing an apparently
+accepted result.</li>
+<li>Inspect an AM/PM boundary and a US daylight-saving date. Exchange
+times, Hong Kong dates, observation periods and liquidation times should
+agree with the accepted calendar rules.</li>
+<li>Export a run bundle and use it to trace a reversal from inputs to
+signal, close fill, reverse fill and reconciled final holdings.</li>
+</ul>
+<h3 id="investor-scope-and-schedule-recommendation">Scope and schedule
+recommendation</h3>
+<p>Keep the four-week estimate for the correctness engine conditional on
+rule/data readiness. The plan currently places a review interface after
+the core becomes stable; therefore do not assume a polished browser
+interface is already included in that estimate. Budget the minimal
+interface explicitly or add it as a follow-on usability milestone.
+Configuration capture, reason codes and portable bundles belong in the
+engine from the start, so a later interface does not require
+redesign.</p>
+<p>Defer parameter-search automation, custom portfolio weights,
+unsupported h/mode/session variants, sophisticated visualizations,
+multi-user accounts, live feeds and broker order controls. Their future
+addition should preserve the faithful v3 preset, versioned alternatives
+and auditable run history. G4 can evaluate performance and robustness
+once G3 is accepted.</p>
+<h3 id="investor-recommended-plan-amendments">Recommended plan
+amendments</h3>
+<p>Make operator sign-off an explicit G3 review item; define the
+no-trade/status vocabulary; capture immutable effective settings at run
+start; add exposure/cost diagnostics without changing core strategy; and
+state whether the minimal browser interface is inside or after the
+four-week engine estimate. These changes make the existing design more
+usable without expanding G3 into a live trading product.</p>
+</article></main></div><footer class="footer">All four Markdown documents are included in full. Source-document links open the repository on GitHub; the plan and review links stay within this file. All content and styling are embedded, so this review file works offline. Roadmap dates remain conditional estimates. No live trading capability is provided.</footer></div><script>document.getElementById('print-button').addEventListener('click',function(){window.print();});</script></body></html>

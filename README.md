@@ -15,6 +15,34 @@
 
 v3 is the current strategy definition. Earlier PDFs and the website may reflect earlier versions; use v3 and `model/parameters.json` when resolving differences. This project currently contains research and specifications, not a complete trading execution system.
 
+## G3 simulator plan and review status
+
+### 可操作平台審閱版
+
+已建立[六頁操作平台](sites/g3-platform/README.md)：工作台、參數設定、五階段結果、逐股重播、假設與留言及版本比較。參數會實際傳入重播核心；示例採合成資料，不是市場回測。此版不接券商或實盤。
+
+[假設分頁](https://newprojectshkau.github.io/Win-win/review.html#assumptions) 已與 01c、逐字稿及審閱 JSON 核對。登記冊預設顯示 A12、A14、A15、A20 四項待確認問題。「全部」亦列已接納的假設。個人留言可隨設定和運行結果匯出。
+
+在 repo 根目錄可執行：
+
+```sh
+python3 -m http.server 8010 --bind 0.0.0.0 --directory sites/g3-platform
+npm test --prefix sites/g3-platform
+```
+
+審閱平台網址：**https://newprojectshkau.github.io/Win-win/**。發布來源分支為 `main`，部署工作流程為 [G3 review platform](.github/workflows/g3-review-pages.yml)。已啟用 GitHub Pages 並允許該分支；每次更新仍需等待自動測試及部署成功。介面採白底、橙色、頂部按鈕導覽及較大的章節／表格間距。實際部署狀態見 [docs/STATUS.md](docs/STATUS.md)。
+
+The G3 implementation plan has been reviewed through three independent agent perspectives: programmatic trading, software engineering, and investor usability. A review implementation now runs on explicit provisional assumptions; the complete v3 simulator and historical-data workflow have not been accepted as G3-complete. Earlier plans and briefings retain their original preparation context.
+
+- [Revised implementation plan](docs/G3-simulator-plan.md)
+- [Trading review](docs/reviews/G3-trading-review.md), [engineering review](docs/reviews/G3-engineering-review.md), and [investor review](docs/reviews/G3-investor-review.md)
+- [Browser and printer-friendly HTML](output/html/G3-review.html): download the file and open it in a browser; GitHub's file view displays the HTML source.
+- [PDF containing the plan and all three reviews](output/pdf/G3-simulator-plan-and-reviews.pdf): open the GitHub file view and select **Download raw file** to save it.
+- [Current project status and next steps](docs/STATUS.md)
+- 香港繁體中文六頁簡報：[PowerPoint](output/slides/G3-engine-briefing-zh-HK.pptx)｜[PDF](output/slides/G3-engine-briefing-zh-HK.pdf)｜[離線瀏覽器版](output/slides/G3-engine-briefing-zh-HK.html)。內容包括引擎架構、建置路線、16 項開工前決策及系統限制；下載後開啟。
+
+The live URL above serves the interactive platform. The separate plan/review HTML and PDF remain downloadable repository files; they are not additional hosted pages.
+
 ## Open in browser Codex
 
 Repository: https://github.com/newprojectshkau/Win-win
