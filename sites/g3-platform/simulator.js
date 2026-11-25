@@ -1,15 +1,16 @@
-import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261108-upgrade';
-import {initCharts} from './charts.js?v=20261108-upgrade';
-import {initPresentation} from './presentation.js?v=20261108-upgrade';
-import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261108-upgrade';
-import {DEFAULT_CONFIG,validateDataset,fingerprint,stockName} from './engine.js?v=20261108-upgrade';
-import {runWindow} from './performance.js?v=20261108-upgrade';
+import {runResearch,parseSlippageRates} from './research.js?v=20261125-comments';
+import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261125-comments';
+import {initCharts} from './charts.js?v=20261125-comments';
+import {initPresentation} from './presentation.js?v=20261125-comments';
+import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261125-comments';
+import {DEFAULT_CONFIG,validateDataset,fingerprint,stockName} from './engine.js?v=20261125-comments';
+import {runWindow} from './performance.js?v=20261125-comments';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
 const stockLabel=s=>`${escapeHTML(s)}<small class="stock-full-name">${escapeHTML(stockName(s))}</small>`;
 const usd=n=>`${n<0?'−':''}US$ ${format(Math.abs(n))}`;
-let data=null,result=null,busy=false;
+let data=null,result=null,busy=false,researchResult=null;
 const table=(headers,rows)=>`<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
 const row=items=>`<tr>${items.map(i=>`<td>${i}</td>`).join('')}</tr>`;
 function error(message){el('error').textContent=message;el('error').hidden=!message;}
@@ -17,7 +18,7 @@ function installDataset(next){
   validateDataset(next);
   if(next.kind!=='imported')throw Error('此頁只接受真實歷史資料。');
   if(next.instruments[0].sessions.length<=DEFAULT_CONFIG.lookback)throw Error('資料需有至少 20 個前置交易日及 1 個測試日。');
-  data=next;el("execution").value=next.recommendedConfig?.execution||"signal_close";result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
+  data=next;el("execution").value=next.recommendedConfig?.execution||DEFAULT_CONFIG.execution;researchResult=null;el("research-results").innerHTML="";el("research-status").textContent="";el("export-research").disabled=true;el("run-research").disabled=false;result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
   const dates=next.instruments[0].sessions.map(s=>s.date);
   const preferredDays=Number.isInteger(next.defaultTradeDays)&&next.defaultTradeDays>0?next.defaultTradeDays:(next.schemaVersion===2?30:10);
   const first=Math.max(DEFAULT_CONFIG.lookback,dates.length-preferredDays);
@@ -25,13 +26,13 @@ function installDataset(next){
   el('start').value=dates[first];el('end').value=dates.at(-1);el('run').disabled=false;
   el('available-dates').innerHTML=dates.slice(DEFAULT_CONFIG.lookback).map(d=>`<option value="${d}">${d}</option>`).join('');
   el('coverage').textContent=`可測試日期：${dates[DEFAULT_CONFIG.lookback]} 至 ${dates.at(-1)}（${dates.length-DEFAULT_CONFIG.lookback} 個交易日）；另有 20 日前置資料。`;
-  const q=next.provenance;
+  const q=next.provenance||{};
   el('universe-note').textContent=next.schemaVersion===2?`50 個已存檔代號，每日重篩並獨立選早／午名單。全市場同期有 ${q.marketNonCapUnionCount} 個代號曾通過成交量／波幅／價格三條件，其中 ${q.unarchivedNonCapUnionCount} 個不在此池；尚未核實它們的市值及 IB 資格。市值不齊時只使用已知值總和 ÷ 20 的非負下限；下限不足不能判定，會列為資料不足及排除，可能改變排名。結果只代表可判定子集。`:'此檔為舊版固定研究子集；篩選成交量沿用常規時段分鐘總和，便於重現舊結果。擴展版使用官方日線。';
   syncDates();presentation.refresh();
   el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
   el('source').textContent=`已載入真實行情研究檔（供應商聲明；未獨立驗證）｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
 }
-function currentConfig(){return {...DEFAULT_CONFIG,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
+function currentConfig(){return {...DEFAULT_CONFIG,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
   const values=[0,...days.map(d=>d.cumulative)],width=1050,height=380,pad=80;
   // Both series share one USD scale and the same zero baseline.
@@ -78,18 +79,18 @@ function download(name,value,type='application/json'){
 }
 async function execute(event){
   event?.preventDefault();if(!data||busy)return;
-  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version').forEach(e=>e.disabled=true);
+  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates').forEach(e=>e.disabled=true);
   try{
     const config=currentConfig();
     const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
     next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
   }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
-  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version').forEach(e=>e.disabled=false);syncFeeFields();}
+  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates').forEach(e=>e.disabled=false);syncFeeFields();}
 }
 function syncFeeFields(){el('fee').disabled=busy||el('fee-model').value!=='custom';for(const id of ['exchange-fee','monthly-shares'])el(id).disabled=busy||el('fee-model').value!=='ibkr_tiered';}
 el('fee-model').addEventListener('change',syncFeeFields);syncFeeFields();
 el('config').addEventListener('submit',execute);
-el('config').addEventListener('input',()=>{if(result)el('dirty').hidden=false;});
+el('config').addEventListener('input',()=>{if(result)el('dirty').hidden=false;if(researchResult)el('research-status').textContent='設定已更改；研究表仍使用上一次鎖定設定。';});
 el('import').onclick=()=>{if(!busy)el('file').click();};
 el('file').onchange=async event=>{
   const file=event.target.files[0];if(!file||busy)return;
@@ -140,3 +141,16 @@ async function initialize(){
 const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,money:usd,format,escapeHTML,onSelectDate:date=>{el('detail-date').value=date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}});
 const charts=initCharts({getResult:()=>result,escapeHTML,format,money:usd,onSelectDate:(date,scroll)=>{el('detail-date').value=date;renderDetail();if(scroll)el('details').scrollIntoView({behavior:'smooth'});}});
 initialize();
+
+el('run-research').onclick=async()=>{
+  if(!data||busy)return;
+  busy=true;const buttons=document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#run-research,#research-rates,#export-research');buttons.forEach(e=>e.disabled=true);
+  try{
+    const next=await runResearch(data,currentConfig(),{startDate:el('start').value,endDate:el('end').value,rates:parseSlippageRates(el('research-rates').value),onProgress:(n,total)=>el('research-status').textContent=`正在比較 ${n} / ${total} 個情景…`});
+    researchResult=next;
+    el('research-results').innerHTML=table(['情景','單邊滑價 bps','追價上限（磚）','淨盈虧 US$','收市最大回撤 US$','費用＋滑價 US$','成交筆數','入市嘗試','拒絕入市','入市成交率'],next.rows.map(r=>row([r.label==='baseline'?'目前設定':r.label==='slippage'?'滑價比較':'追價比較',r.config.slippageBps,r.config.entryChaseLimit<0?'停用':r.config.entryChaseLimit,usd(r.summary.net),usd(r.summary.maxCloseDrawdown),usd(r.summary.fees+r.summary.slippage),r.summary.orders,r.summary.entryAttempts,r.summary.rejectedEntries,r.summary.entryFillRate===null?'—':format(r.summary.entryFillRate*100,1)+'%'])));
+    el('research-status').textContent=`研究完成：${next.startDate} → ${next.endDate} · 資料指紋 ${next.dataHash.slice(0,12)} · 設定指紋 ${next.configHash.slice(0,12)}。入市成交率＝通過價格保護的入市次數／入市嘗試，並非券商實際成交率。`;
+  }catch(e){el('research-status').textContent='研究未完成：'+e.message+'；先前研究結果保留。';}
+  finally{busy=false;buttons.forEach(e=>e.disabled=false);el('export-research').disabled=!researchResult;syncFeeFields();}
+};
+el('export-research').onclick=()=>{if(researchResult)download('g3-execution-research.json',researchResult);};

@@ -1,5 +1,5 @@
-import {ReviewSync} from './review-sync.js?v=20261108-upgrade';
-import {REVIEW_API_URL} from './review-sync-config.js?v=20261108-upgrade';
+import {ReviewSync} from './review-sync.js?v=20261125-comments';
+import {REVIEW_API_URL} from './review-sync-config.js?v=20261125-comments';
 export function mountReviewSync({read,write}) {
   const host=document.createElement('section');host.className='panel sync-panel';host.setAttribute('aria-label','Demo 留言同步');
   document.querySelector('#main').before(host);

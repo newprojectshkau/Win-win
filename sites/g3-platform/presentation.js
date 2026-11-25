@@ -1,5 +1,5 @@
-import {stockName} from './engine.js?v=20261108-upgrade';
-import {DATA_AUDIT} from './quality-audit.js?v=20261108-upgrade';
+import {stockName} from './engine.js?v=20261125-comments';
+import {DATA_AUDIT} from './quality-audit.js?v=20261125-comments';
 export function initPresentation({getResult,getDataset,money,format,escapeHTML:esc,onSelectDate}){
  let mode='numbers',paused=matchMedia('(prefers-reduced-motion: reduce)').matches,timer=null,step=0;
  const $=id=>document.getElementById(id);
