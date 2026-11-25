@@ -227,16 +227,20 @@ function simulateSlot({symbol, bars, slot, quantity, config, observationBars}) {
     transitions = [],
     holdEvents = [],
     rejectedEntries = [];
-  let entryAttempts = 0;
+  let entryAttempts = 0, signalMovesOverBrick = 0, entrySlippagesOverBrick = 0;
   function modeledPrice(side, reference) { return Math.round(reference * (1 + side * config.slippageBps / 10000) * UNIT) / UNIT; }
   function openEntry(e, bar, action) {
     entryAttempts++;
     const price = modeledPrice(e.direction, bar.close);
     const brick = Math.max(1, Math.round((config.mode === "percentage" ? e.anchor : initial) * config.threshold * UNIT)) / UNIT;
+    const signalMove = e.direction * (bar.close - e.price);
+    const modeledSlippage = e.direction * (price - bar.close);
+    if (signalMove > brick + 1e-9) signalMovesOverBrick++;
+    if (modeledSlippage > brick + 1e-9) entrySlippagesOverBrick++;
     const adverse = Math.max(0, e.direction * (price - e.price));
     const chaseBricks = adverse / brick;
     if ((config.entryChaseLimit ?? -1) >= 0 && adverse > config.entryChaseLimit * brick + 1e-9) {
-      rejectedEntries.push({time:e.time,direction:e.direction,signalPrice:e.price,reference:bar.close,modeledPrice:price,brick,chaseBricks,limit:config.entryChaseLimit,reason:"entry_chase_limit"});
+      rejectedEntries.push({time:e.time,direction:e.direction,signalPrice:e.price,reference:bar.close,modeledPrice:price,signalMove,modeledSlippage,brick,chaseBricks,limit:config.entryChaseLimit,reason:"entry_chase_limit"});
       transitions.push({...e,action:"entry_rejected",position:0});
       return false;
     }
@@ -321,6 +325,8 @@ function simulateSlot({symbol, bars, slot, quantity, config, observationBars}) {
     holdEvents,
     rejectedEntries,
     entryAttempts,
+    signalMovesOverBrick,
+    entrySlippagesOverBrick,
     position,
     net: realizedNet,
     fees,
@@ -718,6 +724,8 @@ export function replayValidated(dataset, config, feeState = {}) {
       blockedSlots: Object.values(slots).filter(s=>s.gate.status === "data_blocked").length,
       abortedStockSlots: Object.values(slots).reduce((sum, s) => sum + s.abortedSymbols.length, 0),
       entryAttempts: results.reduce((n,r)=>n+(r.entryAttempts||0),0),
+      signalMovesOverBrick: results.reduce((n,r)=>n+(r.signalMovesOverBrick||0),0),
+      entrySlippagesOverBrick: results.reduce((n,r)=>n+(r.entrySlippagesOverBrick||0),0),
       rejectedEntries: results.reduce((n,r)=>n+(r.rejectedEntries?.length||0),0),
       orders: fills.length,
       net: results.reduce((s, r) => s + r.net, 0),

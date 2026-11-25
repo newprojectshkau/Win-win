@@ -1,10 +1,10 @@
-import {runResearch,parseSlippageRates} from './research.js?v=20261125-assumptions';
+import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-execution-grid';
 import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261125-assumptions';
 import {initCharts} from './charts.js?v=20261125-comments';
 import {initPresentation} from './presentation.js?v=20261125-assumptions';
 import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261125-comments';
-import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName} from './engine.js?v=20261125-assumptions';
-import {runWindow} from './performance.js?v=20261125-assumptions';
+import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName} from './engine.js?v=g3-execution-grid';
+import {runWindow} from './performance.js?v=g3-execution-grid';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
@@ -38,7 +38,7 @@ function installDataset(next){
   el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
   el('source').textContent=`已載入真實行情研究檔（供應商聲明；未獨立驗證）｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
 }
-function currentConfig(){return {...DEFAULT_CONFIG,barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
+function currentConfig(){return {...DEFAULT_CONFIG,barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
   const values=[0,...days.map(d=>d.cumulative)],width=1050,height=380,pad=80;
   // Both series share one USD scale and the same zero baseline.
@@ -85,13 +85,13 @@ function download(name,value,type='application/json'){
 }
 async function execute(event){
   event?.preventDefault();if(!data||busy)return;
-  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates').forEach(e=>e.disabled=true);
+  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates,#research-limits').forEach(e=>e.disabled=true);
   try{
     const config=currentConfig();
     const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
     next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
   }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
-  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates').forEach(e=>e.disabled=false);syncFeeFields();}
+  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates,#research-limits').forEach(e=>e.disabled=false);syncFeeFields();}
 }
 function syncFeeFields(){el('fee').disabled=busy||el('fee-model').value!=='custom';for(const id of ['exchange-fee','monthly-shares'])el(id).disabled=busy||el('fee-model').value!=='ibkr_tiered';}
 el('fee-model').addEventListener('change',syncFeeFields);syncFeeFields();
@@ -149,14 +149,31 @@ const charts=initCharts({getResult:()=>result,escapeHTML,format,money:usd,onSele
 initialize();
 
 el('run-research').onclick=async()=>{
-  if(!data||busy)return;
-  busy=true;const buttons=document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#run-research,#research-rates,#export-research');buttons.forEach(e=>e.disabled=true);
+  if(!data||busy||!el('config').reportValidity())return;
+  busy=true;const buttons=document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#run-research,#research-rates,#research-limits,#export-research');buttons.forEach(e=>e.disabled=true);
   try{
-    const next=await runResearch(data,currentConfig(),{startDate:el('start').value,endDate:el('end').value,rates:parseSlippageRates(el('research-rates').value),onProgress:(n,total)=>el('research-status').textContent=`正在比較 ${n} / ${total} 個情景…`});
+    const next=await runResearch(data,currentConfig(),{
+      startDate:el('start').value,endDate:el('end').value,
+      rates:parseSlippageRates(el('research-rates').value),
+      limits:parseEntryLimits(el('research-limits').value),
+      onProgress:(n,total)=>el('research-status').textContent=`正在比較 ${n} / ${total} 個情景…`,
+    });
     researchResult=next;
-    el('research-results').innerHTML=table(['情景','單邊滑價 bps','追價上限（磚）','淨盈虧 US$','收市最大回撤 US$','費用＋滑價 US$','成交筆數','入市嘗試','拒絕入市','入市成交率'],next.rows.map(r=>row([r.label==='baseline'?'目前設定':r.label==='slippage'?'滑價比較':'追價比較',r.config.slippageBps,r.config.entryChaseLimit<0?'停用':r.config.entryChaseLimit,usd(r.summary.net),usd(r.summary.maxCloseDrawdown),usd(r.summary.fees+r.summary.slippage),r.summary.orders,r.summary.entryAttempts,r.summary.rejectedEntries,r.summary.entryFillRate===null?'—':format(r.summary.entryFillRate*100,1)+'%'])));
-    el('research-status').textContent=`研究完成：${next.startDate} → ${next.endDate} · 資料指紋 ${next.dataHash.slice(0,12)} · 設定指紋 ${next.configHash.slice(0,12)}。入市成交率＝通過價格保護的入市次數／入市嘗試，並非券商實際成交率。`;
+    const headers=['情景','單邊滑價（基點）','追價上限（磚）','淨盈虧','較同滑價無保護差額','收市最大回撤','費用＋滑價','成交筆數','入市嘗試','拒絕入市','入市通過率','訊號後移動 > 1 磚','單純滑價 > 1 磚'];
+    el('research-results').innerHTML=table(headers,next.rows.map(({label,config,summary:s,netVsUnprotected})=>row([
+      label==='baseline'?'<strong>A16 成本基準</strong>':label==='unprotected'?'同滑價對照':'入市保護',
+      config.slippageBps,config.entryChaseLimit<0?'停用':config.entryChaseLimit,usd(s.net),
+      usd(netVsUnprotected),usd(s.maxCloseDrawdown),usd(s.fees+s.slippage),s.orders,s.entryAttempts,
+      s.rejectedEntries,s.entryFillRate===null?'—':format(s.entryFillRate*100,1)+'%',
+      s.signalMovesOverBrick,s.entrySlippagesOverBrick,
+    ])));
+    const c=next.baseline;
+    const execution=c.execution==='next_open'?'下一根 Bar 開市價':'訊號 Bar 收市價';
+    el('research-status').textContent=`已完成 ${next.rows.length} 個情景 · ${next.startDate} → ${next.endDate} · 平均股價 ${usd(c.priceMin)}–${usd(c.priceMax)} · 每隻股票配注 ${usd(c.target)} · 參考價 ${execution} · 資料指紋 ${next.dataHash.slice(0,12)}。`;
   }catch(e){el('research-status').textContent='研究未完成：'+e.message+'；先前研究結果保留。';}
   finally{busy=false;buttons.forEach(e=>e.disabled=false);el('export-research').disabled=!researchResult;syncFeeFields();}
 };
+for(const id of ['research-rates','research-limits']) el(id).addEventListener('input',()=>{
+  if(researchResult)el('research-status').textContent='情景已更改；研究表仍使用上一次鎖定設定。';
+});
 el('export-research').onclick=()=>{if(researchResult)download('g3-execution-research.json',researchResult);};
