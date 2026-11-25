@@ -12,7 +12,7 @@ import {
   fingerprint,
   canonical,
 } from "./engine.js?v=20261125-assumptions";
-import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-assumptions";
+import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-questions";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -142,7 +142,8 @@ const reviewState = (id) =>
 const reviewed = () =>
   ASSUMPTIONS.filter((a) => reviewState(a.id) !== "unreviewed").length;
 const decisionLabel = { accepted: "已接納", applied: "已落實", pending: "待確認" };
-const outstandingCount = ASSUMPTIONS.filter(a => a.outstanding).length;
+const outstandingAssumptions = ASSUMPTIONS.filter(a => a.outstanding);
+const outstandingCount = outstandingAssumptions.length;
 function time(t, zone = "America/New_York", full = false) {
   return new Intl.DateTimeFormat("zh-HK", {
     timeZone: zone,
@@ -427,8 +428,23 @@ function replay() {
     `<div class="filter-row">${slotTabs()}<label for="symbol-select" class="screen-reader">選擇股票</label><select id="symbol-select" class="select-control" style="max-width:220px">${symbols.map((s) => `<option value="${s.symbol}" ${s.symbol === state.symbol ? "selected" : ""}>${s.symbol} · ${statusLabel(s.status)}</option>`).join("")}</select><span class="badge neutral">${esc(r.data.date)} · h＝1</span></div>${!result ? '<div class="panel empty">本時段沒有候選股票</div>' : `<section class="panel"><div class="panel-head"><div><h2>${esc(result.symbol)} · ${SLOT[state.slot].label}價格及決策</h2><p class="detail">${result.reason ? esc(result.reason) : "初始價 " + money(result.initial) + " · 前日參考 " + result.quantity + " 股；入市及反手按成交價重算。"}</p></div><span class="badge ${result.status === "traded" ? "success" : "neutral"}">${statusLabel(result.status)}</span></div><div class="metric-strip"><div><small>模擬成交</small><strong>${result.fills.length} 筆</strong></div><div><small>反手</small><strong>${result.reversals} 次</strong></div><div><small>佣金</small><strong>${money(result.fees)}</strong></div><div><small>模擬淨額 · 非盈利驗證</small><strong>${money(result.net)}</strong></div><div><small>時段尾持倉</small><strong>${result.position} 股</strong></div></div><div class="panel-body">${priceChart(result)}</div></section><section class="panel row-gap"><div class="panel-head"><h2>逐筆成交紀錄</h2><span class="count-label">參考價與理想化成交價分開列明</span></div><div class="table-wrap"><table><thead><tr><th>紐約時間</th><th>香港日期／時間</th><th>動作</th><th class="right">股數</th><th class="right">參考價</th><th class="right">模擬成交價</th><th class="right">佣金</th><th class="right">成交後持倉</th></tr></thead><tbody>${result.fills.map((f) => `<tr><td>${time(f.time)}</td><td>${time(f.time, "Asia/Hong_Kong", true)}</td><td>${ACTION_LABELS[f.action]}</td><td class="right">${f.quantity}</td><td class="right">${num(f.reference, 4)}</td><td class="right">${num(f.price, 4)}</td><td class="right">${money(f.fee)}</td><td class="right">${f.position}</td></tr>`).join("") || `<tr><td colspan="8">${result.status === "flat_no_event" ? "沒有首個達標事件；整段維持空倉。" : "整段開關未通過；沒有產生訂單。"}</td></tr>`}</tbody></table></div></section>${result.holdEvents?.length ? `<div class="notice success row-gap">另有 ${result.holdEvents.length} 個同向持有事件：已記錄於匯出審閱包，沒有加注或額外收費。</div>` : ""}`}<div class="notice row-gap">此版用已知 close 加減滑價作即時理想化成交。沒有模擬券商延遲、部分成交、借貨或購買力；不能聲稱上述價格真實可成交。</div>`
   );
 }
+function outstandingQuestions() {
+  if (!outstandingCount) return "";
+  return `<section class="panel" aria-labelledby="outstanding-questions">
+    <div class="panel-head"><h2 id="outstanding-questions">待答覆問題</h2><span class="count-label">${outstandingCount} 項</span></div>
+    <div class="panel-body">
+      <p class="subtitle">選擇「回覆」可到對應假設的留言欄。回覆會隨審閱包匯出。</p>
+      <ul class="assumption-preview">${outstandingAssumptions.map(a => `<li>
+        <span class="assumption-id">${a.id}</span>
+        <div><strong>${esc(a.title)}</strong><p>${esc(a.outstanding)}</p>
+          <button type="button" class="button secondary small" data-action="reply-assumption" data-assumption-id="${a.id}" aria-label="${a.id} 回覆">回覆</button>
+        </div>
+      </li>`).join("")}</ul>
+    </div>
+  </section>`;
+}
 function assumptions() {
-  let rows = ASSUMPTIONS.filter(
+  const rows = ASSUMPTIONS.filter(
     (a) => state.filter === "all" || (state.filter === "pending" ? a.outstanding : reviewState(a.id) === state.filter),
   );
   return (
@@ -437,7 +453,7 @@ function assumptions() {
       "查看 11 月 4 日審閱包與後續決定的落實情況，以及仍待確認的事項。",
       `<button class="button secondary" data-action="import-review">匯入審閱包</button><button class="button primary" data-action="export-review">匯出全部留言 ↗</button>`,
     ) +
-    pdfReviewStatus() + `<div class="notice"><strong>審閱結論已核對。</strong> 卡片標籤記錄系統採用的決定；下方審閱欄可保存你的個人意見。</div><section class="panel"><div class="panel-head"><h2>已有來源支持的設定</h2><span class="badge success">沿用原意，不用重問</span></div><div class="panel-body"><ul class="known-list">${KNOWN.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></div></section><div class="section-divider"><h2>假設登記冊 <span class="count-label">${ASSUMPTIONS.length} 項</span></h2><span id="review-progress" class="count-label">${reviewed()} 項已標記</span></div><div class="filter-row" role="group" aria-label="按審閱狀態篩選">${[
+    outstandingQuestions() + pdfReviewStatus() + `<div class="notice"><strong>審閱結論已核對。</strong> 卡片標籤記錄系統採用的決定；下方審閱欄可保存你的個人意見。</div><section class="panel"><div class="panel-head"><h2>已有來源支持的設定</h2><span class="badge success">沿用原意，不用重問</span></div><div class="panel-body"><ul class="known-list">${KNOWN.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></div></section><div class="section-divider"><h2>假設登記冊 <span class="count-label">${ASSUMPTIONS.length} 項</span></h2><span id="review-progress" class="count-label">${reviewed()} 項已標記</span></div><div class="filter-row" role="group" aria-label="按審閱狀態篩選">${[
       ["all", "全部"],
       ["pending", `待跟進（${outstandingCount}）`],
       ["unreviewed", "本機未審閱"],
@@ -450,7 +466,7 @@ function assumptions() {
       )
       .join(
         "",
-      )}</div>${rows.map((a) => `<section class="assumption-card"><div><div class="review-top"><h3><span class="assumption-id">${a.id}</span>　${esc(a.title)}</h3><span class="badge ${a.status === "pending" ? "amber" : "success"}">${decisionLabel[a.status]}</span></div><p class="choice">${esc(a.choice)}</p><p class="reason">${esc(a.reason)}</p>${a.outstanding ? `<p class="notice"><strong>待跟進</strong> ${esc(a.outstanding)}</p>` : ""}</div><div class="review-controls"><label class="comment-label" for="status-${a.id}">你的審閱意見</label><select id="status-${a.id}" class="select-control" data-review-status="${a.id}">${["unreviewed", "accepted", "change"].map((s) => `<option value="${s}" ${reviewState(a.id) === s ? "selected" : ""}>${labelReview(s)}</option>`).join("")}</select><label class="screen-reader" for="comment-${a.id}">${a.id} 留言</label><textarea id="comment-${a.id}" class="review-comment" data-review-comment="${a.id}" maxlength="4000" placeholder="例如：改用前收市價；或請先展示另一種計法…">${esc(state.reviews[a.id]?.comment ?? "")}</textarea></div></section>`).join("") || '<div class="panel empty">此分類暫時沒有項目</div>'}<section class="panel row-gap"><div class="panel-head"><h2>整體介面及其他意見</h2></div><div class="panel-body"><label class="screen-reader" for="general-comment">整體意見</label><textarea id="general-comment" class="review-comment" rows="4" maxlength="12000" placeholder="例如：想先看組合風險；表格需要哪些欄位；你想如何比較兩個版本…">${esc(state.general)}</textarea><p class="subtitle row-gap">匯出檔會包括全部假設、留言、草稿、最多四次運行的鎖定設定及結果。原始匯入價量資料不會包含在審閱包；如需可另行下載。</p></div></section>`
+      )}</div>${rows.map((a) => `<section class="assumption-card"><div><div class="review-top"><h3><span class="assumption-id">${a.id}</span>　${esc(a.title)}</h3><span class="badge ${a.status === "pending" ? "amber" : "success"}">${decisionLabel[a.status]}</span></div><p class="choice">${esc(a.choice)}</p><p class="reason">${esc(a.reason)}</p></div><div class="review-controls"><label class="comment-label" for="status-${a.id}">你的審閱意見</label><select id="status-${a.id}" class="select-control" data-review-status="${a.id}">${["unreviewed", "accepted", "change"].map((s) => `<option value="${s}" ${reviewState(a.id) === s ? "selected" : ""}>${labelReview(s)}</option>`).join("")}</select><label class="screen-reader" for="comment-${a.id}">${a.id} 留言</label><textarea id="comment-${a.id}" class="review-comment" data-review-comment="${a.id}" maxlength="4000" placeholder="例如：改用前收市價；或請先展示另一種計法…">${esc(state.reviews[a.id]?.comment ?? "")}</textarea></div></section>`).join("") || '<div class="panel empty">此分類暫時沒有項目</div>'}<section class="panel row-gap"><div class="panel-head"><h2>整體介面及其他意見</h2></div><div class="panel-body"><label class="screen-reader" for="general-comment">整體意見</label><textarea id="general-comment" class="review-comment" rows="4" maxlength="12000" placeholder="例如：想先看組合風險；表格需要哪些欄位；你想如何比較兩個版本…">${esc(state.general)}</textarea><p class="subtitle row-gap">匯出檔會包括全部假設、留言、草稿、最多四次運行的鎖定設定及結果。原始匯入價量資料不會包含在審閱包；如需可另行下載。</p></div></section>`
   );
 }
 function manifest(r) {
@@ -651,6 +667,15 @@ document.addEventListener("click", async (e) => {
     case "export-review":
       exportReview();
       break;
+    case "reply-assumption": {
+      const commentId = `comment-${el.dataset.assumptionId}`;
+      if (!document.getElementById(commentId)) {
+        state.filter = "pending";
+        render();
+      }
+      document.getElementById(commentId)?.focus();
+      break;
+    }
     case "import-data":
       $("#dataset-input").click();
       break;
