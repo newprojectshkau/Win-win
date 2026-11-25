@@ -1,4 +1,4 @@
-import {replayValidated, validateDataset, validateConfig, resolveBarSeconds, ENGINE_VERSION, stockName} from './engine.js?v=g3-execution-grid';
+import {replayValidated, validateDataset, validateConfig, resolveBarSeconds, ENGINE_VERSION, stockName} from './engine.js?v=g3-custom-window';
 
 export function summarizeRuns(runs) {
   let cumulative=0, peak=0, maxDrawdown=0;
@@ -11,7 +11,7 @@ export function summarizeRuns(runs) {
       const v=symbols.get(row.symbol)||{symbol:row.symbol,name:stockName(row.symbol),net:0,fees:0,fills:0,turnover:0,tradedSessions:0};
       v.turnover+=row.fills.reduce((s,f)=>s+f.quantity*f.price,0);v.net+=row.net;v.fees+=row.fees;v.fills+=row.fills.length;v.tradedSessions+=Number(row.fills.length>0);symbols.set(row.symbol,v);
     }
-    return {date:run.data.date,turnover:run.fills.reduce((s,f)=>s+f.quantity*f.price,0),tradedStocks:new Set(run.fills.map(f=>f.symbol)).size,net:run.summary.net,fees:run.summary.fees,slippage,grossBeforeCosts:run.summary.net+run.summary.fees+slippage,cumulative,drawdown,entryAttempts:run.summary.entryAttempts||0,signalMovesOverBrick:run.summary.signalMovesOverBrick||0,entrySlippagesOverBrick:run.summary.entrySlippagesOverBrick||0,rejectedEntries:run.summary.rejectedEntries||0,orders:run.summary.orders,eligible:run.summary.eligible,unassessed:run.summary.unassessed||0,blockedSlots:run.summary.blockedSlots||0,abortedStockSlots:run.summary.abortedStockSlots||0,incompleteSlots:Object.values(run.slots).filter(slot=>slot.coverageStatus==="all_incomplete").length,residual:run.summary.residual,AM:run.slots.AM.gate.status,PM:run.slots.PM.gate.status};
+    return {date:run.data.date,turnover:run.fills.reduce((s,f)=>s+f.quantity*f.price,0),tradedStocks:new Set(run.fills.map(f=>f.symbol)).size,net:run.summary.net,fees:run.summary.fees,slippage,grossBeforeCosts:run.summary.net+run.summary.fees+slippage,cumulative,drawdown,entryAttempts:run.summary.entryAttempts||0,signalMovesOverBrick:run.summary.signalMovesOverBrick||0,entrySlippagesOverBrick:run.summary.entrySlippagesOverBrick||0,rejectedEntries:run.summary.rejectedEntries||0,orders:run.summary.orders,eligible:run.summary.eligible,unassessed:run.summary.unassessed||0,blockedSlots:run.summary.blockedSlots||0,abortedStockSlots:run.summary.abortedStockSlots||0,incompleteSlots:Object.values(run.slots).filter(slot=>slot.coverageStatus==="all_incomplete").length,residual:run.summary.residual,...Object.fromEntries(Object.entries(run.slots).map(([key,slot])=>[key,slot.gate.status]))};
   });
   const sum=k=>days.reduce((s,d)=>s+d[k],0);
   const activeDays=days.filter(d=>d.orders>0).length;

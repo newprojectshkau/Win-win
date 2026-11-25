@@ -1,5 +1,5 @@
-import {runValidatedWindow} from './performance.js?v=g3-execution-grid';
-import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=g3-execution-grid';
+import {runValidatedWindow} from './performance.js?v=g3-custom-window';
+import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=g3-custom-window';
 
 function parseValues(text, maxItems, min, max, message) {
   if (typeof text !== 'string') throw Error(message);

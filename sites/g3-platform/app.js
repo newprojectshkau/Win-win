@@ -11,8 +11,8 @@ import {
   runReplay,
   fingerprint,
   canonical,
-} from "./engine.js?v=20261125-assumptions";
-import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-replies";
+} from "./engine.js?v=g3-custom-window";
+import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=g3-custom-window";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -784,7 +784,7 @@ $("#dataset-input").addEventListener("change", async (e) => {
   try {
     if (file.size > 250 * 1024 * 1024) throw Error("檔案超過 250 MB 上限");
     const data = JSON.parse(await file.text());
-    const { validateDataset } = await import("./engine.js?v=20261125-assumptions");
+    const { validateDataset } = await import("./engine.js?v=g3-custom-window");
     validateDataset(data);
     if (data.kind !== "imported") throw Error("此工作台只接受真實歷史資料");
     dataset = data;
@@ -845,7 +845,7 @@ async function start() {
     if (response.ok) build = await response.json();
   } catch {}
   state.page = location.hash.slice(1) || "overview";
-  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js?v=20261125-assumptions");validateDataset(saved);dataset=saved;if(saved.schemaVersion===2)state.draft.execution="next_open";} }catch(e){state.error="未能載入本機真實資料："+e.message;}
+  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js?v=g3-custom-window");validateDataset(saved);dataset=saved;if(saved.schemaVersion===2)state.draft.execution="next_open";} }catch(e){state.error="未能載入本機真實資料："+e.message;}
   render();
   if(!dataset)return;
   try {

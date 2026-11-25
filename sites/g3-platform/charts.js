@@ -1,4 +1,5 @@
 import {feeModelLabel} from './fees.js?v=20261125-assumptions';
+import {slotLabel} from './engine.js?v=g3-custom-window';
 // Native SVG charts for the existing simulator. Values come only from completed runs.
 export const CHART_METRICS = {
  cumulative:{label:'累計淨盈虧',unit:'US$',color:'#b95b10'},
@@ -20,7 +21,7 @@ export function initCharts({getResult,onSelectDate,escapeHTML:esc,format,money})
  const $=id=>document.getElementById(id);let current=null,saved=[],serial=0;
  const f=(v,unit)=>unit==='US$'?money(v):`${format(v,unit==='相對幅度'?1:0)} ${unit}`;
  const snapshot=r=>({label:'目前結果',days:structuredClone(r.days),config:structuredClone(r.config),dataHash:r.dataHash,configHash:r.configHash,startDate:r.startDate,endDate:r.endDate});
- const configLabel=c=>`配注 ${money(c.target)}／股 · 門檻 ${format(c.threshold*100)}% · ${feeModelLabel(c)} · 自訂 ${money(c.commission)} · 交易所費/股 ${c.exchangePerShare??0} · 首月股數 ${c.initialMonthlyShares??0} · 滑點 ${c.slippageBps} bp · 候選 ${c.candidates} · ${c.mode==='fixed'?'固定磚幅':'百分比磚幅'} · ${c.execution==='next_open'?'下一分鐘開市':'同分鐘收市'} · RR 開關${c.gateEnabled?'開':'關'}`;
+ const configLabel=c=>`配注 ${money(c.target)}／股 · 門檻 ${format(c.threshold*100)}% · ${feeModelLabel(c)} · 自訂 ${money(c.commission)} · 交易所費/股 ${c.exchangePerShare??0} · 首月股數 ${c.initialMonthlyShares??0} · 滑點 ${c.slippageBps} bp · 候選 ${c.candidates} · ${c.mode==='fixed'?'固定磚幅':'百分比磚幅'} · ${c.execution==='next_open'?'下一分鐘開市':'同分鐘收市'} · RR 開關${c.gateEnabled?'開':'關'} · ${c.tradingWindow?`${c.tradingWindow.start}–${c.tradingWindow.end}（${c.tradingWindow.tradeStart} 開始交易）`:'早市及午市分開'}`;
  function bars(rows,unit){
   const min=Math.min(0,...rows.map(r=>r.value)),max=Math.max(0,...rows.map(r=>r.value)),span=max-min||1;
   const x=v=>175+(v-min)/span*360,zero=x(0);
@@ -34,7 +35,7 @@ export function initCharts({getResult,onSelectDate,escapeHTML:esc,format,money})
   const slots=Object.entries(run.slots).map(([k,s])=>({label:k==='AM'?'早市':'午市',fills:s.symbols.flatMap(x=>x.fills)}));
   $('day-turnover-chart').innerHTML=bars(slots.map(s=>({label:s.label,value:s.fills.reduce((a,f)=>a+f.quantity*f.price,0),color:'#246b9c'})),'US$');
   $('day-orders-chart').innerHTML=bars(slots.map(s=>({label:s.label,value:s.fills.length,color:'#76509c'})),'筆');
-  $('chart-day-note').textContent=`${d.date}｜早市：${run.slots.AM.gate.reason}；午市：${run.slots.PM.gate.reason}。缺資料阻擋 ${d.blockedSlots||0} 段；不能把相關零成交視為策略主動不交易。`;
+  $('chart-day-note').textContent=`${d.date}｜${Object.entries(run.slots).map(([key,slot])=>`${slotLabel(key)}：${slot.gate.reason}`).join('；')}。缺資料阻擋 ${d.blockedSlots||0} 段；不能把相關零成交視為策略主動不交易。`;
  }
  function plot(series,title){
   const points=series.flatMap(s=>s.points),unit=series[0].unit;

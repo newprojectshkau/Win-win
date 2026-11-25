@@ -1,5 +1,5 @@
 import {validateFees,applyFeeSchedule} from './fees.js?v=20261125-assumptions';
-export const ENGINE_VERSION = "0.4.2-review";
+export const ENGINE_VERSION = "0.4.3-review";
 // Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
 export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
 export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
@@ -32,6 +32,25 @@ export const SLOT = {
 };
 const UNIT = 10000;
 const DAY_MINUTES = 390;
+const offsetFromMarketOpen = (time) => {
+  if (typeof time!=="string" || !/^\d{2}:\d{2}$/.test(time)) return NaN;
+  const [hours,minutes]=time.split(":").map(Number);
+  if (hours>23 || minutes>59) return NaN;
+  return hours*60+minutes-570;
+};
+export function slotLabel(slot) {
+  return slot === "CUSTOM" ? "自訂時段" : SLOT[slot]?.label ?? slot;
+}
+export function getTradingSlots(config, barSeconds) {
+  if (config.tradingWindow == null) return SLOT;
+  const {start:from,tradeStart,end:to}=config.tradingWindow;
+  const [start,observeEnd,end]=[from,tradeStart,to].map(offsetFromMarketOpen);
+  if (!(start>=0 && start<observeEnd && observeEnd<end && end<=DAY_MINUTES))
+    throw Error("自訂時段須在紐約 09:30–16:00 內，並按觀察開始、交易開始、結束排序。");
+  if (barSeconds && ([start,observeEnd,end].some(offset=>offset*60%barSeconds!==0) || (end-observeEnd)*60<2*barSeconds))
+    throw Error("自訂時段須對齊所選 Bar 週期，交易部分至少要有兩根 Bar。");
+  return {CUSTOM:{label:slotLabel("CUSTOM"),start,observeEnd,end}};
+}
 const INCOMPLETE_BAR = Symbol();
 const isMissingBar = bar => !bar || bar[INCOMPLETE_BAR] === true;
 const validInterval = seconds => Number.isInteger(seconds) && seconds > 0 && 1800 % seconds === 0;
@@ -51,6 +70,7 @@ const units = (p) => {
 };
 export function validateConfig(c) {
   validateFees(c);
+  getTradingSlots(c);
   if (c.barSeconds !== undefined && c.barSeconds !== 0 && !validInterval(c.barSeconds))
     throw Error("Bar 秒數須可整除 30 分鐘。");
   if (!["auto", "complete", "research_lower_bound"].includes(c.marketCapPolicy ?? "auto"))
@@ -205,7 +225,7 @@ export function decideGate(
   };
 }
 export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
-  const {start, end, observeEnd} = SLOT[slot];
+  const {start, end, observeEnd} = getTradingSlots(config,60)[slot];
   return simulateSlot({symbol, bars: bars.slice(start, end), slot, quantity, config, observationBars: observeEnd - start});
 }
 function simulateSlot({symbol, bars, slot, quantity, config, observationBars}) {
@@ -543,6 +563,7 @@ export function runReplay(dataset, config) {
 export function replayValidated(dataset, config, feeState = {}) {
   const sourceSeconds = dataset.barSeconds ?? 60;
   const barSeconds = resolveBarSeconds(dataset, config);
+  const windows = getTradingSlots(config,barSeconds);
   const completeCap = (config.marketCapPolicy ?? "auto") === "auto"
     ? dataset.marketCapCoverage === "complete"
     : config.marketCapPolicy === "complete";
@@ -586,7 +607,7 @@ export function replayValidated(dataset, config, feeState = {}) {
   const eligible = dataset.instruments.filter((_, index) => screening[index].pass);
   const bySymbol = new Map(eligible.map(instrument => [instrument.symbol, instrument]));
   const slots = {};
-  for (const [slot, spec] of Object.entries(SLOT)) {
+  for (const [slot, spec] of Object.entries(windows)) {
     const observationBars = (spec.observeEnd - spec.start) * 60 / barSeconds;
     const missingPrevious = [];
     const ranked = eligible
@@ -675,6 +696,7 @@ export function replayValidated(dataset, config, feeState = {}) {
     });
     const abortedSymbols = symbolResults.filter(row => row.status === "aborted_missing_data").map(row => row.symbol);
     slots[slot] = {
+      window: {...spec},
       ranked,
       selected,
       excludedPrevious: missingPrevious,

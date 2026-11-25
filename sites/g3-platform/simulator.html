@@ -47,7 +47,7 @@
             </fieldset>
             <details class="setup-disclosure">
               <summary>市值模式及資料覆蓋</summary>
-              <div class="sim-fields"><label>市值資料模式<select id="market-cap-policy"><option value="auto">依資料集聲明</option><option value="complete">IBKR 完整市值</option><option value="research_lower_bound">研究檔市值下限</option></select></label><label>Bar 週期<select id="bar-seconds"><option value="0">自動</option><option value="30" disabled>30 秒</option><option value="60" disabled>1 分鐘</option><option value="120" disabled>2 分鐘</option></select><small>載入資料後會顯示支援嘅週期。自動模式會優先用相容嘅 30 秒。</small></label></div>
+              <div class="sim-fields"><label>市值資料模式<select id="market-cap-policy"><option value="auto">依資料集聲明</option><option value="complete">IBKR 完整市值</option><option value="research_lower_bound">研究檔市值下限</option></select></label><button type="button" class="button ghost" id="setup-bar-link">到「Renko 排名」設定 Bar 週期</button></div>
               <p id="universe-note" class="subtitle"></p>
             </details>
           </section>
@@ -55,6 +55,7 @@
             <h3 id="setup-title-2" tabindex="-1">Renko 排名</h3>
             <p class="setup-intro">按前日早市及午市各自計算 RR，選出當日候選名單。</p>
             <div class="sim-fields">
+              <label>Bar 週期<select id="bar-seconds"><option value="0">自動</option><option value="30" disabled>30s</option><option value="60" disabled>1 min</option><option value="120" disabled>2 mins</option></select><small>載入資料後會顯示支援嘅週期。自動模式會優先用相容嘅 30 秒。</small></label>
               <label>Renko 門檻（%）<input id="threshold" type="number" value="0.5" min="0.01" max="20" step="0.01" required><small>價格差額嚴格超過門檻才計事件。</small></label>
               <label>每時段候選數（同分可超出）<input id="candidates" type="number" min="1" max="100" step="1" value="10" required><small>排名邊界同分全納。</small></label>
               <label>磚幅模式<select id="mode"><option value="percentage_simple">百分比磚幅（固定窗口基準）</option><option value="percentage">百分比磚幅（逐事件複利）</option><option value="fixed">固定金額磚幅</option></select></label>
@@ -64,13 +65,23 @@
             <h3 id="setup-title-3" tabindex="-1">股數配置</h3>
             <p class="setup-intro">設定每隻股票嘅目標金額。入市及反手時，系統按模擬成交價計算最接近目標嘅整數股數。</p>
             <div class="sim-fields"><label>每隻股票目標名義金額（US$）<input id="target" type="number" value="10000" min="1" step="1" required><small>兩個股數同樣接近目標時，取較少股數。</small></label></div>
+            <fieldset class="setup-group">
+              <legend>交易時段（紐約時間）</legend>
+              <div class="sim-fields"><label>時段模式<select id="window-mode"><option value="custom">自訂單一時段</option><option value="split">早市及午市分開</option></select></label></div>
+              <div class="sim-fields" id="custom-window-fields" hidden>
+                <label>觀察開始<input type="time" id="window-start" value="09:30" required disabled></label>
+                <label>交易開始<input type="time" id="window-trade" value="10:00" required disabled></label>
+                <label>時段結束<input type="time" id="window-end" value="16:00" required disabled></label>
+              </div>
+              <p class="subtitle" id="custom-window-note" hidden>前日用完整自訂時段排名。當日先觀察，通過 RR 開關後開始交易，到時段結束清倉。</p>
+            </fieldset>
             <p class="subtitle">同方向持倉調整已獲確認，觸發及模擬成交細則仍待定。</p>
           </section>
           <section class="setup-stage" id="setup-stage-4" aria-labelledby="setup-title-4" hidden>
             <h3 id="setup-title-4" tabindex="-1">RR 交易開關</h3>
             <div class="sim-fields"><label>整段交易開關<select id="gate"><option value="on">啟用原有 RR 開關</option><option value="off">停用（比較用假設）</option></select></label></div>
-            <p class="setup-intro">啟用時比較前日完整時段同當日 30 分鐘。當日 RR 大於或等於前日就通過。</p>
-            <dl class="setup-windows"><div><dt>早市</dt><dd>09:30–12:30 / 09:30–10:00</dd></div><div><dt>午市</dt><dd>12:30–16:00 / 12:30–13:00</dd></div></dl>
+            <p class="setup-intro">啟用時比較前日完整時段同當日觀察窗口。當日 RR 大於或等於前日就通過。</p>
+            <dl class="setup-windows" id="gate-windows"><div><dt>早市</dt><dd>09:30–12:30 / 09:30–10:00</dd></div><div><dt>午市</dt><dd>12:30–16:00 / 12:30–13:00</dd></div></dl>
             <p class="subtitle">時間為紐約時間。組合 RR＝ΣB／(ΣR＋1)。</p>
           </section>
           <section class="setup-stage" id="setup-stage-5" aria-labelledby="setup-title-5" hidden>
@@ -142,4 +153,4 @@
 <section id="details" class="panel"><div class="panel-head"><h2><span class="section-num">05</span>決策及成交追溯</h2><label>交易日 <select id="detail-date"></select></label></div><div class="panel-body"><div id="gates" class="notice"></div><div id="screening" class="table-wrap"></div><h3>前日名單及當日觀察</h3><div id="decision" class="table-wrap"></div><p class="subtitle">時間按紐約當地顯示；反手會先平倉，再另開一筆。成交價已包含所設滑點。成交總額＝所有買賣的股數 × 成交價之和（雙邊），不等於本金。已實現價差損益只在平倉確認；開倉為 0。本筆淨損益貢獻＝已實現價差損益 − 本筆交易費用，所以開倉會先記費用負數；全期加總等於淨盈虧，未包括未平倉浮盈虧。股票全名採已存檔 reference 作顯示，不作歷史身份證明。</p><label for="transaction-scope">成交明細範圍</label><select id="transaction-scope"><option value="day">目前所選交易日</option><option value="all">本次測試全部交易日</option></select><div id="fills" class="table-wrap"></div></div></section>
 </div>
 <section class="panel" id="scope-section"><div class="panel-head"><h2><span class="section-num">06</span>這次結果的使用範圍</h2></div><div class="panel-body"><ul class="sim-notes"><li>固定研究股票子集，並非完整歷史 IB 股票池；揀股範圍會影響結果。</li><li>分鐘收市確認訊號；擴展版按下一分鐘開市價加滑點成交，時段尾按最後分鐘收市價平倉，兩者仍屬假設；未模擬買賣差價、流動性、成交排隊、停牌及借券限制。</li><li>按日歷史市值來自供應商 reference 日期查詢；暫設當日收市可用，尚未獨立核實原始公布時間。</li><li>調整後 OHLCV；市值、拆股及公司行動仍需獨立核對。擴展資料格式可記錄缺 Bar；缺口按 A14／A15 只影響該股。研究檔可用市值下限，否則不能判定並排除；不補造資料。</li><li>費用及滑點是可修改假設。沒有保證金／賬戶資金限制；因此只展示美元損益，不年化、不把兩星期結果當成收益預測。</li><li>原有 22 項引擎假設仍適用；此頁不是完整 G3 驗收。資料及結果不會自動跨裝置保存，請匯出檔案備份。</li></ul></div></section>
-</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-screening-inputs"></script><script type="module" src="./i18n.js?v=g3-screening-inputs"></script></body></html>
+</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-custom-window"></script><script type="module" src="./i18n.js?v=g3-custom-window"></script></body></html>
