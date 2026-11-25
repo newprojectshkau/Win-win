@@ -23,9 +23,10 @@
 <section class="panel" id="execution-research">
   <div class="panel-head"><h2>滑價與追價情景比較</h2></div>
   <div class="panel-body">
-    <p>比較使用上方所選日期、資料、策略及費用設定。原基準用上方單邊滑點，追價保護停用。</p>
+    <p>比較沿用上方日期、資料、策略及費用。比較基準預設單邊 5 基點（A16），追價保護停用。</p>
     <div class="sim-fields" id="research-inputs">
-      <label>比較方式<select id="research-design"><option value="separate">逐項比較</option><option value="matrix">滑價 × 追價上限</option></select></label>
+      <label>比較方式<select id="research-design"><option value="matrix">滑價 × 追價上限</option><option value="separate">逐項比較</option></select></label>
+      <label>比較基準滑價（單邊 bps）<input id="research-baseline" type="number" min="0" max="1000" step="any" value="5" required></label>
       <label>滑價情景（單邊 bps）<input id="research-rates" value="5,10,25,50,75,100"></label>
       <label>入市追價情景（磚）<input id="research-limits" value="0.25,0.5,1"></label>
     </div>
@@ -33,7 +34,7 @@
     <div class="actions row-gap"><button id="run-research" class="button primary" disabled>執行情景比較</button><button id="export-research" class="button secondary" disabled>匯出情景比較 JSON</button></div>
     <p id="research-status" class="subtitle" role="status" aria-live="polite"></p>
     <div id="research-results" class="table-wrap" tabindex="0" aria-label="情景比較結果"></div>
-    <p class="subtitle">追價上限只限制新開倉。反手先平舊倉，再檢查新方向。入市通過率按模型計算；收市回撤按每日收市計算。</p>
+    <p class="subtitle">追價上限只限制新開倉。反手先平舊倉，再檢查新方向。入市通過率按模型計算；收市回撤按每日收市計算。兩項超過一磚的統計按入市嘗試計算，分別量度訊號至參考價及參考價至模擬成交價。</p>
   </div>
 </section>
 <div id="output" hidden>
@@ -51,4 +52,4 @@
 <section id="details" class="panel"><div class="panel-head"><h2><span class="section-num">05</span>決策及成交追溯</h2><label>交易日 <select id="detail-date"></select></label></div><div class="panel-body"><div id="gates" class="notice"></div><div id="screening" class="table-wrap"></div><h3>前日名單及當日觀察</h3><div id="decision" class="table-wrap"></div><p class="subtitle">時間按紐約當地顯示；反手會先平倉，再另開一筆。成交價已包含所設滑點。成交總額＝所有買賣的股數 × 成交價之和（雙邊），不等於本金。已實現價差損益只在平倉確認；開倉為 0。本筆淨損益貢獻＝已實現價差損益 − 本筆交易費用，所以開倉會先記費用負數；全期加總等於淨盈虧，未包括未平倉浮盈虧。股票全名採已存檔 reference 作顯示，不作歷史身份證明。</p><label for="transaction-scope">成交明細範圍</label><select id="transaction-scope"><option value="day">目前所選交易日</option><option value="all">本次測試全部交易日</option></select><div id="fills" class="table-wrap"></div></div></section>
 </div>
 <section class="panel" id="scope-section"><div class="panel-head"><h2><span class="section-num">06</span>這次結果的使用範圍</h2></div><div class="panel-body"><ul class="sim-notes"><li>固定研究股票子集，並非完整歷史 IB 股票池；揀股範圍會影響結果。</li><li>分鐘收市確認訊號；擴展版按下一分鐘開市價加滑點成交，時段尾按最後分鐘收市價平倉，兩者仍屬假設；未模擬買賣差價、流動性、成交排隊、停牌及借券限制。</li><li>按日歷史市值來自供應商 reference 日期查詢；暫設當日收市可用，尚未獨立核實原始公布時間。</li><li>調整後 OHLCV；市值、拆股及公司行動仍需獨立核對。擴展資料格式可記錄缺 Bar；缺口按 A14／A15 只影響該股。研究檔可用市值下限，否則不能判定並排除；不補造資料。</li><li>費用及滑點是可修改假設。沒有保證金／賬戶資金限制；因此只展示美元損益，不年化、不把兩星期結果當成收益預測。</li><li>原有 22 項引擎假設仍適用；此頁不是完整 G3 驗收。資料及結果不會自動跨裝置保存，請匯出檔案備份。</li></ul></div></section>
-</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=20261125-scenarios"></script><script type="module" src="./i18n.js?v=20261125-scenarios"></script></body></html>
+</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-execution-grid"></script><script type="module" src="./i18n.js?v=g3-execution-grid"></script></body></html>

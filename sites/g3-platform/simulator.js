@@ -1,10 +1,10 @@
-import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=20261125-scenarios';
+import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-execution-grid';
 import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261125-assumptions';
 import {initCharts} from './charts.js?v=20261125-comments';
 import {initPresentation} from './presentation.js?v=20261125-assumptions';
 import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261125-comments';
-import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName} from './engine.js?v=20261125-assumptions';
-import {runWindow} from './performance.js?v=20261125-scenarios';
+import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName} from './engine.js?v=g3-execution-grid';
+import {runWindow} from './performance.js?v=g3-execution-grid';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
@@ -148,15 +148,15 @@ const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,mo
 const charts=initCharts({getResult:()=>result,escapeHTML,format,money:usd,onSelectDate:(date,scroll)=>{el('detail-date').value=date;renderDetail();if(scroll)el('details').scrollIntoView({behavior:'smooth'});}});
 initialize();
 
-const researchLabels = {baseline:'原基準', slippage:'滑價壓力', entry_limit:'追價保護'};
+const researchLabels = {baseline:'比較基準', slippage:'滑價壓力', entry_limit:'追價保護'};
 function renderResearch(result) {
   el('research-results').innerHTML=table(
-    ['情景','滑價 bps','追價上限（磚）','淨盈虧','較原基準淨盈虧','同滑價下保護影響','收市最大回撤','費用及滑價','入市嘗試','拒絕入市','入市通過率','成交筆數','未估值股數'],
+    ['情景','滑價 bps','追價上限（磚）','淨盈虧','較原基準淨盈虧','同滑價下保護影響','收市最大回撤','費用及滑價','入市嘗試','拒絕入市','入市通過率','成交筆數','未估值股數','訊號後移動 > 1 磚','模型滑價 > 1 磚'],
     result.rows.map(({label,config,summary,deltaFromBaseline,deltaFromUnguardedAtSameSlippage}) => row([
-      researchLabels[label], config.slippageBps, config.entryChaseLimit<0?'停用':config.entryChaseLimit,
+      label==='baseline' && config.slippageBps===5 ? 'A16 成本基準' : researchLabels[label], config.slippageBps, config.entryChaseLimit<0?'停用':config.entryChaseLimit,
       usd(summary.net), usd(deltaFromBaseline.net), deltaFromUnguardedAtSameSlippage ? usd(deltaFromUnguardedAtSameSlippage.net) : '—',
       usd(summary.maxCloseDrawdown), usd(summary.fees+summary.slippage), summary.entryAttempts, summary.rejectedEntries,
-      summary.entryFillRate===null?'—':format(summary.entryFillRate*100,1)+'%',summary.orders,summary.residual,
+      summary.entryFillRate===null?'—':format(summary.entryFillRate*100,1)+'%',summary.orders,summary.residual,summary.signalMovesOverBrick,summary.entrySlippagesOverBrick,
     ])),
   );
   el('research-status').textContent=`已比較 ${result.rows.length} 個情景 · ${result.startDate} 至 ${result.endDate} · 基準滑價 ${result.baseline.slippageBps} bps／追價停用 · 資料指紋 ${result.dataHash.slice(0,12)} · 設定指紋 ${result.configHash.slice(0,12)}`;
@@ -165,14 +165,14 @@ el('research-inputs').addEventListener('input',()=>{
   if(researchResult)el('research-status').textContent='情景設定已更改；表格仍顯示上一次比較。';
 });
 el('run-research').onclick=async()=>{
-  if(!data||busy||!el('config').reportValidity())return;
+  if(!data||busy||!el('config').reportValidity()||!el('research-baseline').reportValidity())return;
   busy=true;
   const fields=document.querySelectorAll('#config input,#config select,#run,#full-range,#import,#dataset-library,#research-inputs input,#research-inputs select,#run-research,#export-research');
   const enabled=[...fields].filter(field=>!field.disabled);
   enabled.forEach(field=>field.disabled=true);
   try{
     const next=await runResearch(data,currentConfig(),{
-      startDate:el('start').value,endDate:el('end').value,design:el('research-design').value,
+      startDate:el('start').value,endDate:el('end').value,design:el('research-design').value,baselineBps:Number(el('research-baseline').value),
       rates:parseSlippageRates(el('research-rates').value),limits:parseEntryLimits(el('research-limits').value),
       onProgress:(n,total)=>el('research-status').textContent=`正在比較 ${n} / ${total} 個情景…`,
     });

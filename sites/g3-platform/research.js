@@ -1,5 +1,5 @@
-import {runValidatedWindow} from './performance.js?v=20261125-scenarios';
-import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=20261125-assumptions';
+import {runValidatedWindow} from './performance.js?v=g3-execution-grid';
+import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=g3-execution-grid';
 
 function parseValues(text, maxItems, min, max, message) {
   if (typeof text !== 'string') throw Error(message);
@@ -21,10 +21,11 @@ export function parseEntryLimits(text) {
 
 export async function runResearch(dataset, config, {
   startDate, endDate, rates = [5, 10, 25, 50, 75, 100],
-  limits = [.25, .5, 1], design = 'separate', onProgress = () => {},
+  limits = [.25, .5, 1], design = 'separate', baselineBps = config.slippageBps, onProgress = () => {},
 } = {}) {
   validateConfig(config);
-  const baseline = {...structuredClone(config), entryChaseLimit: -1};
+  const baseline = {...structuredClone(config), entryChaseLimit: -1, slippageBps: baselineBps};
+  validateConfig(baseline);
   rates = parseSlippageRates(rates.join(',')).filter(rate => rate !== baseline.slippageBps);
   limits = parseEntryLimits(limits.join(','));
   if (!['separate', 'matrix'].includes(design)) throw Error('情景比較方式無效。');
@@ -39,7 +40,7 @@ export async function runResearch(dataset, config, {
     }
   }
   validateDataset(dataset);
-  const [dataHash, configHash] = await Promise.all([fingerprint(dataset), fingerprint(baseline)]);
+  const [dataHash, configHash] = await Promise.all([fingerprint(dataset), fingerprint({baseline, design, rates, limits})]);
   const rows = [];
   const unguarded = new Map();
   for (const [index, scenario] of scenarios.entries()) {

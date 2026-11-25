@@ -49,13 +49,23 @@ test('research freezes configs and period; baseline and independent fee runs rep
  assert.ok(r.rows[0].summary.entryAttempts>0);assert.equal(r.rows[0].summary.entryFillRate,1);
 });
 test('matrix compares every guard against the unguarded result at the same slippage',async()=>{
- const d=createDemoDataset(),config={...DEFAULT_CONFIG,priceMin:1,entryChaseLimit:1};
+ const d=createDemoDataset(),config={...DEFAULT_CONFIG,priceMin:1,entryChaseLimit:1,slippageBps:90};
  const date=d.instruments[0].sessions.at(-1).date;
  const progress=[];
- const r=await runResearch(d,config,{startDate:date,endDate:date,design:'matrix',rates:[5,50],limits:[.25,.5],onProgress:(...value)=>progress.push(value)});
+ const r=await runResearch(d,config,{startDate:date,endDate:date,design:'matrix',baselineBps:5,rates:[5,50],limits:[.25,.5],onProgress:(...value)=>progress.push(value)});
  assert.deepEqual(r.rows.map(({config:c})=>[c.slippageBps,c.entryChaseLimit]),[[5,-1],[5,.25],[5,.5],[50,-1],[50,.25],[50,.5]]);
  assert.deepEqual(progress.at(-1),[6,6]);
  assert.equal(r.rows[4].deltaFromUnguardedAtSameSlippage.net,r.rows[4].summary.net-r.rows[3].summary.net);
  assert.equal(r.rows[4].deltaFromBaseline.net,r.rows[4].summary.net-r.rows[0].summary.net);
  assert.equal(r.rows[3].deltaFromUnguardedAtSameSlippage,null);
+});
+test('separates a one-brick breach from signal movement and modeled execution slippage', () => {
+  const b = bars();
+  b[31].open = 101.6; // 0.6 adverse move from the long signal of 101.
+  b[32].open = 99;    // No adverse move from the short signal of 99.
+  const result = simulateSymbol({symbol:'X', slot:'AM', bars:b, quantity:100,
+    config:{...DEFAULT_CONFIG, slippageBps:75, entryChaseLimit:1}});
+  assert.equal(result.signalMovesOverBrick, 1);
+  assert.equal(result.entrySlippagesOverBrick, 2);
+  assert.equal(result.rejectedEntries.length, 2);
 });

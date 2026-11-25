@@ -1,4 +1,11 @@
 export const TRANSLATIONS = {
+  "比較沿用上方日期、資料、策略及費用。比較基準預設單邊 5 基點（A16），追價保護停用。": "The comparison uses the selected dates, data, strategy and fees. The default A16 reference is 5 bps each way with entry protection off.",
+  "比較基準滑價（單邊 bps）": "Reference slippage (one-way bps)",
+  "比較基準": "Comparison baseline",
+  "A16 成本基準": "A16 cost baseline",
+  "訊號後移動 > 1 磚": "Post-signal move > 1 brick",
+  "模型滑價 > 1 磚": "Modeled slippage > 1 brick",
+  "追價上限只限制新開倉。反手先平舊倉，再檢查新方向。入市通過率按模型計算；收市回撤按每日收市計算。兩項超過一磚的統計按入市嘗試計算，分別量度訊號至參考價及參考價至模擬成交價。": "Entry protection applies to new positions. Reversals close the existing position before checking the new entry. Entry pass rates are modeled and drawdown uses daily closes. The two one-brick counts measure the move from signal to reference and from reference to modeled fill for each entry attempt.",
   "滑價與追價情景比較": "Slippage and entry-price protection scenarios",
   "平均股價下限（US$）": "Minimum average stock price (US$)",
   "平均股價上限（US$）": "Maximum average stock price (US$)",
