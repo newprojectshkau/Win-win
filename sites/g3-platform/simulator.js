@@ -48,7 +48,9 @@ function configureBarOptions(dataset){
     group.append(...extra.map(seconds=>new Option(`${seconds} 秒`,String(seconds))));
     select.append(group);
   }
-  select.value=[...select.options].some(option=>option.value===previous&&!option.disabled)?previous:'0';
+  const kept=[...select.options].some(option=>option.value===previous&&!option.disabled);
+  select.value=kept?previous:'0';
+  el('bar-source-status').textContent=`資料原始週期：${source} 秒。可選週期須係原始週期嘅整數倍。${kept?'':`原先選擇唔適用，已切換到自動（${resolveBarSeconds(dataset)} 秒）。`}`;
 }
 
 function syncDateRange({reset=false}={}){
