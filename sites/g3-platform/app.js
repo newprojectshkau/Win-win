@@ -1,5 +1,6 @@
-import {mountReviewSync} from "./review-sync-ui.js?v=20261108-upgrade";
-import {loadPrivateDataset,savePrivateDataset} from './dataset-store.js?v=20261108-upgrade';
+import {pdfReviewStatus} from "./pdf-review-status.js?v=20261125-comments";
+import {mountReviewSync} from "./review-sync-ui.js?v=20261125-comments";
+import {loadPrivateDataset,savePrivateDataset} from './dataset-store.js?v=20261125-comments';
 import {
   DEFAULT_CONFIG,
   ENGINE_VERSION,
@@ -8,8 +9,8 @@ import {
   runReplay,
   fingerprint,
   canonical,
-} from "./engine.js?v=20261108-upgrade";
-import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261108-upgrade";
+} from "./engine.js?v=20261125-comments";
+import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-comments";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -247,6 +248,7 @@ const FIELD_LABELS = {
   commission: "每筆成交佣金",
   slippageBps: "單邊滑價",
   h: "反向確認 h",
+  entryChaseLimit: "入市追價上限",
 };
 const field = (
   k,
@@ -276,6 +278,7 @@ function settings() {
         options: [
           ["fixed", "固定美元門檻"],
           ["percentage", "百分比逐事件複利（暫定）"],
+          ["percentage_simple", "百分比固定窗口基準"],
         ],
         hint: "A06／A10：每窗口重設，完整算法見假設頁。",
       },
@@ -297,7 +300,7 @@ function settings() {
         ],
         hint: "A13：組合分母為 ΣR+1；零反轉亦有定義。",
       },
-    )}${field("execution", {options:[["next_open","下一分鐘開市價＋成本"],["signal_close","同分鐘收市價（舊版比較）"]],hint:"時段尾仍按最後分鐘收市價平倉；不是成交保證。"})}${field("h", { disabled: true, hint: "固定 h＝1；h＝2／3 完整規則未定，未開放。" })}${field("commission", { suffix: "美元／筆", min: 0, max: 100, hint: "A18：每個 fill 計一次；反手是兩筆。" })}${field("slippageBps", { suffix: "基點／單邊", min: 0, max: 1000, hint: "5 基點＝0.05%；買價上調、賣價下調，不重複扣費。" })}</div></div></section><div class="notice success">固定紐約時間：早市觀察 09:30–10:00、監察至 12:30；午市觀察 12:30–13:00、監察至 16:00。此版不支援半日市或自訂時段。</div><div class="form-actions"><p class="settings-note">改動先存成草稿；只有重新執行才產生新結果。舊運行設定不會跟隨草稿改動。</p><button class="button secondary" type="button" data-action="reset-config">還原 v3 審閱預設</button><button class="button primary" type="submit">儲存設定草稿</button></div></form><section class="panel row-gap"><div class="panel-head"><h2>資料集</h2><span class="badge neutral">真實歷史資料</span></div><div class="panel-body"><p class="subtitle">JSON 格式，最大 250 MB。所有資料在瀏覽器處理，不會上傳。匯入先驗證，失敗不會替換現有資料集。</p><div class="actions row-gap"><button class="button secondary" type="button" data-action="import-data">匯入資料 JSON</button><button class="button secondary" type="button" data-action="export-data">下載目前資料（含格式範本）</button></div><p class="subtitle row-gap">${esc(dataset.description)} 實際歷史資料須另行核實授權、日曆、股票池及公司行動；此版沒有即時行情。</p></div></section>`
+    )}${field("execution", {options:[["next_open","下一分鐘開市價＋成本"],["signal_close","同分鐘收市價（舊版比較）"]],hint:"時段尾仍按最後分鐘收市價平倉；不是成交保證。"})}${field("entryChaseLimit", {min:-1,max:10,step:0.25,suffix:"磚",hint:"-1 停用；只限制新入市，超限等待下一事件，不阻止平倉。"})}${field("h", { disabled: true, hint: "固定 h＝1；h＝2／3 完整規則未定，未開放。" })}${field("commission", { suffix: "美元／筆", min: 0, max: 100, hint: "A18：每個 fill 計一次；反手是兩筆。" })}${field("slippageBps", { suffix: "基點／單邊", min: 0, max: 1000, hint: "5 基點＝0.05%；買價上調、賣價下調，不重複扣費。" })}</div></div></section><div class="notice success">固定紐約時間：早市觀察 09:30–10:00、監察至 12:30；午市觀察 12:30–13:00、監察至 16:00。此版不支援半日市或自訂時段。</div><div class="form-actions"><p class="settings-note">改動先存成草稿；只有重新執行才產生新結果。舊運行設定不會跟隨草稿改動。</p><button class="button secondary" type="button" data-action="reset-config">還原 v3 審閱預設</button><button class="button primary" type="submit">儲存設定草稿</button></div></form><section class="panel row-gap"><div class="panel-head"><h2>資料集</h2><span class="badge neutral">真實歷史資料</span></div><div class="panel-body"><p class="subtitle">JSON 格式，最大 250 MB。所有資料在瀏覽器處理，不會上傳。匯入先驗證，失敗不會替換現有資料集。</p><div class="actions row-gap"><button class="button secondary" type="button" data-action="import-data">匯入資料 JSON</button><button class="button secondary" type="button" data-action="export-data">下載目前資料（含格式範本）</button></div><p class="subtitle row-gap">${esc(dataset.description)} 實際歷史資料須另行核實授權、日曆、股票池及公司行動；此版沒有即時行情。</p></div></section>`
   );
 }
 function results() {
@@ -421,7 +424,7 @@ function assumptions() {
       "未有定論的地方先採明確假設。逐項標記或留言，審閱完可一次過匯出交回。",
       `<button class="button secondary" data-action="import-review">匯入審閱包</button><button class="button primary" data-action="export-review">匯出全部留言 ↗</button>`,
     ) +
-    `<div class="notice"><strong>這是審閱記錄，不是策略批准。</strong>「接受暫定」只記錄你的本地意向，不會自動修改引擎或原始 v3。本機留言保留；可使用上方 demo 面板選擇同步。請繼續匯出備份。01c 對話尚未納入。</div><section class="panel"><div class="panel-head"><h2>已有來源支持的設定</h2><span class="badge success">沿用原意，不用重問</span></div><div class="panel-body"><ul class="known-list">${KNOWN.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></div></section><div class="section-divider"><h2>暫定假設登記冊 <span class="count-label">${ASSUMPTIONS.length} 項</span></h2><span id="review-progress" class="count-label">${reviewed()} 項已標記</span></div><div class="filter-row" role="group" aria-label="按審閱狀態篩選">${[
+    pdfReviewStatus() + `<div class="notice"><strong>這是審閱記錄，不是策略批准。</strong>「接受暫定」只記錄你的本地意向，不會自動修改引擎或原始 v3。本機留言保留；可使用上方 demo 面板選擇同步。請繼續匯出備份。01c 對話尚未納入。</div><section class="panel"><div class="panel-head"><h2>已有來源支持的設定</h2><span class="badge success">沿用原意，不用重問</span></div><div class="panel-body"><ul class="known-list">${KNOWN.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></div></section><div class="section-divider"><h2>暫定假設登記冊 <span class="count-label">${ASSUMPTIONS.length} 項</span></h2><span id="review-progress" class="count-label">${reviewed()} 項已標記</span></div><div class="filter-row" role="group" aria-label="按審閱狀態篩選">${[
       ["all", "全部"],
       ["unreviewed", "未審閱"],
       ["change", "要求修改"],
@@ -742,7 +745,7 @@ $("#dataset-input").addEventListener("change", async (e) => {
   try {
     if (file.size > 250 * 1024 * 1024) throw Error("檔案超過 250 MB 上限");
     const data = JSON.parse(await file.text());
-    const { validateDataset } = await import("./engine.js?v=20261108-upgrade");
+    const { validateDataset } = await import("./engine.js?v=20261125-comments");
     validateDataset(data);
     if (data.kind !== "imported") throw Error("此工作台只接受真實歷史資料");
     dataset = data;
@@ -803,7 +806,7 @@ async function start() {
     if (response.ok) build = await response.json();
   } catch {}
   state.page = location.hash.slice(1) || "overview";
-  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js?v=20261108-upgrade");validateDataset(saved);dataset=saved;if(saved.schemaVersion===2)state.draft.execution="next_open";} }catch(e){state.error="未能載入本機真實資料："+e.message;}
+  try { const saved=await loadPrivateDataset();if(saved?.kind==="imported"){ const {validateDataset}=await import("./engine.js?v=20261125-comments");validateDataset(saved);dataset=saved;if(saved.schemaVersion===2)state.draft.execution="next_open";} }catch(e){state.error="未能載入本機真實資料："+e.message;}
   render();
   if(!dataset)return;
   try {

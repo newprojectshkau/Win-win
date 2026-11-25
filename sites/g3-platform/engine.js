@@ -1,5 +1,5 @@
-import {validateFees,applyFeeSchedule} from './fees.js?v=20261108-upgrade';
-export const ENGINE_VERSION = "0.4.0-review";
+import {validateFees,applyFeeSchedule} from './fees.js?v=20261125-comments';
+export const ENGINE_VERSION = "0.4.1-review";
 // Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
 export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
 export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
@@ -22,6 +22,7 @@ export const DEFAULT_CONFIG = Object.freeze({
   commission: 1,
   slippageBps: 5,
   h: 1,
+  entryChaseLimit: -1, // -1 disables this optional research rule; otherwise adverse bricks allowed.
 });
 export const SLOT = {
   AM: { label: "早市", start: 0, observeEnd: 30, end: 180 },
@@ -36,6 +37,8 @@ const units = (p) => {
 };
 export function validateConfig(c) {
   validateFees(c);
+  if (c.entryChaseLimit !== undefined && (!Number.isFinite(c.entryChaseLimit) || c.entryChaseLimit < -1 || c.entryChaseLimit > 10)) throw Error("追價上限須為 -1（停用）或 0–10 磚");
+  if (c.entryChaseLimit !== undefined && c.entryChaseLimit < 0 && c.entryChaseLimit !== -1) throw Error("追價上限無效");
   for (const k of [
     "lookback",
     "capMin",
@@ -78,7 +81,7 @@ export function validateConfig(c) {
   )
     throw Error("成本設定超出支援範圍");
   if (
-    !["fixed", "percentage"].includes(c.mode) ||
+    !["fixed", "percentage", "percentage_simple"].includes(c.mode) ||
     !["skip", "pass"].includes(c.equalPolicy) ||
     !["lower", "higher"].includes(c.quantityTie) ||
     typeof c.gateEnabled !== "boolean"
@@ -103,7 +106,7 @@ export function countEvents(
       delta = p - anchor,
       d = delta > 0 ? 1 : -1,
       steps = 0;
-    if (mode === "fixed") {
+    if (mode === "fixed" || mode === "percentage_simple") {
       const brick = Math.max(1, Math.round(referenceUnits * threshold));
       steps = Math.max(0, Math.floor((Math.abs(delta) - 1) / brick));
       if (steps > 20000) throw Error("單分鐘事件過多，請核對資料及門檻");
@@ -199,12 +202,27 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
   let entryPrice = 0, realizedNet = 0;
   const fills = [],
     transitions = [],
-    holdEvents = [];
+    holdEvents = [],
+    rejectedEntries = [];
+  let entryAttempts = 0;
+  function modeledPrice(side, reference) { return Math.round(reference * (1 + side * config.slippageBps / 10000) * UNIT) / UNIT; }
+  function openEntry(e, bar, action) {
+    entryAttempts++;
+    const price = modeledPrice(e.direction, bar.close);
+    const brick = Math.max(1, Math.round((config.mode === "percentage" ? e.anchor : initial) * config.threshold * UNIT)) / UNIT;
+    const adverse = Math.max(0, e.direction * (price - e.price));
+    const chaseBricks = adverse / brick;
+    if ((config.entryChaseLimit ?? -1) >= 0 && adverse > config.entryChaseLimit * brick + 1e-9) {
+      rejectedEntries.push({time:e.time,direction:e.direction,signalPrice:e.price,reference:bar.close,modeledPrice:price,brick,chaseBricks,limit:config.entryChaseLimit,reason:"entry_chase_limit"});
+      transitions.push({...e,action:"entry_rejected",position:0});
+      return false;
+    }
+    fill(e.direction, nearestQuantity(price, config.target, config.quantityTie), bar, action);
+    return true;
+  }
   function fill(side, qty, bar, action) {
     const reference = bar.close;
-    const px =
-      Math.round(reference * (1 + (side * config.slippageBps) / 10000) * UNIT) /
-      UNIT;
+    const px = modeledPrice(side, reference);
     const fee = config.commission;
     const closedQuantity = position && Math.sign(position) !== side ? Math.min(qty, Math.abs(position)) : 0;
     const realizedGross = closedQuantity ? closedQuantity * (px - entryPrice) * Math.sign(position) : 0;
@@ -246,26 +264,17 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
     if (config.execution === "next_open" && !next) throw Error("缺下一分鐘開市價，不能模擬成交");
     const bar = { close: next ? next.open : e.price, availableAt: e.time };
     if (position === 0) {
-      fill(
-        e.direction,
-        nearestQuantity(bar.close * (1 + e.direction * config.slippageBps / 10000), config.target, config.quantityTie),
-        bar,
-        e.direction === 1 ? "open_long" : "open_short",
-      );
-      transitions.push({ ...e, action: "entry", position });
+      if (openEntry(e, bar, e.direction === 1 ? "open_long" : "open_short"))
+        transitions.push({ ...e, action: "entry", position });
     } else if (Math.sign(position) === e.direction) {
       holdEvents.push({ ...e, position });
       transitions.push({ ...e, action: "hold", position });
     } else {
       const previous = position;
       fill(-Math.sign(previous), Math.abs(previous), bar, "close_reverse");
-      fill(
-        e.direction,
-        nearestQuantity(bar.close * (1 + e.direction * config.slippageBps / 10000), config.target, config.quantityTie),
-        bar,
-        e.direction === 1 ? "reverse_long" : "reverse_short",
-      );
-      transitions.push({ ...e, action: "reverse", position });
+      if (openEntry(e, bar, e.direction === 1 ? "reverse_long" : "reverse_short"))
+        transitions.push({ ...e, action: "reverse", position });
+      else transitions.push({...e,action:"close_only",position:0});
     }
   }
   const exit = bars[spec.end - 1];
@@ -286,12 +295,14 @@ export function simulateSymbol({ symbol, bars, slot, quantity, config }) {
     fills,
     transitions,
     holdEvents,
+    rejectedEntries,
+    entryAttempts,
     position,
     net: cash,
     fees,
     maxExposure,
     turnover: fills.reduce((s, f) => s + f.quantity * f.price, 0),
-    status: fills.length ? "traded" : "flat_no_event",
+    status: fills.length ? "traded" : rejectedEntries.length ? "flat_entry_rejected" : "flat_no_event",
     signalCount: counted.B,
     points: bars
       .slice(spec.observeEnd - 1, spec.end)
@@ -613,6 +624,8 @@ export function replayValidated(dataset, config, feeState = {}) {
       eligible: eligible.size,
       unassessed: screening.filter(s=>s.dataIncomplete).length,
       blockedSlots: Object.values(slots).filter(s=>s.gate.status === "data_blocked").length,
+      entryAttempts: results.reduce((n,r)=>n+(r.entryAttempts||0),0),
+      rejectedEntries: results.reduce((n,r)=>n+(r.rejectedEntries?.length||0),0),
       orders: fills.length,
       net: results.reduce((s, r) => s + r.net, 0),
       fees: results.reduce((s, r) => s + r.fees, 0),
