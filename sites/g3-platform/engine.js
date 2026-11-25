@@ -1,5 +1,5 @@
 import {validateFees,applyFeeSchedule} from './fees.js?v=20261125-assumptions';
-export const ENGINE_VERSION = "0.4.5-review";
+export const ENGINE_VERSION = "0.4.6-review";
 // Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
 export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
 export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
@@ -108,6 +108,8 @@ const units = (p) => {
 export function validateConfig(c) {
   validateFees(c);
   getTradingSlots(c);
+  if (c.syntheticTestMode !== undefined && typeof c.syntheticTestMode !== "boolean")
+    throw Error("合成測試模式設定無效。");
   if (c.barSeconds !== undefined && c.barSeconds !== 0 && !validInterval(c.barSeconds))
     throw Error("Bar 秒數須可整除 30 分鐘。");
   if (!["auto", "complete", "research_lower_bound"].includes(c.marketCapPolicy ?? "auto"))
@@ -601,6 +603,9 @@ export function replayValidated(dataset, config, feeState = {}) {
   const sourceSeconds = dataset.barSeconds ?? 60;
   const barSeconds = resolveBarSeconds(dataset, config);
   const windows = getTradingSlots(config,barSeconds);
+  const syntheticTest = config.syntheticTestMode === true;
+  if (syntheticTest && dataset.kind !== "synthetic")
+    throw Error("只有合成資料可以使用合成測試模式。");
   const completeCap = (config.marketCapPolicy ?? "auto") === "auto"
     ? dataset.marketCapCoverage === "complete"
     : config.marketCapPolicy === "complete";
@@ -616,12 +621,13 @@ export function replayValidated(dataset, config, feeState = {}) {
     const dailyComplete = history.every(s => (modern ? s.daily : s.bars?.length === DAY_MINUTES * 60 / sourceSeconds) && opening(s) > 0);
     const knownCaps = history.filter(s => Number.isFinite(s.marketCap) && s.marketCap > 0).length;
     const capMissing = knownCaps < history.length;
-    const cap = completeCap && capMissing ? null : avg(s => s.marketCap ?? 0),
+    const capExempt = syntheticTest && capMissing;
+    const cap = (completeCap || capExempt) && capMissing ? null : avg(s => s.marketCap ?? 0),
       volume = dailyComplete ? avg(s => modern ? s.daily.volume : s.bars.reduce((a,b)=>a+b.volume,0)) : null,
       range = dailyComplete ? avg(s => modern ? (s.daily.high-s.daily.low)/opening(s) : (Math.max(...s.bars.map(b=>b.high))-Math.min(...s.bars.map(b=>b.low)))/opening(s)) : null,
       price = dailyComplete ? avg(s => modern ? s.daily.close : s.bars.at(-1).close) : null;
     const checks = {
-      cap: cap !== null && cap > config.capMin,
+      cap: capExempt || (cap !== null && cap > config.capMin),
       volume: volume > config.volumeMin,
       range: range > config.rangeMin,
       price: price >= config.priceMin && price <= config.priceMax,
@@ -630,7 +636,7 @@ export function replayValidated(dataset, config, feeState = {}) {
       symbol: instrument.symbol,
       missingDailyDays: history.filter(s=>!(modern ? s.daily : s.bars) || !(opening(s)>0)).length,
       knownCaps,
-      capBasis: !capMissing ? "exact_average" : completeCap ? "missing_required" : "nonnegative_lower_bound",
+      capBasis: !capMissing ? "exact_average" : capExempt ? "synthetic_exempt" : completeCap ? "missing_required" : "nonnegative_lower_bound",
       dataIncomplete: !dailyComplete || (capMissing && !checks.cap),
       dailyBasis: modern ? "official_daily" : "regular_minutes",
       cap,
@@ -770,7 +776,7 @@ export function replayValidated(dataset, config, feeState = {}) {
       providerStatement: dataset.providerStatement ?? null,
       sourceBarSeconds: sourceSeconds,
       barSeconds,
-      marketCapPolicy: completeCap ? "complete" : "research_lower_bound",
+      marketCapPolicy: syntheticTest ? "synthetic_test" : completeCap ? "complete" : "research_lower_bound",
     },
     config: structuredClone(config),
     screening,

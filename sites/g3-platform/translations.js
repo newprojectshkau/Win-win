@@ -1,4 +1,12 @@
 export const TRANSLATIONS = {
+  "匯入合成資料 JSON": "Import synthetic data JSON",
+  "合成測試資料只供本次頁面使用。缺市值嘅股票會跳過市值篩選，其他門檻照常套用。": "Synthetic data is available for this page session. Missing market caps are exempt from that filter; other thresholds still apply.",
+  "合成測試模式：缺市值時跳過市值門檻。": "Synthetic test mode: missing market caps are exempt from the market cap filter.",
+  "已載入合成行情 · 只供測試程式流程": "Synthetic data loaded · For testing the simulation workflow",
+  "合成測試結果": "Synthetic test results",
+  "合成測試免篩": "Synthetic test exemption",
+  "合成測試": "Synthetic test",
+  "請匯入私人歷史資料或合成測試資料。": "Import private historical data or synthetic test data.",
   "新增時段": "Add window",
   "移除此時段": "Remove this window",
   "額外時段 ": "Extra window ",

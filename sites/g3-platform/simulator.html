@@ -22,7 +22,13 @@
             <p class="setup-intro">先載入歷史資料，設定回看日數同測試期，再調整篩選門檻。</p>
             <div class="setup-data">
               <div><label for="dataset-library">已保存的歷史資料</label><select id="dataset-library"><option value="">請先載入資料</option></select></div>
-              <button type="button" class="button secondary" id="import">匯入私人資料 JSON</button><input type="file" id="file" accept=".json,application/json" hidden>
+              <div class="actions">
+                <button type="button" class="button secondary" id="import">匯入私人資料 JSON</button>
+                <button type="button" class="button secondary" id="import-synthetic">匯入合成資料 JSON</button>
+              </div>
+              <input type="file" id="file" accept=".json,application/json" hidden>
+              <input type="file" id="synthetic-file" accept=".json,application/json" hidden>
+              <p id="synthetic-note" class="notice" hidden>合成測試資料只供本次頁面使用。缺市值嘅股票會跳過市值篩選，其他門檻照常套用。</p>
               <p id="coverage" class="subtitle" role="status">匯入後會顯示可測試的日期。</p><p id="storage-status" class="subtitle"></p>
             </div>
             <fieldset class="setup-group">
@@ -185,4 +191,4 @@
 <section id="details" class="panel"><div class="panel-head"><h2><span class="section-num">05</span>決策及成交追溯</h2><label>交易日 <select id="detail-date"></select></label></div><div class="panel-body"><div id="gates" class="notice"></div><div id="screening" class="table-wrap"></div><h3>前日名單及當日觀察</h3><div id="decision" class="table-wrap"></div><p class="subtitle">時間按紐約當地顯示；反手會先平倉，再另開一筆。成交價已包含所設滑點。成交總額＝所有買賣的股數 × 成交價之和（雙邊），不等於本金。已實現價差損益只在平倉確認；開倉為 0。本筆淨損益貢獻＝已實現價差損益 − 本筆交易費用，所以開倉會先記費用負數；全期加總等於淨盈虧，未包括未平倉浮盈虧。股票全名採已存檔 reference 作顯示，不作歷史身份證明。</p><label for="transaction-scope">成交明細範圍</label><select id="transaction-scope"><option value="day">目前所選交易日</option><option value="all">本次測試全部交易日</option></select><div id="fills" class="table-wrap"></div></div></section>
 </div>
 <section class="panel" id="scope-section"><div class="panel-head"><h2><span class="section-num">06</span>這次結果的使用範圍</h2></div><div class="panel-body"><ul class="sim-notes"><li>固定研究股票子集，並非完整歷史 IB 股票池；揀股範圍會影響結果。</li><li>分鐘收市確認訊號；擴展版按下一分鐘開市價加滑點成交，時段尾按最後分鐘收市價平倉，兩者仍屬假設；未模擬買賣差價、流動性、成交排隊、停牌及借券限制。</li><li>按日歷史市值來自供應商 reference 日期查詢；暫設當日收市可用，尚未獨立核實原始公布時間。</li><li>調整後 OHLCV；市值、拆股及公司行動仍需獨立核對。擴展資料格式可記錄缺 Bar；缺口按 A14／A15 只影響該股。研究檔可用市值下限，否則不能判定並排除；不補造資料。</li><li>費用及滑點是可修改假設。沒有保證金／賬戶資金限制；因此只展示美元損益，不年化、不把兩星期結果當成收益預測。</li><li>原有 22 項引擎假設仍適用；此頁不是完整 G3 驗收。資料及結果不會自動跨裝置保存，請匯出檔案備份。</li></ul></div></section>
-</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-bar-feedback"></script><script type="module" src="./i18n.js?v=g3-bar-feedback"></script></body></html>
+</main><footer class="page-footer"><span>Win-win · 固定假設下的研究模擬</span><span>真實行情 ≠ 可實現的實盤績效</span></footer><script type="module" src="./simulator.js?v=g3-synthetic-test"></script><script type="module" src="./i18n.js?v=g3-synthetic-test"></script></body></html>
