@@ -24,3 +24,51 @@ html[data-presentation=numbers] .audit-facts>div{animation:none}
 #curve .pnl-legend svg,.animated-curve .pnl-legend svg{width:32px;height:12px;min-height:0;display:inline-block}.daily-pnl-bar:focus rect{stroke-width:3}.pnl-legend{margin:12px 0}
 #fee-breakdown{overflow-x:auto}.sim-fields label{min-width:0}.language-switch{max-width:100%}
 .sim-main .badge{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+
+/* Staged simulator setup */
+.setup-flow{display:grid;grid-template-columns:13rem minmax(0,1fr);gap:1.75rem;align-items:start}
+.setup-steps{display:grid;gap:.4rem}
+.setup-steps button{display:flex;align-items:center;gap:.65rem;width:100%;padding:.65rem .75rem;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.setup-steps button b{display:grid;place-items:center;flex:none;width:1.75rem;height:1.75rem;border-radius:7px;background:#f2ece5;color:#645649;font-size:.72rem;font-variant-numeric:tabular-nums}
+.setup-steps button:hover{background:#faf5ee}
+.setup-steps button[aria-current=step]{border-color:var(--accent-border);background:#fff5ea;font-weight:650}
+.setup-steps button[aria-current=step] b{background:#9a480e;color:#fff}
+.setup-steps button:focus-visible,.setup-disclosure summary:focus-visible{outline:2px solid #9a480e;outline-offset:3px}
+.setup-workspace{min-width:0;border:1px solid var(--line);border-radius:16px;padding:clamp(1rem,2.5vw,1.8rem)}
+.setup-stage{scroll-margin-top:1rem}
+.setup-stage h3{margin:0;font-size:1.3rem}
+.setup-stage h3:focus{outline:none}
+.setup-intro{margin:.4rem 0 1rem;color:var(--muted);line-height:1.6}
+.setup-stage .subtitle{margin:.5rem 0 0}
+.setup-stage .sim-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0}
+.setup-stage .sim-fields small{color:var(--muted);line-height:1.5}
+.setup-stage .sim-fields input,.setup-stage .sim-fields select{font:inherit}
+.setup-data{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.45rem .8rem;background:#fcf8f3;border-radius:12px;padding:1rem}
+.setup-data #dataset-library{margin:.35rem 0 0;font-size:.9rem}
+.setup-data p{grid-column:1/-1;margin:0}
+.setup-data p:empty{display:none}
+.setup-group{margin:1.1rem 0 0;padding:0;border:0;min-width:0}
+.setup-group legend{font-weight:650}
+.setup-disclosure{margin:1.1rem 0 0;padding:.7rem 0 0;border-top:1px solid var(--line)}
+.setup-disclosure summary{cursor:pointer;font-weight:600}
+.setup-windows,.setup-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin:.8rem 0}
+.setup-windows>div,.setup-summary>div{background:#f7f4ef;border-radius:10px;padding:.65rem .8rem;overflow-wrap:anywhere}
+.setup-windows dt,.setup-summary dt{color:var(--muted);font-size:.8rem}
+.setup-windows dd,.setup-summary dd{margin:.15rem 0 0;font-weight:600}
+.setup-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.35rem;margin-top:1.25rem;padding-top:.75rem;border-top:1px solid var(--line)}
+.setup-workspace .button{max-width:100%;white-space:normal}
+.setup-actions #setup-back{margin-right:auto}
+.setup-workspace #progress:empty{display:none}
+@media(max-width:930px){
+  .setup-flow{grid-template-columns:minmax(0,1fr);gap:1rem}
+  .setup-steps{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .setup-steps button{align-items:flex-start;flex-direction:column;font-size:.85rem}
+}
+@media(max-width:600px){
+  .setup-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .setup-steps button{align-items:center;flex-direction:row;padding:.35rem .55rem}
+  .setup-workspace{padding:.9rem}
+  .setup-data,.setup-stage .sim-fields,.setup-windows{grid-template-columns:minmax(0,1fr)}
+  .setup-data button{justify-self:start}
+  .setup-actions{justify-content:flex-end}
+}
