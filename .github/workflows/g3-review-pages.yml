@@ -1,7 +1,7 @@
 name: G3 review platform
 on:
   push:
-    branches: [g3-platform-review]
+    branches: [main]
     paths:
       - "sites/g3-platform/**"
       - "scripts/marketdata/**"

@@ -21,7 +21,7 @@ v3 is the current strategy definition. Earlier PDFs and the website may reflect 
 
 已建立[六頁操作平台](sites/g3-platform/README.md)：工作台、參數設定、五階段結果、逐股重播、假設與留言及版本比較。參數會實際傳入重播核心；示例採合成資料，不是市場回測。此版不接券商或實盤。
 
-未定義的內容依用戶指示採用[22 項可追溯暫定假設](docs/G3-platform-assumptions-zh-HK.md)，沒有覆寫原始 v3。留言只存在當前瀏覽器，可連同設定及運行結果匯出 JSON 審閱包。01c 對話仍未納入。
+[假設分頁](https://newprojectshkau.github.io/Win-win/review.html#assumptions) 已與 01c、逐字稿及審閱 JSON 核對。登記冊預設顯示 A12、A14、A15、A20 四項待確認問題。「全部」亦列已接納的假設。個人留言可隨設定和運行結果匯出。
 
 在 repo 根目錄可執行：
 
@@ -30,7 +30,7 @@ python3 -m http.server 8010 --bind 0.0.0.0 --directory sites/g3-platform
 npm test --prefix sites/g3-platform
 ```
 
-審閱平台網址：**https://newprojectshkau.github.io/Win-win/**。發布來源分支為 `g3-platform-review`，部署工作流程為 [G3 review platform](.github/workflows/g3-review-pages.yml)。已啟用 GitHub Pages 並允許該分支；每次更新仍需等待自動測試及部署成功。介面採白底、橙色、頂部按鈕導覽及較大的章節／表格間距。實際部署狀態見 [docs/STATUS.md](docs/STATUS.md)。
+審閱平台網址：**https://newprojectshkau.github.io/Win-win/**。發布來源分支為 `main`，部署工作流程為 [G3 review platform](.github/workflows/g3-review-pages.yml)。已啟用 GitHub Pages 並允許該分支；每次更新仍需等待自動測試及部署成功。介面採白底、橙色、頂部按鈕導覽及較大的章節／表格間距。實際部署狀態見 [docs/STATUS.md](docs/STATUS.md)。
 
 The G3 implementation plan has been reviewed through three independent agent perspectives: programmatic trading, software engineering, and investor usability. A review implementation now runs on explicit provisional assumptions; the complete v3 simulator and historical-data workflow have not been accepted as G3-complete. Earlier plans and briefings retain their original preparation context.
 

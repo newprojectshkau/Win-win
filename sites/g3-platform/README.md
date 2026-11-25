@@ -18,11 +18,11 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 1. 在模擬器或工作台匯入歷史資料，再選擇交易日及重播設定。
 2. 在參數頁修改數值，儲存草稿後重新重播；舊運行不會改變，最多本地保留四次。
 3. 核對五階段輸出、逐股圖表、持倉及成交。淨額是理想化成交下的賬本診斷，不是回測表現。
-4. 在「假設與留言」查看 A01–A22 的系統決定。「待跟進」顯示尚欠資料或決定的項目；可另存個人意見。
+4. 在「假設與留言」查看 A01–A22 的系統決定。登記冊預設顯示待確認的假設；選「全部」可查看已接納的決定。可另存個人意見。
 5. 匯出 JSON 審閱包，將假設、留言、設定及運行結果一次過交回。留言只存在本瀏覽器；換裝置或清除網站資料前請備份。
 6. 可以把審閱包匯回以還原留言，但不會自動執行其參數或替換運行紀錄。
 
-原始 `model/parameters.json` 保留全部已定及未定規格；沒有把此版假設回寫成用戶已批准的規則。01c 對話仍未納入。
+原始 `model/parameters.json` 保留 v3 規格。G3 採用的較新決定已與 01c 對話、逐字稿及 11 月審閱 JSON 核對，記錄於假設分頁。
 
 ![桌面審閱介面示例，數字來自合成資料](../../docs/images/g3-platform-desktop.png)
 
@@ -72,11 +72,11 @@ Node 22+ 用於內建測試；Python 3 只用於本地靜態伺服器。無需 `
 
 ## 部署
 
-`.github/workflows/g3-review-pages.yml` 在 `g3-platform-review` 分支更新後測試及發布六個必要靜態檔案，不會發布匯入資料、留言或憑證。需要 repo 的 **Settings → Pages → Source: GitHub Actions** 已啟用，並允許此分支部署到 `github-pages` 環境。工作流程不得繞過 repo 的環境審批或保護設定。
+`.github/workflows/g3-review-pages.yml` 在 `main` 分支更新後測試及發布工作台靜態檔案，不會發布匯入資料、留言或憑證。需要 repo 的 **Settings → Pages → Source: GitHub Actions** 已啟用，並允許此分支部署到 `github-pages` 環境。工作流程不得繞過 repo 的環境審批或保護設定。
 
 預期 GitHub Pages 位置須以實際部署輸出為準；僅推送程式、工作流程或發布到預備分支，不代表已成功公開或網址已驗證。
 
-公開審閱網址：**https://newprojectshkau.github.io/Win-win/**。用戶已啟用 Pages 及允許審閱分支；[部署記錄](https://github.com/newprojectshkau/Win-win/actions/runs/40761600840) 第三次嘗試成功。舊有 Not Found／分支保護問題已解除；往後更新仍須通過測試及部署。
+公開審閱網址：**https://newprojectshkau.github.io/Win-win/**。Pages 已啟用並允許 `main` 發布；最初的[部署記錄](https://github.com/newprojectshkau/Win-win/actions/runs/40761600840) 第三次嘗試成功。舊有 Not Found／分支保護問題已解除；往後更新仍須通過測試及部署。
 
 介面風格：白底、橙色重點（取代舊綠色）、頂部膠囊導覽、編號章節及暖灰分隔線；較大的字體、表格行距及留言框。此改版沒有改動引擎、資料格式或本地儲存鍵。
 

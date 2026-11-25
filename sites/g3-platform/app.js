@@ -12,7 +12,7 @@ import {
   fingerprint,
   canonical,
 } from "./engine.js?v=20261125-assumptions";
-import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-questions";
+import { ASSUMPTIONS, KNOWN } from "./assumptions.js?v=20261125-confirmed";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -89,7 +89,7 @@ let state = {
   general: typeof stored.general === "string" ? stored.general : "",
   slot: "AM",
   symbol: "",
-  filter: "all",
+  filter: "pending",
   stage: "selection",
   busy: false,
   error: "",
@@ -141,7 +141,7 @@ const reviewState = (id) =>
     : "unreviewed";
 const reviewed = () =>
   ASSUMPTIONS.filter((a) => reviewState(a.id) !== "unreviewed").length;
-const decisionLabel = { accepted: "已接納", applied: "已落實", pending: "待確認" };
+const decisionLabel = { accepted: "已接納", pending: "待確認" };
 const outstandingAssumptions = ASSUMPTIONS.filter(a => a.outstanding);
 const outstandingCount = outstandingAssumptions.length;
 function time(t, zone = "America/New_York", full = false) {
@@ -450,7 +450,7 @@ function assumptions() {
   return (
     head(
       "假設與留言",
-      "查看 11 月 4 日審閱包與後續決定的落實情況，以及仍待確認的事項。",
+      "已核對 01c、11 月 4 日審閱包及後續決定。登記冊預設顯示仍待確認的假設。",
       `<button class="button secondary" data-action="import-review">匯入審閱包</button><button class="button primary" data-action="export-review">匯出全部留言 ↗</button>`,
     ) +
     outstandingQuestions() + pdfReviewStatus() + `<div class="notice"><strong>審閱結論已核對。</strong> 卡片標籤記錄系統採用的決定；下方審閱欄可保存你的個人意見。</div><section class="panel"><div class="panel-head"><h2>已有來源支持的設定</h2><span class="badge success">沿用原意，不用重問</span></div><div class="panel-body"><ul class="known-list">${KNOWN.map((k) => `<li>${esc(k)}</li>`).join("")}</ul></div></section><div class="section-divider"><h2>假設登記冊 <span class="count-label">${ASSUMPTIONS.length} 項</span></h2><span id="review-progress" class="count-label">${reviewed()} 項已標記</span></div><div class="filter-row" role="group" aria-label="按審閱狀態篩選">${[
@@ -458,7 +458,7 @@ function assumptions() {
       ["pending", `待跟進（${outstandingCount}）`],
       ["unreviewed", "本機未審閱"],
       ["change", "要求修改"],
-      ["accepted", "接受暫定"],
+      ["accepted", "本機已接納"],
     ]
       .map(
         ([value, label]) =>
@@ -608,7 +608,7 @@ function exportReview() {
       type: "winwin-g3-review",
       engineVersion: ENGINE_VERSION,
       exportedAt: new Date().toISOString(),
-      scope: "審閱意見及暫定假設，不代表已批准策略或市場回測",
+      scope: "G3 假設的接納狀態、待確認問題及個人審閱意見",
       assumptions: ASSUMPTIONS.map((a) => ({
         ...a,
         review: {
