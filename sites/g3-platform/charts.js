@@ -1,5 +1,5 @@
 import {feeModelLabel} from './fees.js?v=20261125-assumptions';
-import {slotLabel} from './engine.js?v=g3-custom-window';
+import {slotLabel,describeTradingWindows} from './engine.js?v=g3-adjustable-split';
 // Native SVG charts for the existing simulator. Values come only from completed runs.
 export const CHART_METRICS = {
  cumulative:{label:'累計淨盈虧',unit:'US$',color:'#b95b10'},
@@ -21,7 +21,7 @@ export function initCharts({getResult,onSelectDate,escapeHTML:esc,format,money})
  const $=id=>document.getElementById(id);let current=null,saved=[],serial=0;
  const f=(v,unit)=>unit==='US$'?money(v):`${format(v,unit==='相對幅度'?1:0)} ${unit}`;
  const snapshot=r=>({label:'目前結果',days:structuredClone(r.days),config:structuredClone(r.config),dataHash:r.dataHash,configHash:r.configHash,startDate:r.startDate,endDate:r.endDate});
- const configLabel=c=>`配注 ${money(c.target)}／股 · 門檻 ${format(c.threshold*100)}% · ${feeModelLabel(c)} · 自訂 ${money(c.commission)} · 交易所費/股 ${c.exchangePerShare??0} · 首月股數 ${c.initialMonthlyShares??0} · 滑點 ${c.slippageBps} bp · 候選 ${c.candidates} · ${c.mode==='fixed'?'固定磚幅':'百分比磚幅'} · ${c.execution==='next_open'?'下一分鐘開市':'同分鐘收市'} · RR 開關${c.gateEnabled?'開':'關'} · ${c.tradingWindow?`${c.tradingWindow.start}–${c.tradingWindow.end}（${c.tradingWindow.tradeStart} 開始交易）`:'早市及午市分開'}`;
+ const configLabel=c=>`配注 ${money(c.target)}／股 · 門檻 ${format(c.threshold*100)}% · ${feeModelLabel(c)} · 自訂 ${money(c.commission)} · 交易所費/股 ${c.exchangePerShare??0} · 首月股數 ${c.initialMonthlyShares??0} · 滑點 ${c.slippageBps} bp · 候選 ${c.candidates} · ${c.mode==='fixed'?'固定磚幅':'百分比磚幅'} · ${c.execution==='next_open'?'下一分鐘開市':'同分鐘收市'} · RR 開關${c.gateEnabled?'開':'關'} · ${describeTradingWindows(c)}`;
  function bars(rows,unit){
   const min=Math.min(0,...rows.map(r=>r.value)),max=Math.max(0,...rows.map(r=>r.value)),span=max-min||1;
   const x=v=>175+(v-min)/span*360,zero=x(0);

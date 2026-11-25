@@ -161,3 +161,34 @@ test('one custom window uses the chosen observation and exits at its own end',()
  for(const window of [{...cfg.tradingWindow,tradeStart:'10:11'},{...cfg.tradingWindow,end:'10:14'},{...cfg.tradingWindow,start:'09:29'}])
   assert.throws(()=>runReplay(d,{...cfg,tradingWindow:window}),/自訂時段/);
 });
+
+test('editable AM and PM each rank, observe and exit within their own window',()=>{
+ const d=fixture();
+ d.instruments=d.instruments.slice(0,1);
+ const today=d.instruments[0].sessions.at(-1).bars;
+ const splitWindows={
+  AM:{start:'10:10',tradeStart:'10:12',end:'10:16'},
+  PM:{start:'12:04',tradeStart:'12:06',end:'12:10'},
+ };
+ for(const offset of [40,154]){
+  for(let i=offset;i<offset+6;i++){
+   const open=i<offset+4?100:105,close=i<offset+3?100:105;
+   Object.assign(today[i],{open,close,high:Math.max(open,close),low:Math.min(open,close)});
+  }
+ }
+ const cfg={...DEFAULT_CONFIG,gateEnabled:false,barSeconds:120,priceMin:1,rangeMin:0,volumeMin:0,splitWindows};
+ const run=runReplay(d,cfg);
+ assert.deepEqual(Object.keys(run.slots),['AM','PM']);
+ for(const [key,offset] of [['AM',40],['PM',154]]){
+  assert.equal(run.slots[key].symbols[0].initial,100);
+  assert.deepEqual(run.slots[key].symbols[0].fills.map(f=>[f.action,f.time]),[
+   ['open_long',today[offset+4].time],['slot_exit',today[offset+5].availableAt],
+  ]);
+ }
+ const adjacent={...splitWindows,PM:{start:'10:16',tradeStart:'10:18',end:'10:22'}};
+ assert.equal(runReplay(d,{...cfg,splitWindows:adjacent}).slots.PM.window.start,46);
+ const overlap={...splitWindows,PM:{...splitWindows.PM,start:'10:14'}};
+ assert.throws(()=>runReplay(d,{...cfg,splitWindows:overlap}),/午市觀察開始須等於或遲於早市結束/);
+ const misaligned={...splitWindows,AM:{...splitWindows.AM,tradeStart:'10:11'}};
+ assert.throws(()=>runReplay(d,{...cfg,splitWindows:misaligned}),/早市.*對齊/);
+});

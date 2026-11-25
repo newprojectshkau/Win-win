@@ -1,4 +1,6 @@
 export const TRANSLATIONS = {
+  "每段用前日同一完整時段排名。當日先觀察，通過 RR 開關先開始交易，到該段結束清倉。": "Rank each window using the full matching window on the previous day. Observe first, trade after the RR gate passes, and close at the end of that window.",
+  "午市觀察開始須等於或遲於早市結束。": "Afternoon observation must start at or after the end of the morning window.",
   "到「Renko 排名」設定 Bar 週期": "Set the bar interval in Renko ranking",
   "交易時段（紐約時間）": "Trading window (New York time)",
   "時段模式": "Window mode",
