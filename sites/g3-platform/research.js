@@ -1,53 +1,69 @@
-import {prepareWindow} from './performance.js?v=g3-execution-grid';
-import {DEFAULT_CONFIG, validateConfig, fingerprint, ENGINE_VERSION} from './engine.js?v=g3-execution-grid';
+import {runValidatedWindow} from './performance.js?v=g3-execution-grid';
+import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=g3-execution-grid';
 
-function parseValues(text, maxCount, min, max, name) {
-  const parts = typeof text === 'string' ? text.split(',').map(v => v.trim()) : [];
-  if (!parts.length || parts.length > maxCount || parts.some(v => !/^\d+(\.\d+)?$/.test(v)))
-    throw Error(`${name}須輸入 1–${maxCount} 個逗號分隔數值。`);
+function parseValues(text, maxItems, min, max, message) {
+  if (typeof text !== 'string') throw Error(message);
+  const parts = text.split(/[,，]/).map(value => value.trim());
+  if (parts.length > maxItems || parts.some(value => !/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(value)))
+    throw Error(message);
   const values = [...new Set(parts.map(Number))];
-  if (values.some(v => !Number.isFinite(v) || v < min || v > max))
-    throw Error(`${name}須介乎 ${min} 至 ${max}。`);
+  if (values.some(value => value < min || value > max)) throw Error(message);
   return values;
 }
 
 export function parseSlippageRates(text) {
-  return parseValues(text, 12, 0, 1000, '單邊滑價（基點）');
+  return parseValues(text, 12, 0, 1000, '請輸入 1–12 個單邊滑價值（0–1000 bps），以逗號分隔。');
 }
 
 export function parseEntryLimits(text) {
-  return parseValues(text, 6, 0, 10, '追價上限（磚）');
+  return parseValues(text, 6, 0, 10, '請輸入 1–6 個追價上限（0–10 磚），以逗號分隔。');
 }
 
 export async function runResearch(dataset, config, {
-  startDate, endDate, rates = [5, 10, 25, 50, 75, 100], limits = [0.25, 0.5, 1],
-  onProgress = () => {},
+  startDate, endDate, rates = [5, 10, 25, 50, 75, 100],
+  limits = [.25, .5, 1], design = 'separate', baselineBps = config.slippageBps, onProgress = () => {},
 } = {}) {
   validateConfig(config);
-  const baseline = {...structuredClone(config), slippageBps:DEFAULT_CONFIG.slippageBps, entryChaseLimit:-1};
-  const testedRates = [...new Set([baseline.slippageBps, ...parseSlippageRates(rates.join(','))])].sort((a,b) => a-b);
-  const testedLimits = [-1, ...parseEntryLimits(limits.join(',')).sort((a,b) => a-b)];
-  const replay = prepareWindow(dataset, {startDate, endDate, lookback:baseline.lookback});
-  const total = testedRates.length * testedLimits.length;
-  const rows = [];
-  for (const slippageBps of testedRates) {
-    let controlNet;
-    for (const entryChaseLimit of testedLimits) {
-      const scenario = {...baseline, slippageBps, entryChaseLimit};
-      const {summary} = await replay(scenario);
-      if (entryChaseLimit === -1) controlNet = summary.net;
-      const isBaseline = slippageBps === baseline.slippageBps && entryChaseLimit === -1;
-      rows.push({
-        label:isBaseline ? 'baseline' : entryChaseLimit === -1 ? 'unprotected' : 'entry_limit',
-        config:scenario, summary, netVsUnprotected:summary.net - controlNet,
-      });
-      onProgress(rows.length, total);
+  const baseline = {...structuredClone(config), entryChaseLimit: -1, slippageBps: baselineBps};
+  validateConfig(baseline);
+  rates = parseSlippageRates(rates.join(',')).filter(rate => rate !== baseline.slippageBps);
+  limits = parseEntryLimits(limits.join(','));
+  if (!['separate', 'matrix'].includes(design)) throw Error('情景比較方式無效。');
+
+  const scenarios = [{label:'baseline', config:baseline}];
+  for (const slippageBps of [baseline.slippageBps, ...rates]) {
+    if (slippageBps !== baseline.slippageBps)
+      scenarios.push({label:'slippage', config:{...baseline, slippageBps}});
+    if (design === 'matrix' || slippageBps === baseline.slippageBps) {
+      for (const entryChaseLimit of limits)
+        scenarios.push({label:'entry_limit', config:{...baseline, slippageBps, entryChaseLimit}});
     }
   }
-  return {
-    type:'g3-execution-research', schemaVersion:2, engineVersion:ENGINE_VERSION,
-    createdAt:new Date().toISOString(), dataHash:await fingerprint(dataset),
-    configHash:await fingerprint({baseline, rates:testedRates, limits:testedLimits}),
-    startDate, endDate, baseline, rates:testedRates, limits:testedLimits, rows,
-  };
+  validateDataset(dataset);
+  const [dataHash, configHash] = await Promise.all([fingerprint(dataset), fingerprint({baseline, design, rates, limits})]);
+  const rows = [];
+  const unguarded = new Map();
+  for (const [index, scenario] of scenarios.entries()) {
+    const result = await runValidatedWindow(dataset, scenario.config, {startDate, endDate});
+    const {entryChaseLimit, slippageBps} = scenario.config;
+    const {summary} = result;
+    if (entryChaseLimit < 0) unguarded.set(slippageBps, summary);
+    const reference = unguarded.get(slippageBps);
+    const original = rows[0]?.summary ?? summary;
+    rows.push({
+      ...scenario, summary,
+      deltaFromBaseline: {
+        net: summary.net - original.net,
+        maxCloseDrawdown: summary.maxCloseDrawdown - original.maxCloseDrawdown,
+      },
+      deltaFromUnguardedAtSameSlippage: entryChaseLimit < 0 ? null : {
+        net: summary.net - reference.net,
+        maxCloseDrawdown: summary.maxCloseDrawdown - reference.maxCloseDrawdown,
+      },
+    });
+    onProgress(index + 1, scenarios.length);
+  }
+  return {type:'g3-execution-research',schemaVersion:2,engineVersion:ENGINE_VERSION,
+    createdAt:new Date().toISOString(),dataHash,configHash,startDate,endDate,baseline,
+    design,rates:[baseline.slippageBps,...rates],limits,rows};
 }

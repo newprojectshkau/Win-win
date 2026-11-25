@@ -38,7 +38,7 @@ function installDataset(next){
   el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
   el('source').textContent=`已載入真實行情研究檔（供應商聲明；未獨立驗證）｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
 }
-function currentConfig(){return {...DEFAULT_CONFIG,barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
+function currentConfig(){return {...DEFAULT_CONFIG,priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
   const values=[0,...days.map(d=>d.cumulative)],width=1050,height=380,pad=80;
   // Both series share one USD scale and the same zero baseline.
@@ -55,7 +55,7 @@ function curve(days){
 }
 function renderResult(){
   const s=result.summary;
-  const stats=[['總成交額',usd(s.turnover),'所有買入及賣出金額之和；不等於投入本金'],['實際成交股票',`${s.tradedStocks} 隻`,'期間去重；候選上限按設定'],['淨盈虧',usd(s.net),'已扣手續費及滑點'],['費前損益',usd(s.grossBeforeCosts),'按參考價計算，未扣費用及滑點'],['模擬成本',usd(s.fees+s.slippage),`手續費 ${usd(s.fees)} · 滑點 ${usd(s.slippage)}`],['收市最大回撤',usd(s.maxCloseDrawdown),'只量度收市點；不是日內最大回撤'],['有成交的交易日',`${s.activeDays} / ${s.days}`,`${s.orders} 筆成交 · 淨持倉殘留 ${s.residual}`],['盈利日比例',s.winningDayRate===null?'沒有成交':format(s.winningDayRate*100,1)+'%',`${s.winningDays} 個盈利日／${s.activeDays} 個有成交日`]];
+  const stats=[['總成交額',usd(s.turnover),'所有買入及賣出金額之和；不等於投入本金'],['實際成交股票',`${s.tradedStocks} 隻`,'期間去重；候選邊界同分全納'],['淨盈虧',usd(s.net),'已扣手續費及滑點'],['費前損益',usd(s.grossBeforeCosts),'按參考價計算，未扣費用及滑點'],['模擬成本',usd(s.fees+s.slippage),`手續費 ${usd(s.fees)} · 滑點 ${usd(s.slippage)}`],['收市最大回撤',usd(s.maxCloseDrawdown),'只量度收市點；不是日內最大回撤'],['有成交的交易日',`${s.activeDays} / ${s.days}`,`${s.orders} 筆成交 · 淨持倉殘留 ${s.residual}`],['盈利日比例',s.winningDayRate===null?'沒有成交':format(s.winningDayRate*100,1)+'%',`${s.winningDays} 個盈利日／${s.activeDays} 個有成交日`]];
   el('stats').innerHTML=stats.map(([label,value,detail])=>`<div class="sim-stat"><span>${label}</span><strong>${value}</strong><small>${detail}</small></div>`).join('');
   el('run-label').textContent=`${result.startDate} → ${result.endDate} · ${result.data.barSeconds} 秒 Bar · ${result.data.symbols.join('、')} · 每股名義金額 ${usd(result.config.target)} · ${feeModelLabel(result.config)} · 滑點 ${result.config.slippageBps} 基點 · 資料指紋 ${result.dataHash?.slice(0,12)||'未提供'}`;
   el('run-coverage').textContent=`資料不足的股票／日共 ${s.unassessedStockDays||0}；缺觀察資料而整段跳過 ${s.blockedSlots||0} 次；缺交易 Bar 而停止的個股／時段共 ${s.abortedStockSlots||0}；全部已選股受缺口影響 ${s.incompleteSlots||0} 段。${s.residual?'有未估值持倉，損益只計已實現部分及已發生成本。':''}`;
@@ -85,13 +85,13 @@ function download(name,value,type='application/json'){
 }
 async function execute(event){
   event?.preventDefault();if(!data||busy)return;
-  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates,#research-limits').forEach(e=>e.disabled=true);
+  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-inputs input,#research-inputs select').forEach(e=>e.disabled=true);
   try{
     const config=currentConfig();
     const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
     next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
   }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
-  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-rates,#research-limits').forEach(e=>e.disabled=false);syncFeeFields();}
+  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-inputs input,#research-inputs select').forEach(e=>e.disabled=false);syncFeeFields();}
 }
 function syncFeeFields(){el('fee').disabled=busy||el('fee-model').value!=='custom';for(const id of ['exchange-fee','monthly-shares'])el(id).disabled=busy||el('fee-model').value!=='ibkr_tiered';}
 el('fee-model').addEventListener('change',syncFeeFields);syncFeeFields();
@@ -148,32 +148,37 @@ const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,mo
 const charts=initCharts({getResult:()=>result,escapeHTML,format,money:usd,onSelectDate:(date,scroll)=>{el('detail-date').value=date;renderDetail();if(scroll)el('details').scrollIntoView({behavior:'smooth'});}});
 initialize();
 
+const researchLabels = {baseline:'比較基準', slippage:'滑價壓力', entry_limit:'追價保護'};
+function renderResearch(result) {
+  el('research-results').innerHTML=table(
+    ['情景','滑價 bps','追價上限（磚）','淨盈虧','較原基準淨盈虧','同滑價下保護影響','收市最大回撤','費用及滑價','入市嘗試','拒絕入市','入市通過率','成交筆數','未估值股數','訊號後移動 > 1 磚','模型滑價 > 1 磚'],
+    result.rows.map(({label,config,summary,deltaFromBaseline,deltaFromUnguardedAtSameSlippage}) => row([
+      label==='baseline' && config.slippageBps===5 ? 'A16 成本基準' : researchLabels[label], config.slippageBps, config.entryChaseLimit<0?'停用':config.entryChaseLimit,
+      usd(summary.net), usd(deltaFromBaseline.net), deltaFromUnguardedAtSameSlippage ? usd(deltaFromUnguardedAtSameSlippage.net) : '—',
+      usd(summary.maxCloseDrawdown), usd(summary.fees+summary.slippage), summary.entryAttempts, summary.rejectedEntries,
+      summary.entryFillRate===null?'—':format(summary.entryFillRate*100,1)+'%',summary.orders,summary.residual,summary.signalMovesOverBrick,summary.entrySlippagesOverBrick,
+    ])),
+  );
+  el('research-status').textContent=`已比較 ${result.rows.length} 個情景 · ${result.startDate} 至 ${result.endDate} · 基準滑價 ${result.baseline.slippageBps} bps／追價停用 · 資料指紋 ${result.dataHash.slice(0,12)} · 設定指紋 ${result.configHash.slice(0,12)}`;
+}
+el('research-inputs').addEventListener('input',()=>{
+  if(researchResult)el('research-status').textContent='情景設定已更改；表格仍顯示上一次比較。';
+});
 el('run-research').onclick=async()=>{
-  if(!data||busy||!el('config').reportValidity())return;
-  busy=true;const buttons=document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#run-research,#research-rates,#research-limits,#export-research');buttons.forEach(e=>e.disabled=true);
+  if(!data||busy||!el('config').reportValidity()||!el('research-baseline').reportValidity())return;
+  busy=true;
+  const fields=document.querySelectorAll('#config input,#config select,#run,#full-range,#import,#dataset-library,#research-inputs input,#research-inputs select,#run-research,#export-research');
+  const enabled=[...fields].filter(field=>!field.disabled);
+  enabled.forEach(field=>field.disabled=true);
   try{
     const next=await runResearch(data,currentConfig(),{
-      startDate:el('start').value,endDate:el('end').value,
-      rates:parseSlippageRates(el('research-rates').value),
-      limits:parseEntryLimits(el('research-limits').value),
+      startDate:el('start').value,endDate:el('end').value,design:el('research-design').value,baselineBps:Number(el('research-baseline').value),
+      rates:parseSlippageRates(el('research-rates').value),limits:parseEntryLimits(el('research-limits').value),
       onProgress:(n,total)=>el('research-status').textContent=`正在比較 ${n} / ${total} 個情景…`,
     });
     researchResult=next;
-    const headers=['情景','單邊滑價（基點）','追價上限（磚）','淨盈虧','較同滑價無保護差額','收市最大回撤','費用＋滑價','成交筆數','入市嘗試','拒絕入市','入市通過率','訊號後移動 > 1 磚','單純滑價 > 1 磚'];
-    el('research-results').innerHTML=table(headers,next.rows.map(({label,config,summary:s,netVsUnprotected})=>row([
-      label==='baseline'?'<strong>A16 成本基準</strong>':label==='unprotected'?'同滑價對照':'入市保護',
-      config.slippageBps,config.entryChaseLimit<0?'停用':config.entryChaseLimit,usd(s.net),
-      usd(netVsUnprotected),usd(s.maxCloseDrawdown),usd(s.fees+s.slippage),s.orders,s.entryAttempts,
-      s.rejectedEntries,s.entryFillRate===null?'—':format(s.entryFillRate*100,1)+'%',
-      s.signalMovesOverBrick,s.entrySlippagesOverBrick,
-    ])));
-    const c=next.baseline;
-    const execution=c.execution==='next_open'?'下一根 Bar 開市價':'訊號 Bar 收市價';
-    el('research-status').textContent=`已完成 ${next.rows.length} 個情景 · ${next.startDate} → ${next.endDate} · 平均股價 ${usd(c.priceMin)}–${usd(c.priceMax)} · 每隻股票配注 ${usd(c.target)} · 參考價 ${execution} · 資料指紋 ${next.dataHash.slice(0,12)}。`;
+    renderResearch(next);
   }catch(e){el('research-status').textContent='研究未完成：'+e.message+'；先前研究結果保留。';}
-  finally{busy=false;buttons.forEach(e=>e.disabled=false);el('export-research').disabled=!researchResult;syncFeeFields();}
+  finally{busy=false;enabled.forEach(field=>field.disabled=false);el('export-research').disabled=!researchResult;syncFeeFields();}
 };
-for(const id of ['research-rates','research-limits']) el(id).addEventListener('input',()=>{
-  if(researchResult)el('research-status').textContent='情景已更改；研究表仍使用上一次鎖定設定。';
-});
 el('export-research').onclick=()=>{if(researchResult)download('g3-execution-research.json',researchResult);};
