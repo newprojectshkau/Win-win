@@ -1,8 +1,8 @@
 import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-execution-grid';
 import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261125-assumptions';
 import {initCharts} from './charts.js?v=20261125-comments';
-import {initPresentation} from './presentation.js?v=20261125-assumptions';
-import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=20261125-comments';
+import {initPresentation} from './presentation.js?v=g3-screening-inputs';
+import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=g3-screening-inputs';
 import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName} from './engine.js?v=g3-execution-grid';
 import {runWindow} from './performance.js?v=g3-execution-grid';
 const el=id=>document.getElementById(id);
@@ -17,28 +17,72 @@ function error(message){el('error').textContent=message;el('error').hidden=!mess
 function installDataset(next){
   validateDataset(next);
   if(next.kind!=='imported')throw Error('此頁只接受真實歷史資料。');
-  if(next.instruments[0].sessions.length<=DEFAULT_CONFIG.lookback)throw Error('資料需有至少 20 個前置交易日及 1 個測試日。');
-  data=next;el("execution").value=next.recommendedConfig?.execution||DEFAULT_CONFIG.execution;researchResult=null;el("research-results").innerHTML="";el("research-status").textContent="";el("export-research").disabled=true;el("run-research").disabled=false;result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
-  const sourceSeconds=next.barSeconds??60;
-  const intervals=[...new Set([...BAR_INTERVALS,sourceSeconds])].filter(seconds=>seconds%sourceSeconds===0).sort((a,b)=>a-b);
-  const barSelect=el('bar-seconds');
-  const previousInterval=Number(barSelect.value);
-  barSelect.replaceChildren(new Option(`自動（${resolveBarSeconds(next)} 秒）`,'0'),...intervals.map(seconds=>new Option(`${seconds} 秒`,String(seconds))));
-  barSelect.value=intervals.includes(previousInterval)?String(previousInterval):'0';
-  const dates=next.instruments[0].sessions.map(s=>s.date);
-  const preferredDays=Number.isInteger(next.defaultTradeDays)&&next.defaultTradeDays>0?next.defaultTradeDays:(next.schemaVersion===2?30:10);
-  const first=Math.max(DEFAULT_CONFIG.lookback,dates.length-preferredDays);
-  for(const key of ['start','end']){el(key).min=dates[DEFAULT_CONFIG.lookback];el(key).max=dates.at(-1);}
-  el('start').value=dates[first];el('end').value=dates.at(-1);el('run').disabled=false;
-  el('available-dates').innerHTML=dates.slice(DEFAULT_CONFIG.lookback).map(d=>`<option value="${d}">${d}</option>`).join('');
-  el('coverage').textContent=`可測試日期：${dates[DEFAULT_CONFIG.lookback]} 至 ${dates.at(-1)}（${dates.length-DEFAULT_CONFIG.lookback} 個交易日）；另有 20 日前置資料。`;
+  data=next;el("execution").value=next.recommendedConfig?.execution||DEFAULT_CONFIG.execution;researchResult=null;el("research-results").innerHTML="";el("research-status").textContent="";el("export-research").disabled=true;result=null;el('output').hidden=true;el('dirty').hidden=true;error('');
+  configureBarOptions(next);
+  syncDateRange({reset:true});
+  const totalSessions=next.instruments[0].sessions.length;
   const q=next.provenance||{};
-  el('universe-note').textContent=next.marketCapCoverage==='complete'?'資料集聲明回看期市值完整；市值仍須於當日收市或之前可用。':next.schemaVersion===2&&Number.isFinite(q.marketNonCapUnionCount)?`50 個已存檔代號，每日重篩並獨立選早／午名單。全市場同期有 ${q.marketNonCapUnionCount} 個代號曾通過成交量／波幅／價格三條件，其中 ${q.unarchivedNonCapUnionCount} 個不在此池；尚未核實它們的市值及 IB 資格。市值不齊時只使用已知值總和 ÷ 20 的非負下限；下限不足不能判定，會列為資料不足及排除，可能改變排名。結果只代表可判定子集。`:'此檔為舊版固定研究子集；篩選成交量沿用常規時段分鐘總和，便於重現舊結果。擴展版使用官方日線。';
-  syncDates();presentation.refresh();
-  el('scope').textContent=`${data.instruments.length} 隻 · ${dates.length} 個交易日（包含回看期）`;
+  el('universe-note').textContent=next.marketCapCoverage==='complete'?'資料集聲明回看期市值完整；市值仍須於當日收市或之前可用。':next.schemaVersion===2&&Number.isFinite(q.marketNonCapUnionCount)?`50 個已存檔代號，每日重篩並獨立選早／午名單。存檔時，全市場同期有 ${q.marketNonCapUnionCount} 個代號曾通過成交量／波幅／價格三條件，其中 ${q.unarchivedNonCapUnionCount} 個不在此池；尚未核實它們的市值及 IB 資格。市值不齊時只使用已知值總和 ÷ 回看日數的非負下限；下限不足不能判定，會列為資料不足及排除，可能改變排名。結果只代表可判定子集。`:'此檔為舊版固定研究子集；篩選成交量沿用常規時段分鐘總和，便於重現舊結果。擴展版使用官方日線。';
+  presentation.refresh();
+  el('scope').textContent=`${data.instruments.length} 隻 · ${totalSessions} 個交易日（包含回看期）`;
   el('source').textContent=`已載入真實行情研究檔（供應商聲明；未獨立驗證）｜${data.instruments.map(i=>i.symbol).join('、')}。${data.description||''}`;
 }
-function currentConfig(){return {...DEFAULT_CONFIG,priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
+function configureBarOptions(dataset){
+  const source=dataset.barSeconds??60;
+  const select=el('bar-seconds');
+  const previous=select.value;
+  const primary=[[30,'30 秒'],[60,'1 分鐘'],[120,'2 分鐘']];
+  const supported=seconds=>seconds%source===0;
+  select.replaceChildren(
+    new Option(`自動（${resolveBarSeconds(dataset)} 秒）`,'0'),
+    ...primary.map(([seconds,label])=>{
+      const option=new Option(supported(seconds)?label:`${label}（資料不支援）`,String(seconds));
+      option.disabled=!supported(seconds);
+      return option;
+    }),
+  );
+  const extra=[...new Set([...BAR_INTERVALS,source])].filter(seconds=>supported(seconds)&&!primary.some(([main])=>main===seconds));
+  if(extra.length){
+    const group=document.createElement('optgroup');
+    group.label='其他相容週期';
+    group.append(...extra.map(seconds=>new Option(`${seconds} 秒`,String(seconds))));
+    select.append(group);
+  }
+  select.value=[...select.options].some(option=>option.value===previous&&!option.disabled)?previous:'0';
+}
+
+function syncDateRange({reset=false}={}){
+  if(!data)return;
+  const field=el('lookback');
+  const lookback=field.valueAsNumber;
+  const sessions=data.instruments[0].sessions;
+  const validLookback=Number.isInteger(lookback)&&lookback>=1&&lookback<=250;
+  const dates=validLookback?sessions.slice(lookback).map(session=>session.date):[];
+  const first=dates[0]??'',last=dates.at(-1)??'';
+  for(const id of ['run','run-research','full-range'])el(id).disabled=!dates.length;
+  field.setCustomValidity(validLookback&&!dates.length?`資料不足：最多可回看 ${sessions.length-1} 個交易日。`:'');
+  for(const id of ['start','end']){
+    el(id).min=first;
+    el(id).max=last;
+  }
+  el('available-dates').replaceChildren(...dates.map(date=>new Option(date,date)));
+  if(!dates.length){
+    el('coverage').textContent=validLookback?field.validationMessage:'請輸入 1 至 250 個回看交易日。';
+    return;
+  }
+  const preferredDays=Number.isInteger(data.defaultTradeDays)&&data.defaultTradeDays>0?data.defaultTradeDays:(data.schemaVersion===2?30:10);
+  const start=el('start'),end=el('end');
+  const previousStart=start.value,previousEnd=end.value;
+  if(reset||!start.value)start.value=dates.at(-Math.min(dates.length,preferredDays));
+  else if(start.value<first)start.value=first;
+  if(reset||!end.value)end.value=last;
+  else if(end.value<first)end.value=first;
+  syncDates();
+  const adjusted=!reset&&((previousStart && previousStart!==start.value)||(previousEnd && previousEnd!==end.value));
+  el('coverage').textContent=`可測試日期：${first} 至 ${last}（${dates.length} 個交易日）；每次回看 ${lookback} 個已完成交易日。${adjusted?'已將所選日期移到可測範圍。':''}`;
+}
+
+function currentConfig(){return {...DEFAULT_CONFIG,lookback:el('lookback').valueAsNumber,capMin:el('cap-min').valueAsNumber*100000000,rangeMin:el('range-min').valueAsNumber/100,priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
   const values=[0,...days.map(d=>d.cumulative)],width=1050,height=380,pad=80;
   // Both series share one USD scale and the same zero baseline.
@@ -72,7 +116,8 @@ function renderDetail(){
   const r=result.runs.find(r=>r.data.date===el('detail-date').value);if(!r)return;
   el('gates').textContent=`早市：${r.slots.AM.gate.reason}。午市：${r.slots.PM.gate.reason}。前日準備：${r.data.previousDate}。${Object.values(r.slots).flatMap(slot=>slot.abortedSymbols).length ? `缺交易 Bar 停止：${Object.entries(r.slots).filter(([,slot])=>slot.abortedSymbols.length).map(([name,slot])=>name+' '+slot.abortedSymbols.join('、')).join('；')}。` : ''}`;
   const labels={cap:'市值',volume:'成交量',range:'波幅',price:'股價'};
-  el('screening').innerHTML=table(['股票','20 日市值／下限','20 日平均成交量','20 日平均波幅','篩選結果'],r.screening.map(s=>row([stockLabel(s.symbol),`${s.cap===null?'—':usd(s.cap)}${s.capBasis==='missing_required'?'（缺必需市值）':s.capBasis==='nonnegative_lower_bound'?`（下限；${s.knownCaps}/20 日）`:'（平均）'}`,format(s.volume,0),s.range===null?'—':format(s.range*100)+'%',s.dataIncomplete?`資料不足：${s.missingDailyDays?`缺 ${s.missingDailyDays} 日日線／前收市；`:''}${s.capBasis==='missing_required'?'IBKR 完整模式缺每日市值':s.knownCaps<20&&s.cap<=result.config.capMin?`市值僅 ${s.knownCaps}/20 日，下限不足以證明門檻`:''}`:s.pass?'通過':Object.entries(s.checks).filter(([,v])=>!v).map(([k])=>labels[k]).join('、')+'未通過'])));
+  const lookback=result.config.lookback;
+  el('screening').innerHTML=table(['股票',`${lookback} 日市值／下限`,`${lookback} 日平均成交量`,`${lookback} 日平均波幅`,'篩選結果'],r.screening.map(s=>row([stockLabel(s.symbol),`${s.cap===null?'—':usd(s.cap)}${s.capBasis==='missing_required'?'（缺必需市值）':s.capBasis==='nonnegative_lower_bound'?`（下限；${s.knownCaps}/${lookback} 日）`:'（平均）'}`,format(s.volume,0),s.range===null?'—':format(s.range*100)+'%',s.dataIncomplete?`資料不足：${s.missingDailyDays?`缺 ${s.missingDailyDays} 日日線／前收市；`:''}${s.capBasis==='missing_required'?'IBKR 完整模式缺每日市值':s.knownCaps<lookback&&s.cap<=result.config.capMin?`市值僅 ${s.knownCaps}/${lookback} 日，下限不足以證明門檻`:''}`:s.pass?'通過':Object.entries(s.checks).filter(([,v])=>!v).map(([k])=>labels[k]).join('、')+'未通過'])));
   el('decision').innerHTML=table(['時段','前日 B / R','當日觀察 B / R','前日選股及配注'],Object.entries(r.slots).map(([key,s])=>row([key==='AM'?'早市':'午市',`${s.previous.B} / ${s.previous.R}`,`${s.current.B} / ${s.current.R}`,s.selected.map(v=>`${escapeHTML(v.symbol)}：${v.quantity} 股`).join('；')||'沒有候選'])));
   const ny=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',...(result.data.barSeconds%60?{second:'2-digit'}:{}),hour12:false});
   const actions={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉／準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
@@ -114,7 +159,7 @@ function showSetupStage(stage,{focus=true}={}) {
 
 function validateSetup(scope=setupForm) {
   const start=el('start'),end=el('end'),min=el('price-min'),max=el('price-max');
-  const tradingDates=data?.instruments[0].sessions.slice(DEFAULT_CONFIG.lookback).map(s=>s.date);
+  const tradingDates=data?.instruments[0].sessions.slice(el('lookback').valueAsNumber).map(s=>s.date);
   start.setCustomValidity(tradingDates && start.value && !tradingDates.includes(start.value)?'開始日期須為資料內可測試嘅交易日。':'');
   const endError=end.value && tradingDates && !tradingDates.includes(end.value)?'結束日期須為資料內可測試嘅交易日。':'';
   end.setCustomValidity(endError || (start.value && end.value && end.value<start.value?'結束日期須為開始日期或之後。':''));
@@ -134,6 +179,9 @@ function syncSetupSummary(){
   const quote=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:2});
   el('setup-summary').innerHTML=[
     ['測試日期',start && end ? (start===end?start:`${start} – ${end}`) : '等候資料'],
+    ['回看交易日數',el('lookback').value||'—'],
+    ['平均市值門檻（億美元）',el('cap-min').value||'—'],
+    ['平均每日波幅門檻（%）',el('range-min').value||'—'],
     ['平均股價（US$）',priceMin && priceMax ? `${quote(priceMin)} – ${quote(priceMax)}`:'—'],
     ['Renko 門檻（%）',el('threshold').value||'—'],
     ['每時段候選數',el('candidates').value||'—'],
@@ -204,6 +252,7 @@ function syncDates(){
   if(single)el('end').value=el('start').value;
   syncSetupSummary();
 }
+el('lookback').addEventListener('input',()=>{syncDateRange();presentation.refreshSetup();});
 el('period-mode').onchange=syncDates;
 el('start').addEventListener('change',syncDates);
 async function rememberDataset(next){
@@ -212,7 +261,7 @@ async function rememberDataset(next){
 }
 async function refreshLibrary(){
  const items=await listPrivateDatasets();
- el('dataset-library').innerHTML=items.map(item=>`<option value="${escapeHTML(item.id)}">${Math.max(0,item.sessions-20)} 個交易日｜${escapeHTML(item.first||'資料不足')} → ${escapeHTML(item.last)}｜${item.symbols.length} 個代號（${escapeHTML(item.symbols.slice(0,3).join('、'))}${item.symbols.length>3?'…':''}）</option>`).join('');
+ el('dataset-library').innerHTML=items.map(item=>`<option value="${escapeHTML(item.id)}">${item.sessions} 個交易日｜${item.firstSession?escapeHTML(item.firstSession)+' → ':''}${escapeHTML(item.last)}｜${item.symbols.length} 個代號（${escapeHTML(item.symbols.slice(0,3).join('、'))}${item.symbols.length>3?'…':''}）</option>`).join('');
  if(data)el('dataset-library').value=data.id;
 }
 el('dataset-library').onchange=async event=>{
@@ -227,7 +276,7 @@ async function initialize(){
   else{el('source').textContent='首次使用：請匯入 Massive 私人歷史資料 JSON。匯入一次後，此瀏覽器會記住資料。';el('scope').textContent='等待 Massive 歷史資料';}
  }catch(e){error('未能載入已保存資料：'+e.message+'。請重新匯入私人 JSON。');el('source').textContent='等待匯入真實歷史資料。';}
 }
-const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,money:usd,format,escapeHTML,onSelectDate:date=>{el('detail-date').value=date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}});
+const presentation=initPresentation({getResult:()=>result,getDataset:()=>data,getLookback:()=>el('lookback').valueAsNumber,money:usd,format,escapeHTML,onSelectDate:date=>{el('detail-date').value=date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}});
 const charts=initCharts({getResult:()=>result,escapeHTML,format,money:usd,onSelectDate:(date,scroll)=>{el('detail-date').value=date;renderDetail();if(scroll)el('details').scrollIntoView({behavior:'smooth'});}});
 initialize();
 

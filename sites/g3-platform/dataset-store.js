@@ -6,8 +6,9 @@ function openDataDB(){return new Promise((resolve,reject)=>{
 });}
 export async function savePrivateDataset(dataset){
  // Keep large v2 bundles compact on disk; validation expands only in memory.
+ const barsPerFullSession=390*60/(dataset.barSeconds??60);
  const persisted=dataset.schemaVersion===2?{...dataset,instruments:dataset.instruments.map(i=>({...i,sessions:i.sessions.map(s=>{
-  if(!s.bars)return s;
+  if(s.bars?.length!==barsPerFullSession)return s;
   const {bars,...rest}=s;
   return {...rest,startMs:Date.parse(bars[0].time),packedBars:bars.map(b=>[b.open,b.high,b.low,b.close,b.volume])};
  })}))}:dataset;
@@ -17,7 +18,7 @@ export async function savePrivateDataset(dataset){
   const query=store.get('catalog');
   query.onsuccess=()=>{
    const dates=dataset.instruments[0].sessions.map(s=>s.date);
-   const entry={id:dataset.id,symbols:dataset.instruments.map(s=>s.symbol),first:dates[20]||null,last:dates.at(-1),sessions:dates.length};
+   const entry={id:dataset.id,symbols:dataset.instruments.map(s=>s.symbol),firstSession:dates[0],last:dates.at(-1),sessions:dates.length};
    const catalog=Array.isArray(query.result)?query.result:[];
    store.put([...catalog.filter(d=>d.id!==dataset.id),entry],'catalog');
    store.put(persisted,'data:'+dataset.id);store.put({activeDatasetId:dataset.id},'active');
