@@ -1,5 +1,5 @@
 import {validateFees,applyFeeSchedule} from './fees.js?v=20261125-assumptions';
-export const ENGINE_VERSION = "0.4.3-review";
+export const ENGINE_VERSION = "0.4.4-review";
 // Display-only company labels from cached Massive reference responses; not point-in-time universe evidence.
 export const STOCK_NAMES = Object.freeze({"NVDA": "Nvidia Corp", "TSLA": "Tesla, Inc. Common Stock", "AMD": "Advanced Micro Devices", "AAPL": "Apple Inc.", "MSFT": "Microsoft Corp", "AMZN": "Amazon.Com Inc", "APLD": "Applied Digital Corporation Common Stock", "AVGO": "Broadcom Inc. Common Stock", "BAC": "Bank of America Corporation", "BSX": "Boston Scientific Corp.", "CMCSA": "Comcast Corp", "CMG": "Chipotle Mexican Grill, Inc.", "CRWV": "CoreWeave, Inc. Class A Common Stock", "DRAM": "Roundhill Memory ETF", "EWZ": "iShares MSCI Brazil ETF", "GOOG": "Alphabet Inc. Class C Capital Stock", "GOOGL": "Alphabet Inc. Class A Common Stock", "HOOD": "Robinhood Markets, Inc. Class A Common Stock", "INTC": "Intel Corp", "IREN": "IREN Limited Ordinary Shares", "META": "Meta Platforms, Inc. Class A Common Stock", "MU": "Micron Technology, Inc.", "MUU": "Direxion Shares ETF Trust Direxion Daily MU Bull 2X ETF", "NFLX": "NetFlix Inc", "NOW": "SERVICENOW, INC.", "ORCL": "Oracle Corp", "PBR": "PETROLEO BRASILEIRO S.A.-PETROBRAS ADS (REP 1 COMMON SHARE)", "PFE": "Pfizer Inc.", "PLTR": "Palantir Technologies Inc. Class A Common Stock", "SKHY": "SK hynix Inc. American Depositary Shares", "SMCI": "Super Micro Computer, Inc. Common Stock", "SOXL": "Direxion Daily Semiconductor Bull 3X ETF", "SOXS": "Direxion Daily Semiconductor Bear 3X ETF", "SPCX": "Space Exploration Technologies Corp. Class A Common Stock", "SQQQ": "ProShares UltraPro Short QQQ", "T": "AT&T Inc.", "TQQQ": "ProShares  UltraPro QQQ", "VZ": "Verizon Communications", "XLE": "State Street Energy Select Sector SPDR ETF"});
 export const stockName = symbol => STOCK_NAMES[symbol] || "全名未提供";
@@ -41,15 +41,35 @@ const offsetFromMarketOpen = (time) => {
 export function slotLabel(slot) {
   return slot === "CUSTOM" ? "自訂時段" : SLOT[slot]?.label ?? slot;
 }
-export function getTradingSlots(config, barSeconds) {
-  if (config.tradingWindow == null) return SLOT;
-  const {start:from,tradeStart,end:to}=config.tradingWindow;
+export function describeTradingWindows(config) {
+  const windows=config.tradingWindow?{CUSTOM:config.tradingWindow}:config.splitWindows;
+  if(!windows)return "早市及午市分開";
+  return Object.entries(windows).map(([key,window])=>
+    `${slotLabel(key)} ${window.start}–${window.end}（${window.tradeStart} 開始交易）`,
+  ).join(" · ");
+}
+function parseTradingWindow(key, window, barSeconds) {
+  const {start:from,tradeStart,end:to}=window ?? {};
   const [start,observeEnd,end]=[from,tradeStart,to].map(offsetFromMarketOpen);
+  const label=slotLabel(key);
+  const invalid=message=>Object.assign(Error(`${label}：${message}`),{windowKey:key});
   if (!(start>=0 && start<observeEnd && observeEnd<end && end<=DAY_MINUTES))
-    throw Error("自訂時段須在紐約 09:30–16:00 內，並按觀察開始、交易開始、結束排序。");
+    throw invalid("時段須在紐約 09:30–16:00 內，並按觀察開始、交易開始、結束排序。");
   if (barSeconds && ([start,observeEnd,end].some(offset=>offset*60%barSeconds!==0) || (end-observeEnd)*60<2*barSeconds))
-    throw Error("自訂時段須對齊所選 Bar 週期，交易部分至少要有兩根 Bar。");
-  return {CUSTOM:{label:slotLabel("CUSTOM"),start,observeEnd,end}};
+    throw invalid("時段須對齊所選 Bar 週期，交易部分至少要有兩根 Bar。");
+  return {label,start,observeEnd,end};
+}
+export function getTradingSlots(config, barSeconds) {
+  if (config.tradingWindow != null && config.splitWindows != null)
+    throw Error("請選擇單一時段或早／午市分段。");
+  if (config.splitWindows != null) {
+    const AM=parseTradingWindow("AM",config.splitWindows.AM,barSeconds);
+    const PM=parseTradingWindow("PM",config.splitWindows.PM,barSeconds);
+    if (AM.end>PM.start)
+      throw Object.assign(Error("午市觀察開始須等於或遲於早市結束。"),{windowKey:"PM",boundary:"start"});
+    return {AM,PM};
+  }
+  return config.tradingWindow == null ? SLOT : {CUSTOM:parseTradingWindow("CUSTOM",config.tradingWindow,barSeconds)};
 }
 const INCOMPLETE_BAR = Symbol();
 const isMissingBar = bar => !bar || bar[INCOMPLETE_BAR] === true;
