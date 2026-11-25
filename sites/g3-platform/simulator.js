@@ -1,10 +1,10 @@
-import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-execution-grid';
+import {runResearch,parseSlippageRates,parseEntryLimits} from './research.js?v=g3-custom-window';
 import {feeModelLabel,FEE_COMPONENTS} from './fees.js?v=20261125-assumptions';
-import {initCharts} from './charts.js?v=20261125-comments';
+import {initCharts} from './charts.js?v=g3-custom-window';
 import {initPresentation} from './presentation.js?v=g3-screening-inputs';
 import {savePrivateDataset,loadPrivateDataset,listPrivateDatasets,loadSavedDataset} from './dataset-store.js?v=g3-screening-inputs';
-import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName} from './engine.js?v=g3-execution-grid';
-import {runWindow} from './performance.js?v=g3-execution-grid';
+import {DEFAULT_CONFIG,BAR_INTERVALS,resolveBarSeconds,validateDataset,fingerprint,stockName,getTradingSlots,slotLabel} from './engine.js?v=g3-custom-window';
+import {runWindow} from './performance.js?v=g3-custom-window';
 const el=id=>document.getElementById(id);
 const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const format=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
@@ -31,7 +31,7 @@ function configureBarOptions(dataset){
   const source=dataset.barSeconds??60;
   const select=el('bar-seconds');
   const previous=select.value;
-  const primary=[[30,'30 秒'],[60,'1 分鐘'],[120,'2 分鐘']];
+  const primary=[[30,'30s'],[60,'1 min'],[120,'2 mins']];
   const supported=seconds=>seconds%source===0;
   select.replaceChildren(
     new Option(`自動（${resolveBarSeconds(dataset)} 秒）`,'0'),
@@ -82,7 +82,8 @@ function syncDateRange({reset=false}={}){
   el('coverage').textContent=`可測試日期：${first} 至 ${last}（${dates.length} 個交易日）；每次回看 ${lookback} 個已完成交易日。${adjusted?'已將所選日期移到可測範圍。':''}`;
 }
 
-function currentConfig(){return {...DEFAULT_CONFIG,lookback:el('lookback').valueAsNumber,capMin:el('cap-min').valueAsNumber*100000000,rangeMin:el('range-min').valueAsNumber/100,priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
+const currentWindow=()=>el('window-mode').value==='custom'?{start:el('window-start').value,tradeStart:el('window-trade').value,end:el('window-end').value}:null;
+function currentConfig(){return {...DEFAULT_CONFIG,tradingWindow:currentWindow(),lookback:el('lookback').valueAsNumber,capMin:el('cap-min').valueAsNumber*100000000,rangeMin:el('range-min').valueAsNumber/100,priceMin:Number(el('price-min').value),priceMax:Number(el('price-max').value),barSeconds:Number(el('bar-seconds').value),marketCapPolicy:el('market-cap-policy').value,feeModel:el('fee-model').value,exchangePerShare:Number(el('exchange-fee').value),initialMonthlyShares:Number(el('monthly-shares').value),execution:el("execution").value,candidates:Number(el("candidates").value),target:Number(el('target').value),threshold:Number(el('threshold').value)/100,commission:Number(el('fee').value),slippageBps:Number(el('slip').value),entryChaseLimit:Number(el('entry-limit').value),mode:el('mode').value,gateEnabled:el('gate').value==='on'};}
 function curve(days){
   const values=[0,...days.map(d=>d.cumulative)],width=1050,height=380,pad=80;
   // Both series share one USD scale and the same zero baseline.
@@ -101,7 +102,7 @@ function renderResult(){
   const s=result.summary;
   const stats=[['總成交額',usd(s.turnover),'所有買入及賣出金額之和；不等於投入本金'],['實際成交股票',`${s.tradedStocks} 隻`,'期間去重；候選邊界同分全納'],['淨盈虧',usd(s.net),'已扣手續費及滑點'],['費前損益',usd(s.grossBeforeCosts),'按參考價計算，未扣費用及滑點'],['模擬成本',usd(s.fees+s.slippage),`手續費 ${usd(s.fees)} · 滑點 ${usd(s.slippage)}`],['收市最大回撤',usd(s.maxCloseDrawdown),'只量度收市點；不是日內最大回撤'],['有成交的交易日',`${s.activeDays} / ${s.days}`,`${s.orders} 筆成交 · 淨持倉殘留 ${s.residual}`],['盈利日比例',s.winningDayRate===null?'沒有成交':format(s.winningDayRate*100,1)+'%',`${s.winningDays} 個盈利日／${s.activeDays} 個有成交日`]];
   el('stats').innerHTML=stats.map(([label,value,detail])=>`<div class="sim-stat"><span>${label}</span><strong>${value}</strong><small>${detail}</small></div>`).join('');
-  el('run-label').textContent=`${result.startDate} → ${result.endDate} · ${result.data.barSeconds} 秒 Bar · ${result.data.symbols.join('、')} · 每股名義金額 ${usd(result.config.target)} · ${feeModelLabel(result.config)} · 滑點 ${result.config.slippageBps} 基點 · 資料指紋 ${result.dataHash?.slice(0,12)||'未提供'}`;
+  el('run-label').textContent=`${result.startDate} → ${result.endDate} · ${result.data.barSeconds} 秒 Bar · ${result.data.symbols.join('、')} · 每股名義金額 ${usd(result.config.target)}${result.config.tradingWindow? ` · 紐約 ${result.config.tradingWindow.start}–${result.config.tradingWindow.end}` : ''} · ${feeModelLabel(result.config)} · 滑點 ${result.config.slippageBps} 基點 · 資料指紋 ${result.dataHash?.slice(0,12)||'未提供'}`;
   el('run-coverage').textContent=`資料不足的股票／日共 ${s.unassessedStockDays||0}；缺觀察資料而整段跳過 ${s.blockedSlots||0} 次；缺交易 Bar 而停止的個股／時段共 ${s.abortedStockSlots||0}；全部已選股受缺口影響 ${s.incompleteSlots||0} 段。${s.residual?'有未估值持倉，損益只計已實現部分及已發生成本。':''}`;
   const feeLabels=['券商佣金','SEC 賣出費','FINRA TAF 賣出費','CAT 費','清算費','交易所費估算','轉嫁費','四捨五入差額'];
   const allFills=result.runs.flatMap(r=>r.fills);
@@ -114,15 +115,15 @@ function renderResult(){
 }
 function renderDetail(){
   const r=result.runs.find(r=>r.data.date===el('detail-date').value);if(!r)return;
-  el('gates').textContent=`早市：${r.slots.AM.gate.reason}。午市：${r.slots.PM.gate.reason}。前日準備：${r.data.previousDate}。${Object.values(r.slots).flatMap(slot=>slot.abortedSymbols).length ? `缺交易 Bar 停止：${Object.entries(r.slots).filter(([,slot])=>slot.abortedSymbols.length).map(([name,slot])=>name+' '+slot.abortedSymbols.join('、')).join('；')}。` : ''}`;
+  el('gates').textContent=`${Object.entries(r.slots).map(([key,slot])=>`${slotLabel(key)}：${slot.gate.reason}。`).join('')}前日準備：${r.data.previousDate}。${Object.values(r.slots).flatMap(slot=>slot.abortedSymbols).length ? `缺交易 Bar 停止：${Object.entries(r.slots).filter(([,slot])=>slot.abortedSymbols.length).map(([name,slot])=>name+' '+slot.abortedSymbols.join('、')).join('；')}。` : ''}`;
   const labels={cap:'市值',volume:'成交量',range:'波幅',price:'股價'};
   const lookback=result.config.lookback;
   el('screening').innerHTML=table(['股票',`${lookback} 日市值／下限`,`${lookback} 日平均成交量`,`${lookback} 日平均波幅`,'篩選結果'],r.screening.map(s=>row([stockLabel(s.symbol),`${s.cap===null?'—':usd(s.cap)}${s.capBasis==='missing_required'?'（缺必需市值）':s.capBasis==='nonnegative_lower_bound'?`（下限；${s.knownCaps}/${lookback} 日）`:'（平均）'}`,format(s.volume,0),s.range===null?'—':format(s.range*100)+'%',s.dataIncomplete?`資料不足：${s.missingDailyDays?`缺 ${s.missingDailyDays} 日日線／前收市；`:''}${s.capBasis==='missing_required'?'IBKR 完整模式缺每日市值':s.knownCaps<lookback&&s.cap<=result.config.capMin?`市值僅 ${s.knownCaps}/${lookback} 日，下限不足以證明門檻`:''}`:s.pass?'通過':Object.entries(s.checks).filter(([,v])=>!v).map(([k])=>labels[k]).join('、')+'未通過'])));
-  el('decision').innerHTML=table(['時段','前日 B / R','當日觀察 B / R','前日選股及配注'],Object.entries(r.slots).map(([key,s])=>row([key==='AM'?'早市':'午市',`${s.previous.B} / ${s.previous.R}`,`${s.current.B} / ${s.current.R}`,s.selected.map(v=>`${escapeHTML(v.symbol)}：${v.quantity} 股`).join('；')||'沒有候選'])));
+  el('decision').innerHTML=table(['時段','前日 B / R','當日觀察 B / R','前日選股及配注'],Object.entries(r.slots).map(([key,s])=>row([slotLabel(key),`${s.previous.B} / ${s.previous.R}`,`${s.current.B} / ${s.current.R}`,s.selected.map(v=>`${escapeHTML(v.symbol)}：${v.quantity} 股`).join('；')||'沒有候選'])));
   const ny=new Intl.DateTimeFormat('zh-HK',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',...(result.data.barSeconds%60?{second:'2-digit'}:{}),hour12:false});
   const actions={open_long:'開好倉',open_short:'開淡倉',close_reverse:'平倉／準備反手',reverse_long:'反手開好倉',reverse_short:'反手開淡倉',slot_exit:'時段尾平倉'};
   const transactions=(el('transaction-scope').value==='all'?result.runs:[r]).flatMap(run=>run.fills.map(f=>({date:run.data.date,...f})));
-  el('fills').innerHTML=transactions.length?table(['交易日','紐約時間','股票／全名','時段','動作','方向','股數','參考價','成交價','成交金額','本筆交易費用','已實現價差損益','本筆淨損益貢獻'],transactions.map(f=>row([escapeHTML(f.date),ny.format(new Date(f.time)),stockLabel(f.symbol),f.slot==='AM'?'早市':'午市',actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.amount),`${usd(f.fee)}${f.feeBreakdown?`<small>券商佣金 ${format(f.feeBreakdown.broker,4)} · SEC ${format(f.feeBreakdown.sec,4)} · TAF ${format(f.feeBreakdown.taf,4)} · CAT ${format(f.feeBreakdown.cat,6)} · 清算費 ${format(f.feeBreakdown.clearing,4)} · 交易所費估算 ${format(f.feeBreakdown.exchange,4)} · 轉嫁費 ${format(f.feeBreakdown.passThrough,6)}</small>`:''}`,usd(f.realizedGross),usd(f.netContribution)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
+  el('fills').innerHTML=transactions.length?table(['交易日','紐約時間','股票／全名','時段','動作','方向','股數','參考價','成交價','成交金額','本筆交易費用','已實現價差損益','本筆淨損益貢獻'],transactions.map(f=>row([escapeHTML(f.date),ny.format(new Date(f.time)),stockLabel(f.symbol),slotLabel(f.slot),actions[f.action]||escapeHTML(f.action),f.side==='buy'?'買':'賣',f.quantity,format(f.reference,4),format(f.price,4),usd(f.amount),`${usd(f.fee)}${f.feeBreakdown?`<small>券商佣金 ${format(f.feeBreakdown.broker,4)} · SEC ${format(f.feeBreakdown.sec,4)} · TAF ${format(f.feeBreakdown.taf,4)} · CAT ${format(f.feeBreakdown.cat,6)} · 清算費 ${format(f.feeBreakdown.clearing,4)} · 交易所費估算 ${format(f.feeBreakdown.exchange,4)} · 轉嫁費 ${format(f.feeBreakdown.passThrough,6)}</small>`:''}`,usd(f.realizedGross),usd(f.netContribution)]))):'<p class="sim-empty">此日沒有成交。請查看上方篩選結果及交易開關原因。</p>';
   presentation.refreshDetail();charts.selectDate(r.data.date);
 }
 function download(name,value,type='application/json'){
@@ -159,6 +160,13 @@ function showSetupStage(stage,{focus=true}={}) {
 
 function validateSetup(scope=setupForm) {
   const start=el('start'),end=el('end'),min=el('price-min'),max=el('price-max');
+  const window=currentWindow();
+  let windowError='';
+  if(window && Object.values(window).every(Boolean)){
+    try{getTradingSlots({tradingWindow:window},data?resolveBarSeconds(data,currentConfig()):Number(el('bar-seconds').value));}
+    catch(e){windowError=e.message;}
+  }
+  el('window-end').setCustomValidity(windowError);
   const tradingDates=data?.instruments[0].sessions.slice(el('lookback').valueAsNumber).map(s=>s.date);
   start.setCustomValidity(tradingDates && start.value && !tradingDates.includes(start.value)?'開始日期須為資料內可測試嘅交易日。':'');
   const endError=end.value && tradingDates && !tradingDates.includes(end.value)?'結束日期須為資料內可測試嘅交易日。':'';
@@ -173,7 +181,19 @@ function validateSetup(scope=setupForm) {
   return false;
 }
 
+function syncWindowFields(){
+  const custom=el('window-mode').value==='custom';
+  el('custom-window-fields').hidden=!custom;
+  el('custom-window-note').hidden=!custom;
+  for(const id of ['window-start','window-trade','window-end'])el(id).disabled=!custom;
+}
+
 function syncSetupSummary(){
+  const window=currentWindow();
+  const times=window&&Object.values(window).every(Boolean);
+  el('gate-windows').innerHTML=window
+    ? `<div><dt>前日排名時段</dt><dd>${times?escapeHTML(window.start+'–'+window.end):'—'}</dd></div><div><dt>當日觀察時段</dt><dd>${times?escapeHTML(window.start+'–'+window.tradeStart):'—'}</dd></div>`
+    : '<div><dt>早市</dt><dd>09:30–12:30 / 09:30–10:00</dd></div><div><dt>午市</dt><dd>12:30–16:00 / 12:30–13:00</dd></div>';
   const start=el('start').value,end=el('end').value;
   const priceMin=el('price-min').value,priceMax=el('price-max').value,target=el('target').value;
   const quote=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:2});
@@ -186,6 +206,7 @@ function syncSetupSummary(){
     ['Renko 門檻（%）',el('threshold').value||'—'],
     ['每時段候選數',el('candidates').value||'—'],
     ['每股目標',target?usd(Number(target)):'—'],
+    ['交易時段',window?(times?`${window.start}–${window.end} · ${window.tradeStart} 開始交易`:'—'):'早市及午市分開'],
     ['整段交易開關',el('gate').value==='on'?'啟用':'停用'],
   ].map(([label,value])=>`<div><dt>${label}</dt><dd>${escapeHTML(value)}</dd></div>`).join('');
 }
@@ -210,6 +231,9 @@ function advanceSetup(){
 }
 
 for(const button of setupSteps)button.onclick=()=>showSetupStage(Number(button.dataset.setupStep));
+el('setup-bar-link').onclick=()=>showSetupStage(2);
+el('window-mode').addEventListener('change',()=>{syncWindowFields();syncSetupSummary();});
+syncWindowFields();
 el('setup-next').onclick=advanceSetup;
 el('setup-back').onclick=()=>showSetupStage(currentStage-1);
 el('setup-review').onclick=()=>showSetupStage(5);
@@ -237,7 +261,7 @@ el('detail-date').onchange=renderDetail;
 el('transaction-scope').onchange=renderDetail;
 el('daily-table').onclick=event=>{const button=event.target.closest('[data-date]');if(button){el('detail-date').value=button.dataset.date;renderDetail();el('details').scrollIntoView({behavior:'smooth'});}};
 el('export-json').onclick=()=>download(`winwin-performance-${result.startDate}-${result.endDate}.json`,result);
-el('export-csv').onclick=()=>{const keys=['date','turnover','tradedStocks','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','unassessed','blockedSlots','incompleteSlots','abortedStockSlots','residual','AM','PM'];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
+el('export-csv').onclick=()=>{const keys=['date','turnover','tradedStocks','grossBeforeCosts','fees','slippage','net','cumulative','drawdown','orders','eligible','unassessed','blockedSlots','incompleteSlots','abortedStockSlots','residual',...(result.config.tradingWindow?['CUSTOM']:['AM','PM'])];download('winwin-daily-results.csv','\ufeff'+[keys.join(','),...result.days.map(d=>keys.map(k=>d[k]).join(','))].join('\r\n'),'text/csv;charset=utf-8');};
 el('export-fills').onclick=()=>{
  const keys=['date','time','symbol','name','slot','action','side','quantity','reference','price','amount','fee','closedQuantity','realizedGross','netContribution','position',...FEE_COMPONENTS];
  const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';

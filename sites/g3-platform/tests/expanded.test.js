@@ -135,3 +135,29 @@ test('isolated gaps exclude previous or observation data, and a trading gap pres
  assert.equal(blocked.slots.AM.gate.status,'data_blocked');
  assert.equal(blocked.slots.AM.coverageStatus,'all_incomplete');
 });
+
+test('one custom window uses the chosen observation and exits at its own end',()=>{
+ const d=fixture();
+ d.instruments=d.instruments.slice(0,1);
+ const [stock]=d.instruments;
+ const today=stock.sessions.at(-1).bars;
+ for(let i=40;i<46;i++){
+  const open=i<44?100:105,close=i<43?100:105;
+  Object.assign(today[i],{open,close,high:Math.max(open,close),low:Math.min(open,close)});
+ }
+ const cfg={...DEFAULT_CONFIG,gateEnabled:false,barSeconds:120,priceMin:1,rangeMin:0,volumeMin:0,
+   tradingWindow:{start:'10:10',tradeStart:'10:12',end:'10:16'}};
+ const r=runReplay(d,cfg);
+ assert.deepEqual(Object.keys(r.slots),['CUSTOM']);
+ const [result]=r.slots.CUSTOM.symbols;
+ assert.equal(result.initial,100);
+ assert.deepEqual(result.fills.map(f=>[f.action,f.time]),[
+  ['open_long',today[44].time],
+  ['slot_exit',today[45].availableAt],
+ ]);
+ assert.equal(result.position,0);
+ assert.equal(r.slots.CUSTOM.window.observeEnd,42);
+ assert.deepEqual(Object.keys(runReplay(d,{...cfg,tradingWindow:null}).slots),['AM','PM']);
+ for(const window of [{...cfg.tradingWindow,tradeStart:'10:11'},{...cfg.tradingWindow,end:'10:14'},{...cfg.tradingWindow,start:'09:29'}])
+  assert.throws(()=>runReplay(d,{...cfg,tradingWindow:window}),/自訂時段/);
+});
