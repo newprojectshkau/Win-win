@@ -1,5 +1,5 @@
-import {runValidatedWindow} from './performance.js?v=g3-add-windows';
-import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=g3-add-windows';
+import {runValidatedWindow} from './performance.js?v=g3-synthetic-test';
+import {validateConfig,validateDataset,fingerprint,ENGINE_VERSION} from './engine.js?v=g3-synthetic-test';
 
 function parseValues(text, maxItems, min, max, message) {
   if (typeof text !== 'string') throw Error(message);
@@ -64,6 +64,6 @@ export async function runResearch(dataset, config, {
     onProgress(index + 1, scenarios.length);
   }
   return {type:'g3-execution-research',schemaVersion:2,engineVersion:ENGINE_VERSION,
-    createdAt:new Date().toISOString(),dataHash,configHash,startDate,endDate,baseline,
+    createdAt:new Date().toISOString(),dataKind:dataset.kind,dataHash,configHash,startDate,endDate,baseline,
     design,rates:[baseline.slippageBps,...rates],limits,rows};
 }

@@ -219,3 +219,21 @@ test('additional windows run in time order and cannot overlap either session',()
  const overlap={...splitWindows,EXTRA_2:{...splitWindows.EXTRA_2,start:'11:04'}};
  assert.throws(()=>runReplay(d,{...config,splitWindows:overlap}),/額外時段 1同額外時段 2重疊/);
 });
+
+test('synthetic test mode exempts only missing market caps and rejects real datasets',()=>{
+ const d=fixture();
+ const sessions=d.instruments[0].sessions;
+ for(const session of sessions){session.marketCap=null;session.marketCapAvailableAt=null;}
+ for(const session of d.instruments[1].sessions)session.marketCap=100;
+ assert.equal(runReplay(d,DEFAULT_CONFIG).screening[0].pass,false);
+ const config={...DEFAULT_CONFIG,syntheticTestMode:true};
+ const simulated=runReplay(d,config);
+ const missing=simulated.screening[0];
+ assert.equal(missing.cap,null);
+ assert.equal(missing.capBasis,'synthetic_exempt');
+ assert.equal(missing.pass,true);
+ assert.equal(simulated.screening[1].checks.cap,false);
+ assert.equal(simulated.data.kind,'synthetic');
+ assert.equal(simulated.data.marketCapPolicy,'synthetic_test');
+ assert.throws(()=>runReplay({...d,kind:'imported'},config),/只有合成資料/);
+});
