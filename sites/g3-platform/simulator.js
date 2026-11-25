@@ -83,20 +83,102 @@ function renderDetail(){
 function download(name,value,type='application/json'){
   const url=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-async function execute(event){
-  event?.preventDefault();if(!data||busy)return;
-  busy=true;error('');document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-inputs input,#research-inputs select').forEach(e=>e.disabled=true);
+async function execute(){
+  if(!data||busy||!validateSetup())return;
+  busy=true;error('');const unlock=lockSetupInputs();
   try{
     const config=currentConfig();
     const next=await runWindow(data,config,{startDate:el('start').value,endDate:el('end').value,onProgress:(n,total)=>el('progress').textContent=`正在重播 ${n} / ${total} 日…`});
     next.dataHash=await fingerprint(data);next.configHash=await fingerprint(config);result=next;renderResult();el('dirty').hidden=true;el('progress').textContent=`已完成 ${result.days.length} 個交易日。`;
   }catch(e){error(`未完成：${e.message}。先前成功結果保留。`);el('progress').textContent='';}
-  finally{busy=false;document.querySelectorAll('#config input,#config select,#run,#import,#dataset-library,#save-chart-version,#run-research,#research-inputs input,#research-inputs select').forEach(e=>e.disabled=false);syncFeeFields();}
+  finally{busy=false;unlock();syncFeeFields();}
 }
-function syncFeeFields(){el('fee').disabled=busy||el('fee-model').value!=='custom';for(const id of ['exchange-fee','monthly-shares'])el(id).disabled=busy||el('fee-model').value!=='ibkr_tiered';}
-el('fee-model').addEventListener('change',syncFeeFields);syncFeeFields();
-el('config').addEventListener('submit',execute);
-el('config').addEventListener('input',()=>{if(result)el('dirty').hidden=false;if(researchResult)el('research-status').textContent='設定已更改；研究表仍使用上一次鎖定設定。';});
+const setupForm=el('config');
+const setupSteps=[...setupForm.querySelectorAll('[data-setup-step]')];
+let currentStage=1;
+
+function showSetupStage(stage,{focus=true}={}) {
+  currentStage=stage;
+  for(const button of setupSteps){
+    const active=Number(button.dataset.setupStep)===stage;
+    el(button.getAttribute('aria-controls')).hidden=!active;
+    if(active)button.setAttribute('aria-current','step');
+    else button.removeAttribute('aria-current');
+  }
+  el('setup-back').hidden=stage===1;
+  el('setup-next').hidden=stage===5;
+  el('setup-review').hidden=stage===5;
+  el('run').hidden=stage!==5;
+  if(focus)el(`setup-title-${stage}`).focus();
+}
+
+function validateSetup(scope=setupForm) {
+  const start=el('start'),end=el('end'),min=el('price-min'),max=el('price-max');
+  const tradingDates=data?.instruments[0].sessions.slice(DEFAULT_CONFIG.lookback).map(s=>s.date);
+  start.setCustomValidity(tradingDates && start.value && !tradingDates.includes(start.value)?'開始日期須為資料內可測試嘅交易日。':'');
+  const endError=end.value && tradingDates && !tradingDates.includes(end.value)?'結束日期須為資料內可測試嘅交易日。':'';
+  end.setCustomValidity(endError || (start.value && end.value && end.value<start.value?'結束日期須為開始日期或之後。':''));
+  max.setCustomValidity(min.value && max.value && Number(max.value)<Number(min.value)?'股價上限須等於或高於下限。':'');
+  const invalid=[...scope.querySelectorAll('input,select')].find(field=>field.willValidate&&!field.validity.valid);
+  if(!invalid)return true;
+  showSetupStage(Number(invalid.closest('.setup-stage').id.split('-').at(-1)),{focus:false});
+  const disclosure=invalid.closest('details');
+  if(disclosure)disclosure.open=true;
+  invalid.reportValidity();
+  return false;
+}
+
+function syncSetupSummary(){
+  const start=el('start').value,end=el('end').value;
+  const priceMin=el('price-min').value,priceMax=el('price-max').value,target=el('target').value;
+  const quote=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:2});
+  el('setup-summary').innerHTML=[
+    ['測試日期',start && end ? (start===end?start:`${start} – ${end}`) : '等候資料'],
+    ['平均股價（US$）',priceMin && priceMax ? `${quote(priceMin)} – ${quote(priceMax)}`:'—'],
+    ['Renko 門檻（%）',el('threshold').value||'—'],
+    ['每時段候選數',el('candidates').value||'—'],
+    ['每股目標',target?usd(Number(target)):'—'],
+    ['整段交易開關',el('gate').value==='on'?'啟用':'停用'],
+  ].map(([label,value])=>`<div><dt>${label}</dt><dd>${escapeHTML(value)}</dd></div>`).join('');
+}
+
+function syncFeeFields(){
+  const model=el('fee-model').value;
+  el('custom-fee-fields').hidden=model!=='custom';
+  el('tiered-fee-fields').hidden=model!=='ibkr_tiered';
+  el('fee').disabled=busy||model!=='custom';
+  for(const id of ['exchange-fee','monthly-shares'])el(id).disabled=busy||model!=='ibkr_tiered';
+}
+
+function lockSetupInputs(){
+  const controls=document.querySelectorAll('#config input,#config select,#run,#full-range,#import,#save-chart-version,#run-research,#research-inputs input,#research-inputs select,#export-research');
+  const enabled=[...controls].filter(control=>!control.disabled);
+  enabled.forEach(control=>control.disabled=true);
+  return ()=>enabled.forEach(control=>control.disabled=false);
+}
+
+function advanceSetup(){
+  if(validateSetup(el(`setup-stage-${currentStage}`)))showSetupStage(currentStage+1);
+}
+
+for(const button of setupSteps)button.onclick=()=>showSetupStage(Number(button.dataset.setupStep));
+el('setup-next').onclick=advanceSetup;
+el('setup-back').onclick=()=>showSetupStage(currentStage-1);
+el('setup-review').onclick=()=>showSetupStage(5);
+el('fee-model').addEventListener('change',syncFeeFields);
+syncFeeFields();
+syncSetupSummary();
+setupForm.addEventListener('submit',event=>{
+  event.preventDefault();
+  if(busy)return;
+  if(currentStage<5)advanceSetup();
+  else execute();
+});
+setupForm.addEventListener('input',()=>{
+  syncSetupSummary();
+  if(result)el('dirty').hidden=false;
+  if(researchResult)el('research-status').textContent='設定已更改；研究表仍使用上一次鎖定設定。';
+});
 el('import').onclick=()=>{if(!busy)el('file').click();};
 el('file').onchange=async event=>{
   const file=event.target.files[0];if(!file||busy)return;
@@ -114,12 +196,13 @@ el('export-fills').onclick=()=>{
  const records=result.runs.flatMap(r=>r.fills.map(f=>({date:r.data.date,...f,...Object.fromEntries(FEE_COMPONENTS.map(k=>[k,f.feeBreakdown?.[k]??(k==='broker'?f.fee:0)]))})));
  download('winwin-all-transactions.csv','\ufeff'+[keys.join(','),...records.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n'),'text/csv;charset=utf-8');
 };
-el('full-range').onclick=()=>{if(!data||busy)return;el('period-mode').value='range';el('start').value=el('start').min;el('end').value=el('end').max;syncDates();if(result)el('dirty').hidden=false;};
+el('full-range').onclick=()=>{if(!data||busy)return;el('period-mode').value='range';el('start').value=el('start').min;el('end').value=el('end').max;syncDates();setupForm.dispatchEvent(new Event('input'));};
 el('print').onclick=()=>window.print();
 function syncDates(){
   const single=el('period-mode').value==='single';
   el('end-wrap').hidden=single;
   if(single)el('end').value=el('start').value;
+  syncSetupSummary();
 }
 el('period-mode').onchange=syncDates;
 el('start').addEventListener('change',syncDates);
@@ -165,11 +248,9 @@ el('research-inputs').addEventListener('input',()=>{
   if(researchResult)el('research-status').textContent='情景設定已更改；表格仍顯示上一次比較。';
 });
 el('run-research').onclick=async()=>{
-  if(!data||busy||!el('config').reportValidity()||!el('research-baseline').reportValidity())return;
+  if(!data||busy||!validateSetup()||!el('research-baseline').reportValidity())return;
   busy=true;
-  const fields=document.querySelectorAll('#config input,#config select,#run,#full-range,#import,#dataset-library,#research-inputs input,#research-inputs select,#run-research,#export-research');
-  const enabled=[...fields].filter(field=>!field.disabled);
-  enabled.forEach(field=>field.disabled=true);
+  const unlock=lockSetupInputs();
   try{
     const next=await runResearch(data,currentConfig(),{
       startDate:el('start').value,endDate:el('end').value,design:el('research-design').value,baselineBps:Number(el('research-baseline').value),
@@ -179,6 +260,6 @@ el('run-research').onclick=async()=>{
     researchResult=next;
     renderResearch(next);
   }catch(e){el('research-status').textContent='研究未完成：'+e.message+'；先前研究結果保留。';}
-  finally{busy=false;enabled.forEach(field=>field.disabled=false);el('export-research').disabled=!researchResult;syncFeeFields();}
+  finally{busy=false;unlock();el('export-research').disabled=!researchResult;syncFeeFields();}
 };
 el('export-research').onclick=()=>{if(researchResult)download('g3-execution-research.json',researchResult);};
