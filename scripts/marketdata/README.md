@@ -104,3 +104,23 @@ node scripts/marketdata/run_window_replay.mjs /workspace/private/market-data/exp
 Omit `--fetch-cap-samples` for an offline scope calculation. Acquisition uses the existing `MASSIVE_API_KEY` binding, verified cache, five requests/minute and finite request/byte budgets. It prioritizes dated samples for archived stocks with known large market caps that otherwise cannot prove the screening threshold. It does **not** obtain a complete daily market-cap history. Known caps / full lookback only establish a nonnegative lower bound; insufficient bounds remain unassessed and excluded. Check `panel-90days/fetch-complete.json` or `fetch-error.json` and the bundle quality report before publication. Never copy a current cap backwards into history.
 
 The 90-day bundle sets `defaultTradeDays: 90`, so the simulator selects the full available test range after import. The old 30-day bundle remains a separate saved dataset; changing the date picker alone cannot expand that file. Public delivery contains encrypted data only; access links and plaintext results remain private.
+
+## 用 IBKR 歷史價量重跑執行情景
+
+在 Paper Gateway 所在的 Mac 運行。保留 Read-Only API，使用預設
+`127.0.0.1:4002`，並把 `IBKR_PAPER_ACCOUNT` 設為該模擬戶口。本工具
+使用獨立客戶端 ID 92，讀取美股正常時段的日線及一分鐘 TRADES OHLCV。
+請確認 Gateway 的美股歷史成交量以股數回傳。首次可加
+`--symbol AAPL` 做單股行情測試；完整比較去掉該選項。
+
+```sh
+python -m pip install 'ib_async>=2.1.0'
+python scripts/marketdata/build_ibkr_dataset.py /private/path/g3-template.json /private/path/ibkr-g3.json
+node scripts/marketdata/run_window_replay.mjs /private/path/ibkr-g3.json /private/path/ibkr-scenarios.json START_DATE END_DATE --execution-scenarios
+```
+
+選擇模板內的完整交易日，並保留 20 個前置交易日。模板只提供相同的
+股票池、交易日及當時可用的歷史市值，歷史價量全部由 IBKR 重新取回。
+缺資料保留為缺項。固定股票池的結果只代表該研究組合。情景輸出用
+IBKR 固定式費用模型作預設，包含原定 24 組成本與追價比較。
+投入口徑是歷史 OHLCV，未模擬買賣盤深度或部分成交。
